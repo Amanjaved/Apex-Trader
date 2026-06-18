@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApexTrader Pro — Institutional Trading Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     TOAST CONTAINER
+     ═══════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════════════════════
+     TOP BAR
+     ═══════════════════════════════════════ -->
+<div class="topbar" id="topbar">
+
+  <!-- Logo -->
+  <div class="logo">
+    <div class="logo-mark">A</div>
+    <span style="display:none" id="logoText">ApexTrader</span>
+  </div>
+  <div class="sep"></div>
+
+  <!-- Symbol Selector -->
+  <div style="position:relative">
+    <div class="sym-btn" id="symBtn">
+      <span class="sym-icon" id="symIcon">₿</span>
+      <span id="symName">BTC/USDT</span>
+      <span class="chev" id="symChev">▼</span>
+    </div>
+    <div class="coin-dropdown" id="coinDropdown">
+      <input class="coin-search" id="coinSearch" placeholder="Search symbol..." autocomplete="off">
+      <div id="coinList"></div>
+    </div>
+  </div>
+
+  <!-- Live Price -->
+  <div class="price-display">
+    <div class="price-val" id="priceVal" data-last="">—</div>
+    <div class="price-chg" id="priceChg">—</div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Timeframes -->
+  <div class="tf-group" id="tfGroup">
+    <button class="tf-btn" data-tf="1">1m</button>
+    <button class="tf-btn" data-tf="3">3m</button>
+    <button class="tf-btn" data-tf="5">5m</button>
+    <button class="tf-btn" data-tf="15">15m</button>
+    <button class="tf-btn" data-tf="30">30m</button>
+    <button class="tf-btn on" data-tf="60">1H</button>
+    <button class="tf-btn" data-tf="240">4H</button>
+    <button class="tf-btn" data-tf="1440">1D</button>
+    <button class="tf-btn" data-tf="10080">1W</button>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Chart Type -->
+  <div class="dd-wrap" id="typeDd">
+    <div class="dd-trigger" id="typeTrigger">
+      <span>📊</span>
+      <span id="typeLabel">Candle</span>
+      <span class="chev">▼</span>
+    </div>
+    <div class="dd-menu" id="typeMenu">
+      <div class="dd-section">Chart Type</div>
+      <div class="dd-item on" data-mode="candle"><span class="dd-check">✓</span><span class="dd-label">Candlestick</span></div>
+      <div class="dd-item" data-mode="heikin"><span class="dd-check">✓</span><span class="dd-label">Heikin Ashi</span></div>
+      <div class="dd-item" data-mode="line"><span class="dd-check">✓</span><span class="dd-label">Line</span></div>
+      <div class="dd-item" data-mode="area"><span class="dd-check">✓</span><span class="dd-label">Area</span></div>
+      <div class="dd-item" data-mode="bar"><span class="dd-check">✓</span><span class="dd-label">OHLC Bars</span></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Overlays Dropdown -->
+  <div class="dd-wrap" id="overlayDd">
+    <div class="dd-trigger" id="overlayTrigger">
+      <span>📈</span>
+      <span>Overlays</span>
+      <span class="badge" id="overlayBadge">2</span>
+      <span class="chev">▼</span>
+    </div>
+    <div class="dd-menu" id="overlayMenu">
+      <div class="dd-section">Price Overlays</div>
+      <div class="dd-item on" data-ov="ema"><span class="dd-check">✓</span><span class="dd-label">EMA</span><span class="dd-hint">exp. MA</span></div>
+      <div class="dd-item" data-ov="sma"><span class="dd-check">✓</span><span class="dd-label">SMA</span><span class="dd-hint">simple MA</span></div>
+      <div class="dd-item on" data-ov="bb"><span class="dd-check">✓</span><span class="dd-label">Bollinger Bands</span><span class="dd-hint">BB</span></div>
+      <div class="dd-item" data-ov="vwap"><span class="dd-check">✓</span><span class="dd-label">VWAP</span><span class="dd-hint">vol wtd</span></div>
+      <div class="dd-item" data-ov="ichimoku"><span class="dd-check">✓</span><span class="dd-label">Ichimoku Cloud</span><span class="dd-hint">Ichi</span></div>
+      <div class="dd-divider"></div>
+      <div class="dd-section">Smart Money</div>
+      <div class="dd-item" data-ov="smartSR"><span class="dd-check">✓</span><span class="dd-label">Smart S/R Zones</span><span class="dd-hint">S&R</span></div>
+      <div class="dd-item" data-ov="orderBlocks"><span class="dd-check">✓</span><span class="dd-label">Order Blocks</span><span class="dd-hint">OB</span></div>
+      <div class="dd-item" data-ov="fvg"><span class="dd-check">✓</span><span class="dd-label">Fair Value Gaps</span><span class="dd-hint">FVG</span></div>
+      <div class="dd-item" data-ov="marketStructure"><span class="dd-check">✓</span><span class="dd-label">Market Structure</span><span class="dd-hint">BOS/CHoCH</span></div>
+    </div>
+  </div>
+
+  <!-- Indicators Dropdown -->
+  <div class="dd-wrap" id="indDd">
+    <div class="dd-trigger" id="indTrigger">
+      <span>📉</span>
+      <span>Indicators</span>
+      <span class="badge" id="indBadge">2</span>
+      <span class="chev">▼</span>
+    </div>
+    <div class="dd-menu" id="indMenu">
+      <div class="dd-section">Sub-Chart Indicators</div>
+      <div class="dd-item on" data-sub="vol"><span class="dd-check">✓</span><span class="dd-label">Volume</span><span class="dd-hint">VOL</span></div>
+      <div class="dd-item on" data-sub="rsi"><span class="dd-check">✓</span><span class="dd-label">RSI</span><span class="dd-hint">14</span></div>
+      <div class="dd-item" data-sub="macd"><span class="dd-check">✓</span><span class="dd-label">MACD</span><span class="dd-hint">12/26/9</span></div>
+      <div class="dd-item" data-sub="stoch"><span class="dd-check">✓</span><span class="dd-label">Stochastic</span><span class="dd-hint">%K/%D</span></div>
+      <div class="dd-item" data-sub="obv"><span class="dd-check">✓</span><span class="dd-label">On-Balance Volume</span><span class="dd-hint">OBV</span></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Quick action tools -->
+  <button class="tool-btn" id="btnDepth"  title="Order Book Depth">📊</button>
+  <button class="tool-btn" id="btnTheme"  title="Toggle Theme">🌙</button>
+  <button class="tool-btn" id="btnSnap"   title="Screenshot">📷</button>
+  <button class="tool-btn" id="btnFull"   title="Fullscreen">⛶</button>
+  <button class="tool-btn on" id="btnSidebar" title="Sidebar">⚙</button>
+
+  <!-- Connection Status -->
+  <div class="status-area">
+    <span class="dot idle" id="statusDot"></span>
+    <span id="statusTxt">Connecting…</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     24H STATS STRIP
+     ═══════════════════════════════════════ -->
+<div class="stats-strip" id="statsStrip">
+  <div class="stat"><span class="stat-l">Open</span><span class="stat-v" id="sOpen">—</span></div>
+  <div class="stat"><span class="stat-l">High</span><span class="stat-v" id="sHigh" style="color:var(--green)">—</span></div>
+  <div class="stat"><span class="stat-l">Low</span><span class="stat-v" id="sLow" style="color:var(--red)">—</span></div>
+  <div class="stat"><span class="stat-l">Close</span><span class="stat-v" id="sClose">—</span></div>
+  <div class="stat"><span class="stat-l">Volume</span><span class="stat-v" id="sVol">—</span></div>
+  <div class="stat"><span class="stat-l">EMA Fast</span><span class="stat-v" id="sEmaF" style="color:var(--cyan)">—</span></div>
+  <div class="stat"><span class="stat-l">EMA Slow</span><span class="stat-v" id="sEmaS" style="color:var(--purple)">—</span></div>
+  <div class="stat"><span class="stat-l">RSI 14</span><span class="stat-v" id="sRsi">—</span></div>
+  <div class="stat"><span class="stat-l">ATR 14</span><span class="stat-v" id="sAtr" style="color:var(--amber)">—</span></div>
+  <div class="stat"><span class="stat-l">VWAP</span><span class="stat-v" id="sVwap" style="color:var(--orange)">—</span></div>
+  <div class="stat"><span class="stat-l">Candles</span><span class="stat-v" id="sCount">—</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN WORKSPACE
+     ═══════════════════════════════════════ -->
+<div class="workspace">
+
+  <!-- Left Drawing Toolbar -->
+  <div class="left-bar" id="leftBar">
+    <button class="lbar-btn on" data-tool="none"     title="Select / Pan">↖</button>
+    <button class="lbar-btn"   data-tool="crosshair" title="Crosshair">✛</button>
+    <div class="lbar-sep"></div>
+    <button class="lbar-btn"   data-tool="trendline" title="Trend Line">╱</button>
+    <button class="lbar-btn"   data-tool="hline"     title="Horizontal Line">—</button>
+    <button class="lbar-btn"   data-tool="vline"     title="Vertical Line">|</button>
+    <button class="lbar-btn"   data-tool="rect"      title="Rectangle">□</button>
+    <button class="lbar-btn"   data-tool="channel"   title="Parallel Channel">≡</button>
+    <div class="lbar-sep"></div>
+    <button class="lbar-btn"   data-tool="fib"       title="Fibonacci Retracement">∿</button>
+    <button class="lbar-btn"   data-tool="fibext"    title="Fibonacci Extension">∿+</button>
+    <div class="lbar-sep"></div>
+    <button class="lbar-btn"   id="btnClearDrawings" title="Clear All Drawings">🗑</button>
+  </div>
+
+  <!-- Chart Area -->
+  <div class="chart-area" id="chartArea">
+
+    <!-- Main Canvas -->
+    <div class="chart-wrap" id="mainWrap">
+      <canvas id="mainCanvas"></canvas>
+      <canvas class="vp-canvas" id="vpCanvas"></canvas>
+      <!-- OHLCV Tooltip -->
+      <div class="ohlc-tooltip" id="ohlcTooltip"></div>
+    </div>
+
+    <!-- Order Book Depth -->
+    <div class="depth-drawer" id="depthDrawer">
+      <div class="pane-label">Order Book — Cumulative Depth</div>
+      <canvas id="depthCanvas" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+
+    <!-- Volume Sub-Pane -->
+    <div class="pane" id="volPane">
+      <div class="pane-label" id="volLabel">Volume</div>
+      <div class="pane-body"><canvas id="volCanvas"></canvas></div>
+      <div class="pane-resize" data-pane="volPane"></div>
+    </div>
+
+    <!-- RSI Sub-Pane -->
+    <div class="pane" id="rsiPane">
+      <div class="pane-label" id="rsiLabel">RSI (14)</div>
+      <div class="pane-body"><canvas id="rsiCanvas"></canvas></div>
+      <div class="pane-resize" data-pane="rsiPane"></div>
+    </div>
+
+    <!-- MACD Sub-Pane -->
+    <div class="pane hidden" id="macdPane">
+      <div class="pane-label">MACD (12, 26, 9)</div>
+      <div class="pane-body"><canvas id="macdCanvas"></canvas></div>
+      <div class="pane-resize" data-pane="macdPane"></div>
+    </div>
+
+    <!-- Stochastic Sub-Pane -->
+    <div class="pane hidden" id="stochPane">
+      <div class="pane-label">Stochastic (14, 3, 3)</div>
+      <div class="pane-body"><canvas id="stochCanvas"></canvas></div>
+      <div class="pane-resize" data-pane="stochPane"></div>
+    </div>
+
+    <!-- OBV Sub-Pane -->
+    <div class="pane hidden" id="obvPane">
+      <div class="pane-label">On-Balance Volume</div>
+      <div class="pane-body"><canvas id="obvCanvas"></canvas></div>
+      <div class="pane-resize" data-pane="obvPane"></div>
+    </div>
+
+    <!-- Minimap -->
+    <div class="minimap" id="minimapPanel">
+      <canvas id="minimapCanvas" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+  </div>
+
+  <!-- Sidebar Backdrop (Mobile Overlay) -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- ═══ RIGHT SIDEBAR ═══ -->
+  <div class="sidebar" id="sidebar">
+
+    <!-- Tabs -->
+    <div class="sb-tabs">
+      <div class="sb-tab on"  data-page="tools">Tools</div>
+      <div class="sb-tab"     data-page="indicators">Settings</div>
+      <div class="sb-tab"     data-page="risk">Risk</div>
+      <div class="sb-tab"     data-page="intel">Intel</div>
+      <div class="sb-tab"     data-page="ai">AI</div>
+      <button class="sb-close-btn" id="btnSidebarClose" title="Close Sidebar">×</button>
+    </div>
+
+    <!-- TAB: Tools -->
+    <div class="sb-page on" id="page-tools">
+      <!-- Alerts -->
+      <div class="sb-section">
+        <div class="sb-title">🔔 Price Alerts</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input type="number" class="inp" id="alertPrice" placeholder="Price (USD)" step="1" style="flex:1;min-width:0;">
+          <button class="btn btn-primary btn-sm" id="btnAlertAdd">+ Add</button>
+        </div>
+        <div class="alert-list" id="alertList">
+          <div style="font-size:11px;color:var(--text-3)">No alerts set.</div>
+        </div>
+      </div>
+
+      <!-- Drawing Tools -->
+      <div class="sb-section">
+        <div class="sb-title">📐 Drawing Tools</div>
+        <div class="tool-palette" id="toolPalette">
+          <div class="tp-btn on" data-tool="none">↖ Select</div>
+          <div class="tp-btn" data-tool="trendline">╱ Trend Line</div>
+          <div class="tp-btn" data-tool="hline">— H-Line</div>
+          <div class="tp-btn" data-tool="vline">| V-Line</div>
+          <div class="tp-btn" data-tool="rect">□ Box</div>
+          <div class="tp-btn" data-tool="fib">∿ Fibonacci</div>
+          <div class="tp-btn" data-tool="channel">≡ Channel</div>
+          <div class="tp-btn" data-tool="fibext">∿+ Fib Ext</div>
+        </div>
+        <div id="drawInstr" style="font-size:10px;color:var(--text-3);line-height:1.5;margin-top:6px;">Click or drag on chart.</div>
+        <button class="btn btn-danger btn-sm" id="btnClearDrawingsSB" style="margin-top:8px;">🗑 Clear All Drawings</button>
+      </div>
+
+      <!-- Smart S/R Settings -->
+      <div class="sb-section">
+        <div class="sb-title">⚡ Smart S/R Settings</div>
+        <div class="form-row" style="margin-bottom:8px;">
+          <label>Enable Smart S/R</label>
+          <input type="checkbox" id="chkSR" style="cursor:pointer;">
+        </div>
+        <div class="form-row">
+          <label>S/R Timeframe</label>
+          <select class="inp-select inp" id="selSrTf">
+            <option value="5">5m</option>
+            <option value="15">15m</option>
+            <option value="60">1h</option>
+            <option value="240">4h</option>
+            <option value="1440" selected>1d</option>
+            <option value="10080">1w</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Market Structure -->
+      <div class="sb-section">
+        <div class="sb-title">🏗 Market Structure</div>
+        <div class="ms-toggle-grid">
+          <div class="ms-toggle on" data-ms="bos"><span class="ms-dot" style="background:var(--cyan)"></span>BOS</div>
+          <div class="ms-toggle on" data-ms="choch"><span class="ms-dot" style="background:var(--orange)"></span>CHoCH</div>
+          <div class="ms-toggle" data-ms="hh"><span class="ms-dot" style="background:var(--green)"></span>HH/HL</div>
+          <div class="ms-toggle" data-ms="ll"><span class="ms-dot" style="background:var(--red)"></span>LH/LL</div>
+          <div class="ms-toggle" data-ms="eqhl"><span class="ms-dot" style="background:var(--amber)"></span>Equal H/L</div>
+          <div class="ms-toggle" data-ms="sweeps"><span class="ms-dot" style="background:var(--purple)"></span>Sweeps</div>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="sb-section">
+        <button class="btn btn-ghost" id="btnExportCSV">📥 Export OHLCV CSV</button>
+        <div style="font-size:9px;color:var(--text-3);margin-top:10px;line-height:1.6;">
+          <b>Hotkeys:</b> 1–9=Timeframe · C=Chart type · O=Order book · T=Theme · Esc=Reset zoom · ?=Help
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Indicators Settings -->
+    <div class="sb-page" id="page-indicators">
+      <div class="sb-section">
+        <div class="sb-title">📊 Moving Averages</div>
+        <div class="form-row"><label>EMA Fast Period</label><input type="number" class="inp inp-num" id="inpEmaFast" value="20" min="2"></div>
+        <div class="form-row"><label>EMA Slow Period</label><input type="number" class="inp inp-num" id="inpEmaSlow" value="50" min="2"></div>
+        <div class="form-row"><label>SMA Period</label><input type="number" class="inp inp-num" id="inpSmaPeriod" value="20" min="2"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">📉 Bollinger Bands</div>
+        <div class="form-row"><label>BB Period</label><input type="number" class="inp inp-num" id="inpBbPeriod" value="20" min="5"></div>
+        <div class="form-row"><label>BB Std Dev</label><input type="number" class="inp inp-num" id="inpBbStd" value="2" min="0.5" step="0.5"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">📈 Oscillators</div>
+        <div class="form-row"><label>RSI Period</label><input type="number" class="inp inp-num" id="inpRsiPeriod" value="14" min="2"></div>
+        <div class="form-row"><label>MACD Fast</label><input type="number" class="inp inp-num" id="inpMacdFast" value="12" min="2"></div>
+        <div class="form-row"><label>MACD Slow</label><input type="number" class="inp inp-num" id="inpMacdSlow" value="26" min="2"></div>
+        <div class="form-row"><label>MACD Signal</label><input type="number" class="inp inp-num" id="inpMacdSig" value="9" min="2"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">🕯 Candle Colors</div>
+        <div class="form-row"><label>Bull color</label><input type="color" id="inpBullColor" value="#26a69a" style="cursor:pointer;border:none;background:none;width:32px;height:24px;"></div>
+        <div class="form-row"><label>Bear color</label><input type="color" id="inpBearColor" value="#ef5350" style="cursor:pointer;border:none;background:none;width:32px;height:24px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Risk Calculator -->
+    <div class="sb-page" id="page-risk">
+      <div class="sb-section">
+        <div class="sb-title">💰 Position Size Calculator</div>
+        <div class="form-row"><label>Account Size ($)</label><input type="number" class="inp inp-num" id="riskAccount" value="10000" min="1" step="100"></div>
+        <div class="form-row"><label>Risk per Trade (%)</label><input type="number" class="inp inp-num" id="riskPct" value="1" min="0.1" step="0.1" max="20"></div>
+        <div class="form-row"><label>Entry Price</label><input type="number" class="inp inp-num" id="riskEntry" placeholder="auto" step="1"></div>
+        <div class="form-row"><label>Stop Loss Price</label><input type="number" class="inp inp-num" id="riskStop" placeholder="required" step="1"></div>
+        <div class="form-row"><label>Take Profit</label><input type="number" class="inp inp-num" id="riskTP" placeholder="optional" step="1"></div>
+        <button class="btn btn-primary" id="btnCalcRisk" style="width:100%;margin-top:6px;">Calculate</button>
+      </div>
+      <div class="sb-section" id="riskResults" style="display:none;">
+        <div class="sb-title">📊 Risk Analysis</div>
+        <div class="risk-grid">
+          <div class="risk-card"><div class="risk-card-label">Position Size</div><div class="risk-card-val" id="rcSize">—</div></div>
+          <div class="risk-card"><div class="risk-card-label">$ at Risk</div><div class="risk-card-val bad" id="rcRisk">—</div></div>
+          <div class="risk-card"><div class="risk-card-label">Stop %</div><div class="risk-card-val" id="rcStopPct">—</div></div>
+          <div class="risk-card"><div class="risk-card-label">R:R Ratio</div><div class="risk-card-val good" id="rcRR">—</div></div>
+          <div class="risk-card"><div class="risk-card-label">Potential Gain</div><div class="risk-card-val good" id="rcGain">—</div></div>
+          <div class="risk-card"><div class="risk-card-label">Break-even %</div><div class="risk-card-val" id="rcBE">—</div></div>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">📓 Trade Journal</div>
+        <div id="journalList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
+        <button class="btn btn-ghost" id="btnJournalExport">📤 Export Journal CSV</button>
+      </div>
+    </div>
+
+    <!-- TAB: Market Intel -->
+    <div class="sb-page" id="page-intel">
+      <!-- Fear & Greed -->
+      <div class="sb-section">
+        <div class="sb-title">🔥 Fear & Greed Index</div>
+        <div class="fng-wrap">
+          <canvas id="fngCanvas"></canvas>
+          <div class="fng-val" id="fngValue">—</div>
+          <div class="fng-lbl" id="fngLabel">—</div>
+        </div>
+      </div>
+      <!-- News -->
+      <div class="sb-section">
+        <div class="sb-title" style="display:flex;align-items:center;">
+          <span id="newsTitle">📰 News Impact</span>
+          <button class="btn btn-ghost btn-sm" id="btnNewsFilter" style="margin-left:auto;padding:2px 7px;font-size:9px;">All</button>
+        </div>
+        <div class="news-list" id="newsList">
+          <div style="font-size:11px;color:var(--text-3);">Loading headlines…</div>
+        </div>
+      </div>
+      <!-- Economic Events -->
+      <div class="sb-section">
+        <div class="sb-title" style="display:flex;align-items:center;">
+          <span>📅 Economic Events</span>
+          <button class="btn btn-ghost btn-sm" id="btnAddEvt" style="margin-left:auto;padding:2px 7px;font-size:9px;">+ Add</button>
+        </div>
+        <div id="addEvtForm" style="display:none;flex-direction:column;gap:5px;margin-bottom:8px;background:var(--bg-3);padding:8px;border-radius:var(--radius-sm);">
+          <input type="text" class="inp inp-full" id="evtTitle" placeholder="Event title…">
+          <input type="date" class="inp inp-full" id="evtDate">
+          <select class="inp-select inp inp-full" id="evtImpact">
+            <option value="high">🔥 High Impact</option>
+            <option value="med">⚡ Medium Impact</option>
+            <option value="low">⚙ Low Impact</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="btnSaveEvt" style="width:100%;">Save Event</button>
+        </div>
+        <div class="event-list" id="eventList"></div>
+      </div>
+    </div>
+
+    <!-- TAB: AI Assistant -->
+    <div class="sb-page" id="page-ai">
+      <div class="sb-section">
+        <div class="sb-title">⭐ AI Market Analyst</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:11px;color:var(--text-2);">Current Bias:</span>
+          <span id="aiTrendBadge" class="ai-badge neutral">NEUTRAL</span>
+        </div>
+        <div id="aiReasonsList" style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px;"></div>
+        <div style="font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Directional Probability</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);font-weight:600;margin-bottom:4px;">
+          <span style="color:var(--green);">LONG <span id="aiLongProb">50%</span></span>
+          <span style="color:var(--red);">SHORT <span id="aiShortProb">50%</span></span>
+        </div>
+        <div class="prob-bar">
+          <div class="prob-fill-l" id="aiLongBar" style="width:50%"></div>
+          <div class="prob-fill-s" id="aiShortBar" style="width:50%"></div>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">🎯 Key Levels (Auto-Detected)</div>
+        <div id="aiLevelsList" style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-family:var(--mono);"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">📋 Trade Idea</div>
+        <div id="aiTradeIdea" style="font-size:11px;color:var(--text-2);line-height:1.6;"></div>
+      </div>
+    </div>
+  </div><!-- /sidebar -->
+
+</div><!-- /workspace -->
+
+<!-- ═══════════════════════════════════════
+     CONTEXT MENU
+     ═══════════════════════════════════════ -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" id="ctxAlert">🔔 Alert at <span id="ctxPrice">$0</span></div>
+  <div class="ctx-item" id="ctxCopy">📋 Copy Price</div>
+  <div class="ctx-item" id="ctxReset">🔄 Reset View</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-header">Quick Timeframe</div>
+  <div class="ctx-grid">
+    <div class="ctx-tf" data-tf="1">1m</div>
+    <div class="ctx-tf" data-tf="5">5m</div>
+    <div class="ctx-tf" data-tf="15">15m</div>
+    <div class="ctx-tf" data-tf="60">1h</div>
+    <div class="ctx-tf" data-tf="240">4h</div>
+    <div class="ctx-tf" data-tf="1440">1d</div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
