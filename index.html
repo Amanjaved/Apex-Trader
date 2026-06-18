@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -149,7 +150,7 @@
       background: var(--bg-panel-solid);
       border: var(--glass-border);
       border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       opacity: 0;
       visibility: hidden;
       transform: translateY(-8px);
@@ -238,7 +239,10 @@
       border-radius: 8px;
     }
 
-    .tf-btn, .mode-btn, .ind-btn, .tool-btn {
+    .tf-btn,
+    .mode-btn,
+    .ind-btn,
+    .tool-btn {
       background: transparent;
       border: none;
       color: var(--muted);
@@ -251,19 +255,179 @@
       white-space: nowrap;
     }
 
-    .tf-btn:hover, .mode-btn:hover, .ind-btn:hover, .tool-btn:hover {
+    .tf-btn:hover,
+    .mode-btn:hover,
+    .ind-btn:hover,
+    .tool-btn:hover {
       color: var(--text);
       background: rgba(255, 255, 255, 0.05);
     }
 
-    .tf-btn.on, .mode-btn.on, .ind-btn.on, .tool-btn.on {
+    .tf-btn.on,
+    .mode-btn.on,
+    .ind-btn.on,
+    .tool-btn.on {
       background: var(--bg-panel-solid);
       color: var(--text);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
 
     .ind-btn.on {
       border-bottom: 2px solid var(--cyan);
+    }
+
+    /* ── Toolbar Dropdown Menus ── */
+    .toolbar-dropdown {
+      position: relative;
+      user-select: none;
+    }
+
+    .toolbar-dropdown-trigger {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .toolbar-dropdown-trigger:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border);
+    }
+
+    .toolbar-dropdown.open .toolbar-dropdown-trigger {
+      color: var(--text);
+      background: var(--bg-panel-solid);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px var(--glow);
+    }
+
+    .toolbar-dropdown-trigger .dd-icon {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .toolbar-dropdown-trigger .dd-count {
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--cyan);
+      color: #000;
+      border-radius: 10px;
+      padding: 1px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .toolbar-dropdown-trigger .dd-chevron {
+      font-size: 7px;
+      color: var(--muted);
+      transition: transform 0.2s;
+      margin-left: 2px;
+    }
+
+    .toolbar-dropdown.open .dd-chevron {
+      transform: rotate(180deg);
+    }
+
+    .toolbar-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 180px;
+      background: var(--bg-panel-solid);
+      border: var(--glass-border);
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px) scale(0.97);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 300;
+      padding: 6px 0;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .toolbar-dropdown.open .toolbar-dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    .toolbar-dropdown-menu .dd-header {
+      padding: 6px 14px 4px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+
+    .toolbar-dropdown-menu .dd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .toolbar-dropdown-menu .dd-item:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .toolbar-dropdown-menu .dd-item.active {
+      color: var(--text);
+    }
+
+    .toolbar-dropdown-menu .dd-item .dd-check {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .toolbar-dropdown-menu .dd-item.active .dd-check {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #000;
+    }
+
+    .toolbar-dropdown-menu .dd-item .dd-label {
+      flex: 1;
+    }
+
+    .toolbar-dropdown-menu .dd-item .dd-shortcut {
+      font-size: 9px;
+      color: var(--muted);
+      opacity: 0.6;
+      font-family: monospace;
+    }
+
+    .toolbar-dropdown-menu .dd-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 10px;
     }
 
     .sep {
@@ -300,9 +464,21 @@
     }
 
     @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.6; }
-      50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px var(--green); }
-      100% { transform: scale(0.9); opacity: 0.6; }
+      0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 1;
+        box-shadow: 0 0 12px var(--green);
+      }
+
+      100% {
+        transform: scale(0.9);
+        opacity: 0.6;
+      }
     }
 
     /* ── Stats Strip ── */
@@ -385,7 +561,7 @@
       display: none;
       line-height: 1.6;
       z-index: 50;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
     .tooltip b {
@@ -481,7 +657,8 @@
       margin-bottom: 8px;
     }
 
-    .alert-row input, .ind-row input {
+    .alert-row input,
+    .ind-row input {
       flex: 1;
       background: rgba(0, 0, 0, 0.2);
       border: var(--glass-border);
@@ -494,7 +671,8 @@
       transition: border-color 0.2s;
     }
 
-    .alert-row input:focus, .ind-row input:focus {
+    .alert-row input:focus,
+    .ind-row input:focus {
       border-color: var(--border-focus);
     }
 
@@ -563,7 +741,7 @@
       overflow-y: auto;
       padding-right: 4px;
     }
-    
+
     .news-item {
       background: rgba(0, 0, 0, 0.15);
       border-radius: 8px;
@@ -574,11 +752,11 @@
       border-left: 3px solid var(--muted);
       transition: background-color 0.2s;
     }
-    
+
     .news-item:hover {
       background: rgba(255, 255, 255, 0.04);
     }
-    
+
     .news-meta {
       display: flex;
       justify-content: space-between;
@@ -586,7 +764,7 @@
       font-size: 9px;
       color: var(--muted);
     }
-    
+
     .news-tag {
       padding: 2px 6px;
       border-radius: 4px;
@@ -595,22 +773,22 @@
       font-size: 8px;
       letter-spacing: 0.2px;
     }
-    
+
     .news-tag.bullish {
       background: rgba(0, 255, 136, 0.1);
       color: var(--green);
     }
-    
+
     .news-tag.bearish {
       background: rgba(255, 51, 102, 0.1);
       color: var(--red);
     }
-    
+
     .news-tag.neutral {
       background: rgba(255, 255, 255, 0.05);
       color: var(--muted);
     }
-    
+
     .news-title {
       font-size: 11px;
       font-weight: 500;
@@ -618,7 +796,7 @@
       text-decoration: none;
       color: var(--text);
     }
-    
+
     .news-title:hover {
       color: var(--cyan);
     }
@@ -632,7 +810,7 @@
       overflow-y: auto;
       padding-right: 4px;
     }
-    
+
     .event-item {
       background: rgba(0, 0, 0, 0.15);
       border-radius: 8px;
@@ -644,11 +822,11 @@
       transition: background-color 0.2s;
       position: relative;
     }
-    
+
     .event-item:hover {
       background: rgba(255, 255, 255, 0.04);
     }
-    
+
     .event-meta {
       display: flex;
       justify-content: space-between;
@@ -656,7 +834,7 @@
       font-size: 9px;
       color: var(--muted);
     }
-    
+
     .event-impact {
       font-size: 8px;
       font-weight: 700;
@@ -665,29 +843,29 @@
       text-transform: uppercase;
       letter-spacing: 0.2px;
     }
-    
+
     .event-impact.high {
       background: rgba(255, 51, 102, 0.1);
       color: var(--red);
     }
-    
+
     .event-impact.med {
       background: rgba(255, 170, 0, 0.1);
       color: var(--amber);
     }
-    
+
     .event-impact.low {
       background: rgba(255, 255, 255, 0.05);
       color: var(--muted);
     }
-    
+
     .event-title {
       font-size: 11px;
       font-weight: 600;
       color: var(--text);
       line-height: 1.3;
     }
-    
+
     .event-del-btn {
       position: absolute;
       top: 6px;
@@ -699,11 +877,11 @@
       font-size: 10px;
       display: none;
     }
-    
+
     .event-item:hover .event-del-btn {
       display: block;
     }
-    
+
     .event-del-btn:hover {
       color: var(--red);
     }
@@ -829,7 +1007,7 @@
       position: absolute;
       background: var(--bg-panel-solid);
       border: var(--glass-border);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       border-radius: 8px;
       padding: 6px 0;
       min-width: 180px;
@@ -877,7 +1055,7 @@
       padding: 4px;
       font-size: 10px;
       text-align: center;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 4px;
       cursor: pointer;
     }
@@ -907,7 +1085,7 @@
       padding: 12px 16px;
       color: var(--text);
       font-size: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -922,24 +1100,35 @@
       transform: translateX(0);
     }
 
-    .toast-success { border-left-color: var(--green); }
-    .toast-error { border-left-color: var(--red); }
-    .toast-warn { border-left-color: var(--amber); }
+    .toast-success {
+      border-left-color: var(--green);
+    }
+
+    .toast-error {
+      border-left-color: var(--red);
+    }
+
+    .toast-warn {
+      border-left-color: var(--amber);
+    }
 
     /* Scrollbar overrides */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
     }
+
     ::-webkit-scrollbar-track {
       background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 4px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255,255,255,0.25);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     /* AI Trading Assistant Styling */
@@ -951,26 +1140,32 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
     .ai-badge.bullish {
       background: rgba(0, 255, 136, 0.12);
       color: var(--green);
     }
+
     .ai-badge.bearish {
       background: rgba(255, 51, 102, 0.12);
       color: var(--red);
     }
+
     .ai-badge.neutral {
       background: rgba(255, 255, 255, 0.06);
       color: var(--muted);
     }
+
     .ai-reason-item {
       display: flex;
       align-items: center;
       gap: 6px;
     }
+
     .ai-reason-item.ok {
       color: var(--green);
     }
+
     .ai-reason-item.ko {
       color: var(--red);
     }
@@ -985,15 +1180,18 @@
         z-index: 500;
         width: 260px;
       }
+
       .topbar {
         overflow-x: auto;
       }
+
       .stats {
         overflow-x: auto;
       }
     }
   </style>
 </head>
+
 <body>
 
   <!-- ── Custom Toast Container ── -->
@@ -1029,36 +1227,69 @@
 
     <div class="sep"></div>
 
-    <!-- Chart Modes -->
-    <div class="tf-row" id="modeRow">
-      <button class="mode-btn on" data-mode="candle">Candle</button>
-      <button class="mode-btn" data-mode="heikin">HA</button>
-      <button class="mode-btn" data-mode="line">Line</button>
-      <button class="mode-btn" data-mode="area">Area</button>
+    <!-- Chart Mode Dropdown -->
+    <div class="toolbar-dropdown" id="modeDropdown">
+      <div class="toolbar-dropdown-trigger" id="modeTrigger">
+        <span class="dd-icon">📊</span>
+        <span id="modeLabel">Candle</span>
+        <span class="dd-chevron">▼</span>
+      </div>
+      <div class="toolbar-dropdown-menu">
+        <div class="dd-header">Chart Type</div>
+        <div class="dd-item active" data-mode="candle"><span class="dd-check">✓</span><span class="dd-label">Candlestick</span></div>
+        <div class="dd-item" data-mode="heikin"><span class="dd-check">✓</span><span class="dd-label">Heikin Ashi</span></div>
+        <div class="dd-item" data-mode="line"><span class="dd-check">✓</span><span class="dd-label">Line</span></div>
+        <div class="dd-item" data-mode="area"><span class="dd-check">✓</span><span class="dd-label">Area</span></div>
+      </div>
     </div>
+    <!-- Hidden modeRow for JS compat -->
+    <div class="tf-row" id="modeRow" style="display:none;"></div>
 
     <div class="sep"></div>
 
-    <!-- Main Chart Indicators -->
-    <div class="tf-row" id="overlayRow">
-      <button class="ind-btn on" data-ind="ema">EMA</button>
-      <button class="ind-btn" data-ind="sma">SMA</button>
-      <button class="ind-btn on" data-ind="bb">BB</button>
-      <button class="ind-btn" data-ind="vwap">VWAP</button>
-      <button class="ind-btn" data-ind="ichimoku">Ichimoku</button>
-      <button class="ind-btn" data-ind="smartSR">Smart Support & Resistance</button>
+    <!-- Overlays Dropdown -->
+    <div class="toolbar-dropdown" id="overlayDropdown">
+      <div class="toolbar-dropdown-trigger" id="overlayTrigger">
+        <span class="dd-icon">📈</span>
+        <span>Overlays</span>
+        <span class="dd-count" id="overlayCount">2</span>
+        <span class="dd-chevron">▼</span>
+      </div>
+      <div class="toolbar-dropdown-menu">
+        <div class="dd-header">Chart Overlays</div>
+        <div class="dd-item active" data-ind="ema"><span class="dd-check">✓</span><span class="dd-label">EMA</span><span class="dd-shortcut">Moving Avg</span></div>
+        <div class="dd-item" data-ind="sma"><span class="dd-check">✓</span><span class="dd-label">SMA</span><span class="dd-shortcut">Simple MA</span></div>
+        <div class="dd-item active" data-ind="bb"><span class="dd-check">✓</span><span class="dd-label">Bollinger Bands</span><span class="dd-shortcut">BB</span></div>
+        <div class="dd-item" data-ind="vwap"><span class="dd-check">✓</span><span class="dd-label">VWAP</span><span class="dd-shortcut">Vol Wtd</span></div>
+        <div class="dd-item" data-ind="ichimoku"><span class="dd-check">✓</span><span class="dd-label">Ichimoku Cloud</span><span class="dd-shortcut">Cloud</span></div>
+        <div class="dd-sep"></div>
+        <div class="dd-item" data-ind="smartSR"><span class="dd-check">✓</span><span class="dd-label">Smart S/R Zones</span><span class="dd-shortcut">S&R</span></div>
+      </div>
     </div>
+    <!-- Hidden overlayRow for JS compat -->
+    <div class="tf-row" id="overlayRow" style="display:none;"></div>
 
     <div class="sep"></div>
 
-    <!-- Sub-Chart Toggles -->
-    <div class="tf-row" id="subRow">
-      <button class="ind-btn on" data-ind="vol">VOL</button>
-      <button class="ind-btn on" data-ind="rsi">RSI</button>
-      <button class="ind-btn" data-ind="macd">MACD</button>
-      <button class="ind-btn" data-ind="stoch">STOCH</button>
-      <button class="ind-btn" data-ind="obv">OBV</button>
+    <!-- Sub-Indicators Dropdown -->
+    <div class="toolbar-dropdown" id="subDropdown">
+      <div class="toolbar-dropdown-trigger" id="subTrigger">
+        <span class="dd-icon">📉</span>
+        <span>Indicators</span>
+        <span class="dd-count" id="subCount">2</span>
+        <span class="dd-chevron">▼</span>
+      </div>
+      <div class="toolbar-dropdown-menu">
+        <div class="dd-header">Sub-Chart Indicators</div>
+        <div class="dd-item active" data-ind="vol"><span class="dd-check">✓</span><span class="dd-label">Volume</span><span class="dd-shortcut">VOL</span></div>
+        <div class="dd-item active" data-ind="rsi"><span class="dd-check">✓</span><span class="dd-label">RSI</span><span class="dd-shortcut">14</span></div>
+        <div class="dd-item" data-ind="macd"><span class="dd-check">✓</span><span class="dd-label">MACD</span><span class="dd-shortcut">12/26/9</span></div>
+        <div class="dd-item" data-ind="stoch"><span class="dd-check">✓</span><span class="dd-label">Stochastic</span><span class="dd-shortcut">STOCH</span></div>
+        <div class="dd-item" data-ind="obv"><span class="dd-check">✓</span><span class="dd-label">On Balance Vol</span><span class="dd-shortcut">OBV</span></div>
+      </div>
     </div>
+    <!-- Hidden subRow for JS compat -->
+    <div class="tf-row" id="subRow" style="display:none;"></div>
 
     <div class="sep"></div>
 
@@ -1079,16 +1310,46 @@
 
   <!-- ── Stats Strip ── -->
   <div class="stats" id="statsStrip">
-    <div class="stat"><div class="stat-l">Open</div><div class="stat-v" id="s-open">—</div></div>
-    <div class="stat"><div class="stat-l">High</div><div class="stat-v" style="color:var(--green)" id="s-high">—</div></div>
-    <div class="stat"><div class="stat-l">Low</div><div class="stat-v" style="color:var(--red)" id="s-low">—</div></div>
-    <div class="stat"><div class="stat-l">Close</div><div class="stat-v" id="s-close">—</div></div>
-    <div class="stat"><div class="stat-l">Volume</div><div class="stat-v" id="s-vol">—</div></div>
-    <div class="stat"><div class="stat-l">EMA Fast</div><div class="stat-v" style="color:var(--cyan)" id="s-emaf">—</div></div>
-    <div class="stat"><div class="stat-l">RSI (14)</div><div class="stat-v" id="s-rsi">—</div></div>
-    <div class="stat"><div class="stat-l">ATR (14)</div><div class="stat-v" style="color:var(--purple)" id="s-atr">—</div></div>
-    <div class="stat"><div class="stat-l">VWAP</div><div class="stat-v" style="color:var(--amber)" id="s-vwap">—</div></div>
-    <div class="stat"><div class="stat-l">Candles</div><div class="stat-v" id="s-count">—</div></div>
+    <div class="stat">
+      <div class="stat-l">Open</div>
+      <div class="stat-v" id="s-open">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">High</div>
+      <div class="stat-v" style="color:var(--green)" id="s-high">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">Low</div>
+      <div class="stat-v" style="color:var(--red)" id="s-low">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">Close</div>
+      <div class="stat-v" id="s-close">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">Volume</div>
+      <div class="stat-v" id="s-vol">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">EMA Fast</div>
+      <div class="stat-v" style="color:var(--cyan)" id="s-emaf">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">RSI (14)</div>
+      <div class="stat-v" id="s-rsi">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">ATR (14)</div>
+      <div class="stat-v" style="color:var(--purple)" id="s-atr">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">VWAP</div>
+      <div class="stat-v" style="color:var(--amber)" id="s-vwap">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-l">Candles</div>
+      <div class="stat-v" id="s-count">—</div>
+    </div>
   </div>
 
   <!-- ── Main Layout ── -->
@@ -1167,9 +1428,12 @@
 
       <!-- Latest News & Sentiment Impact -->
       <div class="sidebar-section">
-        <div class="sidebar-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="sidebar-title"
+          style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span id="newsTitle">📰 News Impact</span>
-          <button class="btn-sm" id="btnNewsFilter" style="padding: 2px 6px; font-size: 9px; background: rgba(0,0,0,0.2); color: var(--muted); border: var(--glass-border);">All News</button>
+          <button class="btn-sm" id="btnNewsFilter"
+            style="padding: 2px 6px; font-size: 9px; background: rgba(0,0,0,0.2); color: var(--muted); border: var(--glass-border);">All
+            News</button>
         </div>
         <div class="news-list" id="newsList">
           <div style="font-size:11px;color:var(--muted)">Loading headlines...</div>
@@ -1178,21 +1442,29 @@
 
       <!-- Upcoming Events Calendar -->
       <div class="sidebar-section">
-        <div class="sidebar-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="sidebar-title"
+          style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span>📅 Economic Events</span>
-          <button class="btn-sm" id="btnAddEventToggle" style="padding: 2px 6px; font-size: 9px; background: rgba(0,0,0,0.2); color: var(--muted); border: var(--glass-border);">+ Add</button>
+          <button class="btn-sm" id="btnAddEventToggle"
+            style="padding: 2px 6px; font-size: 9px; background: rgba(0,0,0,0.2); color: var(--muted); border: var(--glass-border);">+
+            Add</button>
         </div>
-        
+
         <!-- Add Event Form (Collapsible) -->
-        <div id="addEventForm" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px; border: var(--glass-border);">
-          <input type="text" id="evtTitle" placeholder="Event Title (e.g. FOMC Meeting)" style="font-size:11.5px; padding: 4px 6px; background: rgba(0,0,0,0.3); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
-          <input type="date" id="evtDate" style="font-size:11.5px; padding: 4px 6px; background: rgba(0,0,0,0.3); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
-          <select id="evtImpact" style="font-size:11.5px; padding: 4px 6px; background: var(--bg-panel-solid); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
+        <div id="addEventForm"
+          style="display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px; border: var(--glass-border);">
+          <input type="text" id="evtTitle" placeholder="Event Title (e.g. FOMC Meeting)"
+            style="font-size:11.5px; padding: 4px 6px; background: rgba(0,0,0,0.3); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
+          <input type="date" id="evtDate"
+            style="font-size:11.5px; padding: 4px 6px; background: rgba(0,0,0,0.3); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
+          <select id="evtImpact"
+            style="font-size:11.5px; padding: 4px 6px; background: var(--bg-panel-solid); border: var(--glass-border); border-radius: 4px; color: var(--text); outline: none;">
             <option value="high">🔥 High Impact</option>
             <option value="med">⚡ Medium Impact</option>
             <option value="low">⚙ Low Impact</option>
           </select>
-          <button class="btn-sm" id="btnSaveEvent" style="width: 100%; padding: 5px; font-size: 11px;">Save Event</button>
+          <button class="btn-sm" id="btnSaveEvent" style="width: 100%; padding: 5px; font-size: 11px;">Save
+            Event</button>
         </div>
 
         <div class="event-list" id="eventList">
@@ -1203,20 +1475,26 @@
       <!-- AI Trading Assistant -->
       <div class="sidebar-section" id="aiAssistantSection">
         <div class="sidebar-title">⭐ AI Trading Assistant</div>
-        <div class="ai-trend-container" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <div class="ai-trend-container"
+          style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
           <span style="font-size: 11px; color: var(--muted);">Current Trend:</span>
           <span id="aiTrendBadge" class="ai-badge neutral">NEUTRAL</span>
         </div>
-        <div class="ai-reasons" id="aiReasonsList" style="font-size: 11px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; line-height: 1.5;">
+        <div class="ai-reasons" id="aiReasonsList"
+          style="font-size: 11px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; line-height: 1.5;">
           <!-- Checklist items populated dynamically -->
         </div>
         <div class="ai-probability-container" style="display: flex; flex-direction: column; gap: 6px;">
-          <div style="font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Directional Probability:</div>
-          <div style="display: flex; justify-content: space-between; font-size: 11px; font-family: monospace; font-weight: 600;">
+          <div
+            style="font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+            Directional Probability:</div>
+          <div
+            style="display: flex; justify-content: space-between; font-size: 11px; font-family: monospace; font-weight: 600;">
             <span style="color: var(--green);">LONG <span id="aiLongProb">50%</span></span>
             <span style="color: var(--red);">SHORT <span id="aiShortProb">50%</span></span>
           </div>
-          <div style="height: 6px; background: rgba(0,0,0,0.25); border-radius: 3px; display: flex; overflow: hidden; border: var(--glass-border);">
+          <div
+            style="height: 6px; background: rgba(0,0,0,0.25); border-radius: 3px; display: flex; overflow: hidden; border: var(--glass-border);">
             <div id="aiLongBar" style="width: 50%; background: var(--green); transition: width 0.3s ease;"></div>
             <div id="aiShortBar" style="width: 50%; background: var(--red); transition: width 0.3s ease;"></div>
           </div>
@@ -1226,13 +1504,15 @@
       <!-- Smart S/R Settings -->
       <div class="sidebar-section">
         <div class="sidebar-title">⚡ Smart Support & Resistance Settings</div>
-        <div class="ind-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <div class="ind-row"
+          style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
           <label style="color: var(--muted); font-size: 11px;">Enable Support & Resistance</label>
           <input type="checkbox" id="chkSmartSR" style="cursor: pointer; width: auto;">
         </div>
         <div class="ind-row" style="display: flex; align-items: center; justify-content: space-between;">
           <label style="color: var(--muted); font-size: 11px;">S/R Timeframe</label>
-          <select id="selSrTimeframe" style="background: var(--bg-panel-solid); border: var(--glass-border); color: var(--text); border-radius: 4px; padding: 3px 6px; outline: none; font-size: 11px; width: 80px; text-align: right;">
+          <select id="selSrTimeframe"
+            style="background: var(--bg-panel-solid); border: var(--glass-border); color: var(--text); border-radius: 4px; padding: 3px 6px; outline: none; font-size: 11px; width: 80px; text-align: right;">
             <option value="5">5m</option>
             <option value="15">15m</option>
             <option value="30">30m</option>
@@ -1251,7 +1531,8 @@
         <div class="ind-row"><label>EMA Slow</label><input type="number" id="inpEmaSlow" value="50" min="2"></div>
         <div class="ind-row"><label>SMA Period</label><input type="number" id="inpSmaPeriod" value="20" min="2"></div>
         <div class="ind-row"><label>BB Period</label><input type="number" id="inpBbPeriod" value="20" min="5"></div>
-        <div class="ind-row"><label>BB StdDev</label><input type="number" id="inpBbStd" value="2" min="1" step="0.5"></div>
+        <div class="ind-row"><label>BB StdDev</label><input type="number" id="inpBbStd" value="2" min="1" step="0.5">
+        </div>
         <div class="ind-row"><label>RSI Period</label><input type="number" id="inpRsiPeriod" value="14" min="2"></div>
         <div class="ind-row"><label>MACD Fast</label><input type="number" id="inpMacdFast" value="12" min="2"></div>
         <div class="ind-row"><label>MACD Slow</label><input type="number" id="inpMacdSlow" value="26" min="2"></div>
@@ -1298,7 +1579,7 @@
       currentCoin: 'BTCUSDT',
       currentInterval: '60',
       chartMode: 'candle',
-      
+
       // Indicators enabled
       overlays: { ema: true, sma: false, bb: true, vwap: false, ichimoku: false, smartSR: false },
       subs: { vol: true, rsi: true, macd: false, stoch: false, obv: false },
@@ -1530,22 +1811,38 @@
       document.querySelectorAll('#tfRow .tf-btn').forEach(btn => {
         btn.classList.toggle('on', btn.dataset.tf === state.currentInterval);
       });
-      // Chart mode
-      document.querySelectorAll('#modeRow .mode-btn').forEach(btn => {
-        btn.classList.toggle('on', btn.dataset.mode === state.chartMode);
+
+      // ── Chart Mode dropdown sync ──
+      const modeNames = { candle: 'Candle', heikin: 'Heikin Ashi', line: 'Line', area: 'Area' };
+      const modeLabel = document.getElementById('modeLabel');
+      if (modeLabel) modeLabel.textContent = modeNames[state.chartMode] || 'Candle';
+      document.querySelectorAll('#modeDropdown .dd-item[data-mode]').forEach(item => {
+        item.classList.toggle('active', item.dataset.mode === state.chartMode);
       });
-      // Overlays
-      document.querySelectorAll('#overlayRow .ind-btn').forEach(btn => {
-        const ind = btn.dataset.ind;
-        btn.classList.toggle('on', !!state.overlays[ind]);
+
+      // ── Overlays dropdown sync ──
+      let overlayActiveCount = 0;
+      document.querySelectorAll('#overlayDropdown .dd-item[data-ind]').forEach(item => {
+        const ind = item.dataset.ind;
+        const isOn = !!state.overlays[ind];
+        item.classList.toggle('active', isOn);
+        if (isOn) overlayActiveCount++;
       });
-      // Subs
-      document.querySelectorAll('#subRow .ind-btn').forEach(btn => {
-        const ind = btn.dataset.ind;
-        btn.classList.toggle('on', !!state.subs[ind]);
+      const overlayCount = document.getElementById('overlayCount');
+      if (overlayCount) overlayCount.textContent = overlayActiveCount;
+
+      // ── Sub-indicators dropdown sync ──
+      let subActiveCount = 0;
+      document.querySelectorAll('#subDropdown .dd-item[data-ind]').forEach(item => {
+        const ind = item.dataset.ind;
+        const isOn = !!state.subs[ind];
+        item.classList.toggle('active', isOn);
+        if (isOn) subActiveCount++;
         const sec = document.getElementById(`${ind}Section`);
-        if (sec) sec.style.display = state.subs[ind] ? 'flex' : 'none';
+        if (sec) sec.style.display = isOn ? 'flex' : 'none';
       });
+      const subCount = document.getElementById('subCount');
+      if (subCount) subCount.textContent = subActiveCount;
 
       // Sidebars & Depth panel
       nodes.sidebar.classList.toggle('hidden', !state.isSidebarOpen);
@@ -1576,7 +1873,7 @@
 
         // Invalidate cache if candles array changes, count changes, or last candle ticks
         if (
-          this.dataRef !== state.candles || 
+          this.dataRef !== state.candles ||
           this.lastCandleCount !== len ||
           this.lastCandleTime !== lastTime ||
           this.lastCandleClose !== lastClose
@@ -1896,9 +2193,9 @@
             }
           }
           // 4. Morning/Evening Star
-          if (prev2.c < prev2.o && prevBody < Math.abs(prev2.o - prev2.c) * 0.3 && c.c > c.o && c.c > (prev2.o + prev2.c)/2) {
+          if (prev2.c < prev2.o && prevBody < Math.abs(prev2.o - prev2.c) * 0.3 && c.c > c.o && c.c > (prev2.o + prev2.c) / 2) {
             patterns[i] = { type: 'MorningStar', label: '★', desc: 'Morning Star (Bullish Reversal)', color: 'var(--green)', position: 'below' };
-          } else if (prev2.c > prev2.o && prevBody < Math.abs(prev2.o - prev2.c) * 0.3 && c.c < c.o && c.c < (prev2.o + prev2.c)/2) {
+          } else if (prev2.c > prev2.o && prevBody < Math.abs(prev2.o - prev2.c) * 0.3 && c.c < c.o && c.c < (prev2.o + prev2.c) / 2) {
             patterns[i] = { type: 'EveningStar', label: '★', desc: 'Evening Star (Bearish Reversal)', color: 'var(--red)', position: 'above' };
           }
         }
@@ -1935,13 +2232,27 @@
       });
     }
 
-    // Heikin Ashi conversion
+    // Heikin Ashi conversion (TradingView-compatible)
     function toHeikin(src) {
       const key = `heikin_${src.length}`;
       return indicatorsCache.get(key, () => {
         const ha = new Array(src.length);
         if (src.length === 0) return ha;
-        ha[0] = { ...src[0] };
+
+        // First HA candle: initialize using HA formula (matches TradingView)
+        // haClose = (O+H+L+C)/4, haOpen = (O+C)/2, then high/low from real extremes
+        const first = src[0];
+        const haClose0 = (first.o + first.h + first.l + first.c) * 0.25;
+        const haOpen0 = (first.o + first.c) * 0.5;
+        ha[0] = {
+          t: first.t,
+          o: haOpen0,
+          c: haClose0,
+          h: Math.max(first.h, haOpen0, haClose0),
+          l: Math.min(first.l, haOpen0, haClose0),
+          v: first.v
+        };
+
         for (let i = 1; i < src.length; i++) {
           const c = src[i];
           const prev = ha[i - 1];
@@ -2016,10 +2327,10 @@
       setStatus('Loading candles...', 'idle');
       state.candles = []; // Clear old candles immediately
       queueRender();
-      
+
       const symbol = state.currentCoin;
       const interval = TF_MAP[state.currentInterval];
-      
+
       try {
         const r = await fetch(`/api/candles?symbol=${symbol}&interval=${interval}&limit=500`);
         if (!r.ok) {
@@ -2027,7 +2338,7 @@
           throw new Error(errObj.error || `HTTP ${r.status}`);
         }
         const raw = await r.json();
-        
+
         // Guard check: make sure the user hasn't switched symbol/interval in the meantime
         if (symbol !== state.currentCoin || interval !== TF_MAP[state.currentInterval]) {
           return;
@@ -2056,7 +2367,7 @@
           throw new Error(errObj.error || `HTTP ${r.status}`);
         }
         const data = await r.json();
-        
+
         // Guard check
         if (symbol !== state.currentCoin) return;
 
@@ -2072,10 +2383,10 @@
 
     async function fetchSrTimeframeCandles() {
       if (!state.overlays.smartSR) return;
-      
+
       const symbol = state.currentCoin;
       const srTf = TF_MAP[state.srTimeframe] || '1d';
-      
+
       try {
         const r = await fetch(`/api/candles?symbol=${symbol}&interval=${srTf}&limit=300`);
         if (!r.ok) {
@@ -2083,7 +2394,7 @@
           throw new Error(errObj.error || `HTTP ${r.status}`);
         }
         const raw = await r.json();
-        
+
         // Guard check
         if (symbol !== state.currentCoin || srTf !== (TF_MAP[state.srTimeframe] || '1d')) {
           return;
@@ -2092,7 +2403,7 @@
         state.srCandles = raw.map(k => ({
           t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5]
         }));
-        
+
         calculateSmartSR();
         queueRender();
       } catch (e) {
@@ -2106,14 +2417,14 @@
 
       const swingHighs = [];
       const swingLows = [];
-      const N = 5; 
+      const N = 5;
 
       for (let i = N; i < candles.length - N; i++) {
         let isHigh = true;
         let isLow = true;
         const currentHigh = candles[i].h;
         const currentLow = candles[i].l;
-        
+
         for (let j = 1; j <= N; j++) {
           if (candles[i - j].h >= currentHigh || candles[i + j].h > currentHigh) {
             isHigh = false;
@@ -2122,7 +2433,7 @@
             isLow = false;
           }
         }
-        
+
         if (isHigh) {
           swingHighs.push({ idx: i, price: currentHigh, t: candles[i].t, open: candles[i].o, close: candles[i].c });
         }
@@ -2161,7 +2472,7 @@
     function timestampToX(t) {
       const layout = nodes.mainCanvas._layout;
       if (!layout || !state.candles.length) return null;
-      
+
       let idx = -1;
       for (let i = 0; i < state.candles.length; i++) {
         if (state.candles[i].t <= t) {
@@ -2179,7 +2490,7 @@
         const stepX = layout.cw / layout.n;
         return layout.PAD.l + (diffIdx - state.viewStart + 0.5) * stepX;
       }
-      
+
       const step = layout.cw / layout.n;
       return layout.PAD.l + (idx - state.viewStart + 0.5) * step;
     }
@@ -2218,32 +2529,32 @@
 
     function getNewsSentiment(title, body) {
       const text = `${title} ${body}`.toLowerCase();
-      
+
       const bullishWords = [
-        'bullish', 'surge', 'rally', 'gain', 'breakout', 'all-time high', 'ath', 'soar', 
-        'jump', 'skyrocket', 'buying', 'support', 'adoption', 'partnership', 'greenlight', 
+        'bullish', 'surge', 'rally', 'gain', 'breakout', 'all-time high', 'ath', 'soar',
+        'jump', 'skyrocket', 'buying', 'support', 'adoption', 'partnership', 'greenlight',
         'approve', 'approval', 'growth', 'upward', 'pump', 'investment', 'expanded', 'positive'
       ];
-      
+
       const bearishWords = [
         'bearish', 'crash', 'drop', 'dump', 'hack', 'banned', 'ban', 'lawsuit', 'sec charge',
-        'plummet', 'sell-off', 'regulatory concerns', 'downward', 'fud', 'fears', 'dip', 
+        'plummet', 'sell-off', 'regulatory concerns', 'downward', 'fud', 'fears', 'dip',
         'plunge', 'liquidated', 'liquidation', 'crackdown', 'fined', 'probe', 'theft', 'risk', 'negative'
       ];
-      
+
       let bullCount = 0;
       let bearCount = 0;
-      
+
       bullishWords.forEach(w => {
         const matches = text.match(new RegExp(w, 'g'));
         if (matches) bullCount += matches.length;
       });
-      
+
       bearishWords.forEach(w => {
         const matches = text.match(new RegExp(w, 'g'));
         if (matches) bearCount += matches.length;
       });
-      
+
       return {
         sentiment: (bullCount > bearCount) ? 'bullish' : (bearCount > bullCount) ? 'bearish' : 'neutral',
         score: bullCount + bearCount
@@ -2270,7 +2581,7 @@
 
       // Keywords that affect the selected coin's price (macro, regulations, etc.)
       const macroTerms = ['fed', 'sec', 'etf', 'cpi', 'inflation', 'fomc', 'interest rate', 'regulation', 'macro', 'crypto', 'cryptocurrency', 'digital asset'];
-      
+
       // Build relevance regex: matching either the coin's symbol/name, or macro factors
       const pattern = `\\b${coinSym}\\b|${coinName}|` + macroTerms.map(t => `\\b${t}\\b`).join('|');
       const relevanceRegex = new RegExp(pattern, 'i');
@@ -2298,14 +2609,14 @@
         const analysis = getNewsSentiment(art.title, art.body);
         const sentiment = analysis.sentiment;
         const tagLabel = sentiment === 'bullish' ? 'Bullish' : sentiment === 'bearish' ? 'Bearish' : 'Neutral';
-        
+
         const div = document.createElement('div');
         div.className = 'news-item';
         div.style.borderLeftColor = sentiment === 'bullish' ? 'var(--green)' : sentiment === 'bearish' ? 'var(--red)' : 'var(--muted)';
-        
+
         const timeVal = new Date(art.published_on * 1000);
         const date = timeVal.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
+
         div.innerHTML = `
           <div class="news-meta">
             <span>${art.source_info ? art.source_info.name : art.source} • ${date}</span>
@@ -2336,7 +2647,7 @@
           state.events = [...DEFAULT_EVENTS];
           localStorage.setItem('apex_trader_events', JSON.stringify(state.events));
         }
-      } catch(e) {
+      } catch (e) {
         state.events = [...DEFAULT_EVENTS];
       }
       renderEvents();
@@ -2355,13 +2666,13 @@
       }
 
       // Sort events by date ascending
-      const sorted = [...state.events].sort((a,b) => new Date(a.date) - new Date(b.date));
+      const sorted = [...state.events].sort((a, b) => new Date(a.date) - new Date(b.date));
 
       sorted.forEach(evt => {
         const item = document.createElement('div');
         item.className = 'event-item';
         item.style.borderRightColor = evt.impact === 'high' ? 'var(--red)' : evt.impact === 'med' ? 'var(--amber)' : 'var(--muted)';
-        
+
         // Format Date nicely
         const d = new Date(evt.date);
         const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -2380,14 +2691,16 @@
       });
     }
 
-    window.deleteEvent = function(id) {
+    window.deleteEvent = function (id) {
       state.events = state.events.filter(e => e.id !== id);
       saveEvents();
       showToast('Event removed from economic calendar');
     };
 
-    function initDataFetch() {
-      fetchCandles();
+    async function initDataFetch() {
+      // Await candles before connecting WebSocket to prevent WS pushing
+      // into an empty/stale candle array during initial load
+      await fetchCandles();
       fetchOrderBook();
       fetchSrTimeframeCandles();
       connectWS();
@@ -2465,7 +2778,7 @@
         subscribedKlineStream = null;
         subscribedDepthStream = null;
         setStatus('Disconnected', 'err');
-        
+
         wsReconnectTimeout = setTimeout(() => {
           reconnectDelay = Math.min(reconnectDelay * 2, 30000);
           connectWS();
@@ -2513,7 +2826,7 @@
 
     function handleTickerMessage(stream, data) {
       const symbol = data.s;
-      
+
       state.tickerData[symbol] = {
         symbol: symbol,
         lastPrice: data.c,
@@ -2561,15 +2874,28 @@
 
     function handleKlineMessage(stream, data) {
       const k = data.k;
+
+      // Guard: ignore kline messages from a different symbol during coin-switch transitions
+      if (k.s !== state.currentCoin) return;
+
       const c = { t: k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v };
 
       if (state.candles.length && state.candles[state.candles.length - 1].t === c.t) {
+        // Update current (last) candle in-place
         state.candles[state.candles.length - 1] = c;
       } else if (state.candles.length) {
         state.candles.push(c);
-        if (state.candles.length > 1000) state.candles.shift();
-        
-        const wasAtEnd = state.viewEnd === state.candles.length - 1;
+
+        // If buffer overflows, shift out the oldest candle and adjust view indices
+        if (state.candles.length > 1000) {
+          state.candles.shift();
+          // After shift(), all indices slide down by 1 — adjust view to prevent jump
+          state.viewStart = Math.max(0, state.viewStart - 1);
+          state.viewEnd = Math.max(0, state.viewEnd - 1);
+        }
+
+        // Auto-scroll: if user was viewing the latest candle, keep them at the end
+        const wasAtEnd = state.viewEnd >= state.candles.length - 1;
         state.viewEnd = state.candles.length;
         if (wasAtEnd) {
           state.viewStart = Math.max(0, state.viewStart + 1);
@@ -2580,6 +2906,11 @@
 
     function handleDepthMessage(stream, data) {
       if (!state.showDepth) return;
+
+      // Guard: ignore depth messages from a different symbol during coin-switch transitions
+      const expectedStream = `${state.currentCoin.toLowerCase()}@depth20@100ms`;
+      if (stream !== expectedStream) return;
+
       state.orderBook = {
         bids: data.bids.map(b => [+b[0], +b[1]]),
         asks: data.asks.map(a => [+a[0], +a[1]])
@@ -2601,7 +2932,7 @@
           a.triggered = true;
           changed = true;
           showToast(`🔔 Price Alert! ${COINS[state.currentCoin].symbol} hit ${fmtUSD(a.price)}`, 'warn');
-          
+
           // Trigger system notification if permitted
           if (Notification.permission === 'granted') {
             new Notification(`ApexTrader Alert 📈`, {
@@ -2636,7 +2967,7 @@
       });
     }
 
-    window.deleteAlert = function(index) {
+    window.deleteAlert = function (index) {
       state.alerts.splice(index, 1);
       saveState();
       renderAlertList();
@@ -2649,7 +2980,7 @@
       const W = rect.width;
       const H = rect.height;
       const dpr = window.devicePixelRatio || 1;
-      
+
       // Only resize backing store if the actual bounding box size changed
       if (canvas._lastWidth !== W || canvas._lastHeight !== H || canvas._lastDpr !== dpr) {
         canvas.width = W * dpr;
@@ -2686,7 +3017,7 @@
       // Render top headers
       const lastCandle = state.candles[state.candles.length - 1];
       nodes.curPrice.textContent = fmtUSD(lastCandle.c);
-      
+
       let activeCandleForChange;
       if (state.chartMode === 'heikin') {
         const fullHa = toHeikin(state.candles);
@@ -2708,7 +3039,7 @@
           activeIdx = targetIdx;
         }
       }
-      
+
       let activeCandle;
       if (state.chartMode === 'heikin') {
         const fullHa = toHeikin(state.candles);
@@ -2735,15 +3066,15 @@
         const emaSlowPeriod = parseInt(document.getElementById('inpEmaSlow').value) || 50;
         const emaSlowFull = getEMA(closes, emaSlowPeriod);
         const emaSlowVal = emaSlowFull[lastIdx];
-        
+
         const rsiVal = rsi[lastIdx];
-        
+
         const macdFast = parseInt(document.getElementById('inpMacdFast').value) || 12;
         const macdSlow = parseInt(document.getElementById('inpMacdSlow').value) || 26;
         const macdSig = parseInt(document.getElementById('inpMacdSig').value) || 9;
         const macdData = getMACD(closes, macdFast, macdSlow, macdSig);
         const macdHistVal = macdData.hist[lastIdx];
-        
+
         const bbPeriod = parseInt(document.getElementById('inpBbPeriod').value) || 20;
         const bbStd = parseFloat(document.getElementById('inpBbStd').value) || 2;
         const bbData = getBB(closes, bbPeriod, bbStd);
@@ -2935,7 +3266,7 @@
         const timeVal = new Date(chartData[i].t);
         const isD = parseInt(state.currentInterval) >= 1440;
         const lbl = isD ? timeVal.toLocaleDateString('en', { month: 'short', day: 'numeric' })
-                        : timeVal.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+          : timeVal.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
         ctx.beginPath();
         ctx.moveTo(x, PAD.t);
         ctx.lineTo(x, H - PAD.b);
@@ -2979,8 +3310,8 @@
         ctx.fillStyle = 'rgba(16, 185, 129, 0.04)';
         ctx.beginPath();
         ctx.moveTo(idxToX(0), valToY(sA[0]));
-        for(let i=1; i<n; i++) ctx.lineTo(idxToX(i), valToY(sA[i]));
-        for(let i=n-1; i>=0; i--) ctx.lineTo(idxToX(i), valToY(sB[i]));
+        for (let i = 1; i < n; i++) ctx.lineTo(idxToX(i), valToY(sA[i]));
+        for (let i = n - 1; i >= 0; i--) ctx.lineTo(idxToX(i), valToY(sB[i]));
         ctx.closePath();
         ctx.fill();
 
@@ -2989,13 +3320,13 @@
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)'; // Tenkan (Red)
         ctx.beginPath();
         ctx.moveTo(idxToX(0), valToY(tenkan[0]));
-        for(let i=1; i<n; i++) ctx.lineTo(idxToX(i), valToY(tenkan[i]));
+        for (let i = 1; i < n; i++) ctx.lineTo(idxToX(i), valToY(tenkan[i]));
         ctx.stroke();
 
         ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)'; // Kijun (Blue)
         ctx.beginPath();
         ctx.moveTo(idxToX(0), valToY(kijun[0]));
-        for(let i=1; i<n; i++) ctx.lineTo(idxToX(i), valToY(kijun[i]));
+        for (let i = 1; i < n; i++) ctx.lineTo(idxToX(i), valToY(kijun[i]));
         ctx.stroke();
       }
 
@@ -3278,7 +3609,7 @@
         const target = chartData[state.hoverIdx];
         const dateObj = new Date(target.t);
         const ds = dateObj.toLocaleString();
-        
+
         nodes.tooltip.style.display = 'block';
         let patInfo = visiblePatterns[state.hoverIdx] ? `<br><span style="color:var(--amber)">Pattern: <b>${visiblePatterns[state.hoverIdx].desc}</b></span>` : '';
         let sigInfo = visibleSignals[state.hoverIdx] ? `<br><span style="color:var(--green)">Signal: <b>${visibleSignals[state.hoverIdx].type}</b></span>` : '';
@@ -3857,7 +4188,7 @@
 
       state.viewStart = Math.max(0, Math.min(state.candles.length - w, targetCandle - Math.round(w / 2)));
       state.viewEnd = state.viewStart + w;
-      
+
       const onMove = ev => {
         const cx = ev.clientX - rect.left;
         const r = cx / rect.width;
@@ -4010,7 +4341,7 @@
 
     nodes.fullscreenBtn.addEventListener('click', () => {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
+        document.documentElement.requestFullscreen().catch(() => { });
       } else {
         document.exitFullscreen();
       }
@@ -4066,17 +4397,34 @@
       nodes.evtDate.value = '';
       nodes.addEventForm.style.display = 'none';
       nodes.btnAddEventToggle.textContent = '+ Add';
-      
+
       showToast('Event successfully added to economic calendar', 'success');
     });
 
     nodes.coinTrigger.addEventListener('click', e => {
       e.stopPropagation();
       nodes.coinSelector.classList.toggle('open');
+      // Close toolbar dropdowns when coin selector opens
+      closeAllToolbarDropdowns();
     });
 
+    // ── Toolbar Dropdown Helpers ──
+    function closeAllToolbarDropdowns() {
+      document.querySelectorAll('.toolbar-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    }
+
+    function toggleToolbarDropdown(dropdownEl, e) {
+      e.stopPropagation();
+      const wasOpen = dropdownEl.classList.contains('open');
+      closeAllToolbarDropdowns();
+      nodes.coinSelector.classList.remove('open');
+      if (!wasOpen) dropdownEl.classList.add('open');
+    }
+
+    // Close all dropdowns on outside click
     document.addEventListener('click', () => {
       nodes.coinSelector.classList.remove('open');
+      closeAllToolbarDropdowns();
     });
 
     nodes.tfRow.addEventListener('click', e => {
@@ -4088,35 +4436,61 @@
       initDataFetch();
     });
 
-    nodes.modeRow.addEventListener('click', e => {
-      const btn = e.target.closest('.mode-btn');
-      if (!btn) return;
-      state.chartMode = btn.dataset.mode;
+    // ── Chart Mode Dropdown ──
+    document.getElementById('modeTrigger').addEventListener('click', e => {
+      toggleToolbarDropdown(document.getElementById('modeDropdown'), e);
+    });
+
+    document.getElementById('modeDropdown').querySelector('.toolbar-dropdown-menu').addEventListener('click', e => {
+      const item = e.target.closest('.dd-item[data-mode]');
+      if (!item) return;
+      e.stopPropagation();
+      state.chartMode = item.dataset.mode;
       saveState();
       updateUIRowSelections();
       queueRender();
+      closeAllToolbarDropdowns();
     });
 
-    nodes.overlayRow.addEventListener('click', e => {
-      const btn = e.target.closest('.ind-btn');
-      if (!btn) return;
-      const ind = btn.dataset.ind;
+    // ── Overlays Dropdown ──
+    document.getElementById('overlayTrigger').addEventListener('click', e => {
+      toggleToolbarDropdown(document.getElementById('overlayDropdown'), e);
+    });
+
+    document.getElementById('overlayDropdown').querySelector('.toolbar-dropdown-menu').addEventListener('click', e => {
+      const item = e.target.closest('.dd-item[data-ind]');
+      if (!item) return;
+      e.stopPropagation();
+      const ind = item.dataset.ind;
       state.overlays[ind] = !state.overlays[ind];
       saveState();
       updateUIRowSelections();
-      if (ind === 'smartSR') {
-        fetchSrTimeframeCandles();
-      }
+      if (ind === 'smartSR') fetchSrTimeframeCandles();
       queueRender();
     });
 
+    // ── Sub-Indicators Dropdown ──
+    document.getElementById('subTrigger').addEventListener('click', e => {
+      toggleToolbarDropdown(document.getElementById('subDropdown'), e);
+    });
+
+    document.getElementById('subDropdown').querySelector('.toolbar-dropdown-menu').addEventListener('click', e => {
+      const item = e.target.closest('.dd-item[data-ind]');
+      if (!item) return;
+      e.stopPropagation();
+      const ind = item.dataset.ind;
+      state.subs[ind] = !state.subs[ind];
+      saveState();
+      updateUIRowSelections();
+      queueRender();
+    });
+
+    // ── Smart S/R sidebar controls ──
     document.getElementById('chkSmartSR').addEventListener('change', e => {
       state.overlays.smartSR = e.target.checked;
       saveState();
       updateUIRowSelections();
-      if (state.overlays.smartSR) {
-        fetchSrTimeframeCandles();
-      }
+      if (state.overlays.smartSR) fetchSrTimeframeCandles();
       queueRender();
     });
 
@@ -4124,27 +4498,13 @@
       state.srTimeframe = e.target.value;
       saveState();
       updateUIRowSelections();
-      if (state.overlays.smartSR) {
-        fetchSrTimeframeCandles();
-      }
+      if (state.overlays.smartSR) fetchSrTimeframeCandles();
       queueRender();
     });
 
     setInterval(() => {
-      if (state.overlays.smartSR) {
-        fetchSrTimeframeCandles();
-      }
-    }, 60000); // 1 min
-
-    nodes.subRow.addEventListener('click', e => {
-      const btn = e.target.closest('.ind-btn');
-      if (!btn) return;
-      const ind = btn.dataset.ind;
-      state.subs[ind] = !state.subs[ind];
-      saveState();
-      updateUIRowSelections();
-      queueRender();
-    });
+      if (state.overlays.smartSR) fetchSrTimeframeCandles();
+    }, 60000);
 
     // Custom Context menu timeframe shortcuts click
     nodes.contextMenu.addEventListener('click', e => {
@@ -4169,7 +4529,7 @@
     // Keyboard Shortcuts
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT') return;
-      
+
       // Numbers 1-8 for timeframes
       const tfKeys = { '1': 1, '2': 5, '3': 15, '4': 30, '5': 60, '6': 240, '7': 1440, '8': 10080 };
       if (tfKeys[e.key]) {
@@ -4246,4 +4606,5 @@ Esc    : Reset chart zoom window`);
     setInterval(fetchNews, 60000); // 1 min
   </script>
 </body>
+
 </html>
