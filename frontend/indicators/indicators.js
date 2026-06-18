@@ -383,9 +383,17 @@ export function detectMarketStructure(candles) {
       }
     }
 
+    let hIdx = 0, lIdx = 0;
+    let recentH = null, recentL = null;
     for (let i = 5; i < n; i++) {
-      const recentH = highs.filter(h => h.i < i).slice(-1)[0];
-      const recentL = lows.filter(l => l.i < i).slice(-1)[0];
+      while (hIdx < highs.length && highs[hIdx].i < i) {
+        recentH = highs[hIdx];
+        hIdx++;
+      }
+      while (lIdx < lows.length && lows[lIdx].i < i) {
+        recentL = lows[lIdx];
+        lIdx++;
+      }
       if (recentH && candles[i].c > recentH.price && candles[i-1].c <= recentH.price) {
         labels[i] = { type: 'BOS', color: '#00d4ff', pos: 'above', price: recentH.price };
       }
@@ -445,7 +453,7 @@ export function detectSignals(candles) {
     const n = candles.length;
     const out = new Array(n).fill(null);
     if (n < 60) return out;
-    const closes = candles.map(c => c.c);
+    const closes = getCloses();
     const fast = getEMA(closes, getInpVal(D.inpEmaFast, 20));
     const slow = getEMA(closes, getInpVal(D.inpEmaSlow, 50));
     const rsi  = getRSI(closes, getInpVal(D.inpRsiPeriod, 14));
