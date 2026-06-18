@@ -732,6 +732,7 @@ export function initChartInteractions() {
 
   D.mainCanvas.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
+      e.preventDefault(); // Stop default browser pinch-to-zoom
       _touchDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
       _isTouchPanning = false;
     } else if (e.touches.length === 1) {
@@ -749,10 +750,11 @@ export function initChartInteractions() {
       }
       if (queueRenderCallback) queueRenderCallback();
     }
-  }, { passive: true });
+  }, { passive: false });
 
   D.mainCanvas.addEventListener('touchmove', e => {
     if (e.touches.length === 2) {
+      e.preventDefault(); // Stop default browser pinch-to-zoom
       const d2 = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
       const factor = _touchDist / (d2 || 1);
       const w = S.viewEnd - S.viewStart;
@@ -762,6 +764,7 @@ export function initChartInteractions() {
       _touchDist  = d2;
       if (queueRenderCallback) queueRenderCallback();
     } else if (e.touches.length === 1 && _isTouchPanning) {
+      e.preventDefault(); // Stop default browser scroll
       const touch = e.touches[0];
       const L = S.layout;
       if (!L) return;
@@ -779,7 +782,7 @@ export function initChartInteractions() {
 
       if (queueRenderCallback) queueRenderCallback();
     }
-  }, { passive: true });
+  }, { passive: false });
 
   D.mainCanvas.addEventListener('touchend', () => {
     _isTouchPanning = false;

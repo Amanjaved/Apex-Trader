@@ -415,11 +415,13 @@ function initListeners() {
     _resizeTimer = setTimeout(queueRender, 80);
   });
 
-  // Pane Resize drag
+  // Pane Resize drag (Mouse & Touch support)
   document.querySelectorAll('.pane-resize').forEach(handle => {
+    const pane = document.getElementById(handle.dataset.pane);
+    if (!pane) return;
+
+    // Mouse resize drag
     handle.addEventListener('mousedown', e => {
-      const pane = document.getElementById(handle.dataset.pane);
-      if (!pane) return;
       const startY = e.clientY, startH = pane.offsetHeight;
       const onMove = mv => {
         const h = clamp(startH + (mv.clientY - startY), 60, 300);
@@ -430,6 +432,24 @@ function initListeners() {
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
     });
+
+    // Touch resize drag
+    handle.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      const startY = e.touches[0].clientY, startH = pane.offsetHeight;
+      const onTouchMove = mv => {
+        if (mv.touches.length !== 1) return;
+        const h = clamp(startH + (mv.touches[0].clientY - startY), 60, 300);
+        pane.style.height = h + 'px';
+        queueRender();
+      };
+      const onTouchEnd = () => {
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
+      };
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+    }, { passive: true });
   });
 }
 
