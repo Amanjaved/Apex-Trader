@@ -75,13 +75,21 @@ export async function fetchOrderBook() {
 
 export async function fetchSrCandles() {
   if (!S.overlays.smartSR) return;
-  const sym = S.coin, stf = TF_MAP[S.srTf] || '1d';
+  const sym = S.coin;
   try {
-    const r = await fetch(`/api/candles?symbol=${sym}&interval=${stf}&limit=300`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const raw = await r.json();
-    if (S.coin !== sym || (TF_MAP[S.srTf]||'1d') !== stf) return;
-    S.srCandles = raw.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] }));
+    const [rawW, rawD, raw4h, raw1h] = await Promise.all([
+      fetch(`/api/candles?symbol=${sym}&interval=1w&limit=300`).then(r => r.json()),
+      fetch(`/api/candles?symbol=${sym}&interval=1d&limit=300`).then(r => r.json()),
+      fetch(`/api/candles?symbol=${sym}&interval=4h&limit=300`).then(r => r.json()),
+      fetch(`/api/candles?symbol=${sym}&interval=1h&limit=300`).then(r => r.json())
+    ]);
+    if (S.coin !== sym) return;
+    S.srCandlesMTF = {
+      "1w": rawW.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
+      "1d": rawD.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
+      "4h": raw4h.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
+      "1h": raw1h.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] }))
+    };
     calculateSmartSR();
     try { updateAI(); } catch(e) { console.error(e); }
     if (queueRenderCallback) queueRenderCallback();

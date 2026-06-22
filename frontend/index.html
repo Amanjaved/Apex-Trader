@@ -1,479 +1,650 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ApexTrader Pro — Institutional Trading Terminal</title>
+<title>ApexTrader Ultra — Cinematic 3D Institutional Trading Platform</title>
+<meta name="description" content="Experience the future of trading. Institutional 3D charting, neural AI signals, multi-exchange liquidity, and real-time market universe visualization.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     TOAST CONTAINER
-     ═══════════════════════════════════════ -->
-<div class="toast-container" id="toastContainer"></div>
+<!-- Background Global Particle Canvas -->
+<canvas id="bgParticles"></canvas>
 
 <!-- ═══════════════════════════════════════
-     TOP BAR
+     NAVIGATION
      ═══════════════════════════════════════ -->
-<div class="topbar" id="topbar">
-
-  <!-- Logo -->
-  <div class="logo">
-    <div class="logo-mark">A</div>
-    <span style="display:none" id="logoText">ApexTrader</span>
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="/" class="logo">
+      <div class="logo-mark">A</div>
+      <span>ApexTrader <span class="text-gold">Ultra</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#markets">Universe</a>
+      <a href="#chart-hologram">HoloChart</a>
+      <a href="#brain">AI Brain</a>
+      <a href="#galaxy">Galaxy</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <a href="/charts" class="btn btn-gold">Launch Terminal</a>
+    </div>
+    <button class="menu-toggle" id="menuToggle">☰</button>
   </div>
-  <div class="sep"></div>
+</nav>
 
-  <!-- Symbol Selector -->
-  <div style="position:relative">
-    <div class="sym-btn" id="symBtn">
-      <span class="sym-icon" id="symIcon">₿</span>
-      <span id="symName">BTC/USDT</span>
-      <span class="chev" id="symChev">▼</span>
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#markets">Universe</a>
+  <a href="#chart-hologram">HoloChart</a>
+  <a href="#brain">AI Brain</a>
+  <a href="#galaxy">Galaxy</a>
+  <a href="#pricing">Pricing</a>
+  <a href="/charts" class="btn btn-gold">Launch Terminal</a>
+</div>
+
+<!-- ═══════════════════════════════════════
+     HERO SECTION
+     ═══════════════════════════════════════ -->
+<header class="hero" id="hero">
+  <div class="hero-ambient"></div>
+  
+  <!-- Interactive Three.js WebGL 3D Scene Container -->
+  <div class="hero-3d-scene" id="hero3dScene"></div>
+
+  <div class="hero-container">
+    <!-- Left: Copy -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Enterprise Node Live
+      </div>
+      <h1>Trade Crypto with<br><span class="text-gold">Spatial 3D</span><br>Confluence</h1>
+      <p>A cinematic WebGL trading platform aggregating real-time order books, AI neural signals, and institutional market flow into a single unified universe.</p>
+      
+      <div class="hero-actions">
+        <a href="/charts" class="btn btn-gold btn-lg">
+          <span>🚀</span> Launch Terminal
+        </a>
+        <a href="#markets" class="btn btn-glass btn-lg">
+          <span>🌌</span> Enter Universe
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">$12B+</div>
+          <div class="hero-stat-label">Monthly Volume</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">500K+</div>
+          <div class="hero-stat-label">Quants Active</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">50ms</div>
+          <div class="hero-stat-label">Avg Latency</div>
+        </div>
+      </div>
     </div>
-    <div class="coin-dropdown" id="coinDropdown">
-      <input class="coin-search" id="coinSearch" placeholder="Search symbol..." autocomplete="off">
-      <div id="coinList"></div>
+
+    <!-- Right: Holographic Orbit Container (Cards positioned overlaying WebGL) -->
+    <div class="hero-visual">
+      <div class="orbit-center-trigger"></div>
+      <!-- Cards that will orbit in 3D via GSAP and CSS 3D -->
+      <div class="orbit-card-wrap" id="orbitCardWrap">
+        
+        <div class="orbit-card glass-gold" style="--index: 0;">
+          <span class="oc-label">BTC Price</span>
+          <span class="oc-val text-gold" id="heroPrice">$67,284.50</span>
+          <span class="oc-pct pill-up" id="heroChange">+3.42%</span>
+        </div>
+
+        <div class="orbit-card glass-cyan" style="--index: 1;">
+          <span class="oc-label">Fear &amp; Greed</span>
+          <span class="oc-val text-cyan">72 · Greed</span>
+          <span class="oc-status">Bullish</span>
+        </div>
+
+        <div class="orbit-card glass-emerald" style="--index: 2;">
+          <span class="oc-label">24h Volume</span>
+          <span class="oc-val text-emerald">$48.2B</span>
+          <span class="oc-status">Heavy</span>
+        </div>
+
+        <div class="orbit-card glass-purple" style="--index: 3;">
+          <span class="oc-label">Funding Rate</span>
+          <span class="oc-val text-purple">+0.0125%</span>
+          <span class="oc-status">Neutral</span>
+        </div>
+
+        <div class="orbit-card glass-orange" style="--index: 4;">
+          <span class="oc-label">BTC Dominance</span>
+          <span class="oc-val text-orange">54.8%</span>
+          <span class="oc-status">Increasing</span>
+        </div>
+
+      </div>
+
+      <!-- Floating Terminal Screen Preview -->
+      <div class="hero-dashboard glass-gold">
+        <div class="dash-header">
+          <div class="dash-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <div class="dash-symbol">BTC/USDT · 1H</div>
+          <div class="dash-live">LIVE</div>
+        </div>
+        <div class="dash-chart-area">
+          <canvas id="heroLiveChart"></canvas>
+        </div>
+        <div class="dash-stats-row">
+          <div class="dash-stat">
+            <div class="dash-stat-l">Price</div>
+            <div class="dash-stat-v v-gold" id="dashPrice">$67,284</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-l">24h Vol</div>
+            <div class="dash-stat-v v-cyan">$48.2B</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-l">Change</div>
+            <div class="dash-stat-v v-green" id="dashChg">+3.42%</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</header>
 
-  <!-- Live Price -->
-  <div class="price-display">
-    <div class="price-val" id="priceVal" data-last="">—</div>
-    <div class="price-chg" id="priceChg">—</div>
-  </div>
-
-  <div class="sep"></div>
-
-  <!-- Timeframes -->
-  <div class="tf-group" id="tfGroup">
-    <button class="tf-btn" data-tf="1">1m</button>
-    <button class="tf-btn" data-tf="3">3m</button>
-    <button class="tf-btn" data-tf="5">5m</button>
-    <button class="tf-btn" data-tf="15">15m</button>
-    <button class="tf-btn" data-tf="30">30m</button>
-    <button class="tf-btn on" data-tf="60">1H</button>
-    <button class="tf-btn" data-tf="240">4H</button>
-    <button class="tf-btn" data-tf="1440">1D</button>
-    <button class="tf-btn" data-tf="10080">1W</button>
-  </div>
-
-  <div class="sep"></div>
-
-  <!-- Chart Type -->
-  <div class="dd-wrap" id="typeDd">
-    <div class="dd-trigger" id="typeTrigger">
-      <span>📊</span>
-      <span id="typeLabel">Candle</span>
-      <span class="chev">▼</span>
-    </div>
-    <div class="dd-menu" id="typeMenu">
-      <div class="dd-section">Chart Type</div>
-      <div class="dd-item on" data-mode="candle"><span class="dd-check">✓</span><span class="dd-label">Candlestick</span></div>
-      <div class="dd-item" data-mode="heikin"><span class="dd-check">✓</span><span class="dd-label">Heikin Ashi</span></div>
-      <div class="dd-item" data-mode="line"><span class="dd-check">✓</span><span class="dd-label">Line</span></div>
-      <div class="dd-item" data-mode="area"><span class="dd-check">✓</span><span class="dd-label">Area</span></div>
-      <div class="dd-item" data-mode="bar"><span class="dd-check">✓</span><span class="dd-label">OHLC Bars</span></div>
-    </div>
-  </div>
-
-  <div class="sep"></div>
-
-  <!-- Overlays Dropdown -->
-  <div class="dd-wrap" id="overlayDd">
-    <div class="dd-trigger" id="overlayTrigger">
-      <span>📈</span>
-      <span>Overlays</span>
-      <span class="badge" id="overlayBadge">2</span>
-      <span class="chev">▼</span>
-    </div>
-    <div class="dd-menu" id="overlayMenu">
-      <div class="dd-section">Price Overlays</div>
-      <div class="dd-item on" data-ov="ema"><span class="dd-check">✓</span><span class="dd-label">EMA</span><span class="dd-hint">exp. MA</span></div>
-      <div class="dd-item" data-ov="sma"><span class="dd-check">✓</span><span class="dd-label">SMA</span><span class="dd-hint">simple MA</span></div>
-      <div class="dd-item on" data-ov="bb"><span class="dd-check">✓</span><span class="dd-label">Bollinger Bands</span><span class="dd-hint">BB</span></div>
-      <div class="dd-item" data-ov="vwap"><span class="dd-check">✓</span><span class="dd-label">VWAP</span><span class="dd-hint">vol wtd</span></div>
-      <div class="dd-item" data-ov="ichimoku"><span class="dd-check">✓</span><span class="dd-label">Ichimoku Cloud</span><span class="dd-hint">Ichi</span></div>
-      <div class="dd-divider"></div>
-      <div class="dd-section">Smart Money</div>
-      <div class="dd-item" data-ov="smartSR"><span class="dd-check">✓</span><span class="dd-label">Smart S/R Zones</span><span class="dd-hint">S&R</span></div>
-      <div class="dd-item" data-ov="orderBlocks"><span class="dd-check">✓</span><span class="dd-label">Order Blocks</span><span class="dd-hint">OB</span></div>
-      <div class="dd-item" data-ov="fvg"><span class="dd-check">✓</span><span class="dd-label">Fair Value Gaps</span><span class="dd-hint">FVG</span></div>
-      <div class="dd-item" data-ov="marketStructure"><span class="dd-check">✓</span><span class="dd-label">Market Structure</span><span class="dd-hint">BOS/CHoCH</span></div>
-    </div>
-  </div>
-
-  <!-- Indicators Dropdown -->
-  <div class="dd-wrap" id="indDd">
-    <div class="dd-trigger" id="indTrigger">
-      <span>📉</span>
-      <span>Indicators</span>
-      <span class="badge" id="indBadge">2</span>
-      <span class="chev">▼</span>
-    </div>
-    <div class="dd-menu" id="indMenu">
-      <div class="dd-section">Sub-Chart Indicators</div>
-      <div class="dd-item on" data-sub="vol"><span class="dd-check">✓</span><span class="dd-label">Volume</span><span class="dd-hint">VOL</span></div>
-      <div class="dd-item on" data-sub="rsi"><span class="dd-check">✓</span><span class="dd-label">RSI</span><span class="dd-hint">14</span></div>
-      <div class="dd-item" data-sub="macd"><span class="dd-check">✓</span><span class="dd-label">MACD</span><span class="dd-hint">12/26/9</span></div>
-      <div class="dd-item" data-sub="stoch"><span class="dd-check">✓</span><span class="dd-label">Stochastic</span><span class="dd-hint">%K/%D</span></div>
-      <div class="dd-item" data-sub="obv"><span class="dd-check">✓</span><span class="dd-label">On-Balance Volume</span><span class="dd-hint">OBV</span></div>
-    </div>
-  </div>
-
-  <div class="sep"></div>
-
-  <!-- Quick action tools -->
-  <button class="tool-btn" id="btnDepth"  title="Order Book Depth">📊</button>
-  <button class="tool-btn" id="btnTheme"  title="Toggle Theme">🌙</button>
-  <button class="tool-btn" id="btnSnap"   title="Screenshot">📷</button>
-  <button class="tool-btn" id="btnFull"   title="Fullscreen">⛶</button>
-  <button class="tool-btn on" id="btnSidebar" title="Sidebar">⚙</button>
-
-  <!-- Connection Status -->
-  <div class="status-area">
-    <span class="dot idle" id="statusDot"></span>
-    <span id="statusTxt">Connecting…</span>
+<!-- Ticker strip -->
+<div class="ticker-strip">
+  <div class="ticker-track" id="tickerTrack">
+    <!-- Managed dynamically by app.js -->
+    <div class="ticker-item"><span class="ticker-symbol">BTC</span><span class="ticker-price">$67,284.50</span><span class="ticker-chg up">+3.42%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">ETH</span><span class="ticker-price">$3,512.80</span><span class="ticker-chg up">+2.18%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">SOL</span><span class="ticker-price">$184.32</span><span class="ticker-chg up">+5.67%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">BNB</span><span class="ticker-price">$612.40</span><span class="ticker-chg dn">-0.85%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">XRP</span><span class="ticker-price">$0.6284</span><span class="ticker-chg up">+1.34%</span></div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════
-     24H STATS STRIP
+     3D MARKET UNIVERSE (GLASS PANELS)
      ═══════════════════════════════════════ -->
-<div class="stats-strip" id="statsStrip">
-  <div class="stat"><span class="stat-l">Open</span><span class="stat-v" id="sOpen">—</span></div>
-  <div class="stat"><span class="stat-l">High</span><span class="stat-v" id="sHigh" style="color:var(--green)">—</span></div>
-  <div class="stat"><span class="stat-l">Low</span><span class="stat-v" id="sLow" style="color:var(--red)">—</span></div>
-  <div class="stat"><span class="stat-l">Close</span><span class="stat-v" id="sClose">—</span></div>
-  <div class="stat"><span class="stat-l">Volume</span><span class="stat-v" id="sVol">—</span></div>
-  <div class="stat"><span class="stat-l">EMA Fast</span><span class="stat-v" id="sEmaF" style="color:var(--cyan)">—</span></div>
-  <div class="stat"><span class="stat-l">EMA Slow</span><span class="stat-v" id="sEmaS" style="color:var(--purple)">—</span></div>
-  <div class="stat"><span class="stat-l">RSI 14</span><span class="stat-v" id="sRsi">—</span></div>
-  <div class="stat"><span class="stat-l">ATR 14</span><span class="stat-v" id="sAtr" style="color:var(--amber)">—</span></div>
-  <div class="stat"><span class="stat-l">VWAP</span><span class="stat-v" id="sVwap" style="color:var(--orange)">—</span></div>
-  <div class="stat"><span class="stat-l">Candles</span><span class="stat-v" id="sCount">—</span></div>
-</div>
+<section class="markets" id="markets">
+  <!-- Backing canvas for orbiting/floating particle galaxy of coins -->
+  <div class="section-canvas-bg" id="marketsCanvasContainer"></div>
+  
+  <div class="section-container">
+    <div style="text-align:center;">
+      <div class="section-tag">📡 Interactive Market Nodes</div>
+      <h2 class="section-title">The Market Universe</h2>
+      <p class="section-desc">Interact with the core assets. Floating glassmorphic panels map instant volume and price fluctuations in real time.</p>
+    </div>
+
+    <!-- Markets Grid with CSS 3D Glassmorphism Cards -->
+    <div class="markets-grid" id="marketsGrid">
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
+    </div>
+  </div>
+</section>
 
 <!-- ═══════════════════════════════════════
-     MAIN WORKSPACE
+     HOLOGRAM CHART SECTION
      ═══════════════════════════════════════ -->
-<div class="workspace">
+<section class="hologram-chart-section" id="chart-hologram">
+  <div class="section-container">
+    <div class="chart-flex-container">
+      
+      <!-- Copy Details -->
+      <div class="chart-content">
+        <div class="section-tag">📈 WebGL Holographic Projection</div>
+        <h2 class="section-title text-left">Holographic Candlestick Projection</h2>
+        <p class="section-desc text-left">Step into raw data. Our custom WebGL holographic projection renders price feeds in real-time 3D perspective with neon buy and sell confluences.</p>
+        
+        <div class="chart-stats-list">
+          <div class="chart-stat-item">
+            <span class="cs-dot c-green"></span>
+            <div>
+              <h4>Realtime Order Imbalance</h4>
+              <p>Green bars indicate instant buy confluences and volume profile density.</p>
+            </div>
+          </div>
+          <div class="chart-stat-item">
+            <span class="cs-dot c-red"></span>
+            <div>
+              <h4>Neon Signal Confluence</h4>
+              <p>Buy and sell markers appear suspended on the chart based on the AI Brain analysis.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <!-- Left Drawing Toolbar -->
-  <div class="left-bar" id="leftBar">
-    <button class="lbar-btn on" data-tool="none"     title="Select / Pan">↖</button>
-    <button class="lbar-btn"   data-tool="crosshair" title="Crosshair">✛</button>
-    <div class="lbar-sep"></div>
-    <button class="lbar-btn"   data-tool="trendline" title="Trend Line">╱</button>
-    <button class="lbar-btn"   data-tool="hline"     title="Horizontal Line">—</button>
-    <button class="lbar-btn"   data-tool="vline"     title="Vertical Line">|</button>
-    <button class="lbar-btn"   data-tool="rect"      title="Rectangle">□</button>
-    <button class="lbar-btn"   data-tool="channel"   title="Parallel Channel">≡</button>
-    <div class="lbar-sep"></div>
-    <button class="lbar-btn"   data-tool="fib"       title="Fibonacci Retracement">∿</button>
-    <button class="lbar-btn"   data-tool="fibext"    title="Fibonacci Extension">∿+</button>
-    <div class="lbar-sep"></div>
-    <button class="lbar-btn"   id="btnClearDrawings" title="Clear All Drawings">🗑</button>
-  </div>
+      <!-- Holographic Chart Canvas Container -->
+      <div class="chart-visual-wrapper">
+        <div class="chart-canvas-container" id="hologramChartContainer"></div>
+        <div class="hologram-grid-floor"></div>
+      </div>
 
-  <!-- Chart Area -->
-  <div class="chart-area" id="chartArea">
-
-    <!-- Main Canvas -->
-    <div class="chart-wrap" id="mainWrap">
-      <canvas id="mainCanvas"></canvas>
-      <canvas class="vp-canvas" id="vpCanvas"></canvas>
-      <!-- OHLCV Tooltip -->
-      <div class="ohlc-tooltip" id="ohlcTooltip"></div>
-    </div>
-
-    <!-- Order Book Depth -->
-    <div class="depth-drawer" id="depthDrawer">
-      <div class="pane-label">Order Book — Cumulative Depth</div>
-      <canvas id="depthCanvas" style="width:100%;height:100%;display:block;"></canvas>
-    </div>
-
-    <!-- Volume Sub-Pane -->
-    <div class="pane" id="volPane">
-      <div class="pane-label" id="volLabel">Volume</div>
-      <div class="pane-body"><canvas id="volCanvas"></canvas></div>
-      <div class="pane-resize" data-pane="volPane"></div>
-    </div>
-
-    <!-- RSI Sub-Pane -->
-    <div class="pane" id="rsiPane">
-      <div class="pane-label" id="rsiLabel">RSI (14)</div>
-      <div class="pane-body"><canvas id="rsiCanvas"></canvas></div>
-      <div class="pane-resize" data-pane="rsiPane"></div>
-    </div>
-
-    <!-- MACD Sub-Pane -->
-    <div class="pane hidden" id="macdPane">
-      <div class="pane-label">MACD (12, 26, 9)</div>
-      <div class="pane-body"><canvas id="macdCanvas"></canvas></div>
-      <div class="pane-resize" data-pane="macdPane"></div>
-    </div>
-
-    <!-- Stochastic Sub-Pane -->
-    <div class="pane hidden" id="stochPane">
-      <div class="pane-label">Stochastic (14, 3, 3)</div>
-      <div class="pane-body"><canvas id="stochCanvas"></canvas></div>
-      <div class="pane-resize" data-pane="stochPane"></div>
-    </div>
-
-    <!-- OBV Sub-Pane -->
-    <div class="pane hidden" id="obvPane">
-      <div class="pane-label">On-Balance Volume</div>
-      <div class="pane-body"><canvas id="obvCanvas"></canvas></div>
-      <div class="pane-resize" data-pane="obvPane"></div>
-    </div>
-
-    <!-- Minimap -->
-    <div class="minimap" id="minimapPanel">
-      <canvas id="minimapCanvas" style="width:100%;height:100%;display:block;"></canvas>
     </div>
   </div>
-
-  <!-- Sidebar Backdrop (Mobile Overlay) -->
-  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
-  <!-- ═══ RIGHT SIDEBAR ═══ -->
-  <div class="sidebar" id="sidebar">
-
-    <!-- Tabs -->
-    <div class="sb-tabs">
-      <div class="sb-tab on"  data-page="tools">Tools</div>
-      <div class="sb-tab"     data-page="indicators">Settings</div>
-      <div class="sb-tab"     data-page="risk">Risk</div>
-      <div class="sb-tab"     data-page="intel">Intel</div>
-      <div class="sb-tab"     data-page="ai">AI</div>
-      <button class="sb-close-btn" id="btnSidebarClose" title="Close Sidebar">×</button>
-    </div>
-
-    <!-- TAB: Tools -->
-    <div class="sb-page on" id="page-tools">
-      <!-- Alerts -->
-      <div class="sb-section">
-        <div class="sb-title">🔔 Price Alerts</div>
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <input type="number" class="inp" id="alertPrice" placeholder="Price (USD)" step="1" style="flex:1;min-width:0;">
-          <button class="btn btn-primary btn-sm" id="btnAlertAdd">+ Add</button>
-        </div>
-        <div class="alert-list" id="alertList">
-          <div style="font-size:11px;color:var(--text-3)">No alerts set.</div>
-        </div>
-      </div>
-
-      <!-- Drawing Tools -->
-      <div class="sb-section">
-        <div class="sb-title">📐 Drawing Tools</div>
-        <div class="tool-palette" id="toolPalette">
-          <div class="tp-btn on" data-tool="none">↖ Select</div>
-          <div class="tp-btn" data-tool="trendline">╱ Trend Line</div>
-          <div class="tp-btn" data-tool="hline">— H-Line</div>
-          <div class="tp-btn" data-tool="vline">| V-Line</div>
-          <div class="tp-btn" data-tool="rect">□ Box</div>
-          <div class="tp-btn" data-tool="fib">∿ Fibonacci</div>
-          <div class="tp-btn" data-tool="channel">≡ Channel</div>
-          <div class="tp-btn" data-tool="fibext">∿+ Fib Ext</div>
-        </div>
-        <div id="drawInstr" style="font-size:10px;color:var(--text-3);line-height:1.5;margin-top:6px;">Click or drag on chart.</div>
-        <button class="btn btn-danger btn-sm" id="btnClearDrawingsSB" style="margin-top:8px;">🗑 Clear All Drawings</button>
-      </div>
-
-      <!-- Smart S/R Settings -->
-      <div class="sb-section">
-        <div class="sb-title">⚡ Smart S/R Settings</div>
-        <div class="form-row" style="margin-bottom:8px;">
-          <label>Enable Smart S/R</label>
-          <input type="checkbox" id="chkSR" style="cursor:pointer;">
-        </div>
-        <div class="form-row">
-          <label>S/R Timeframe</label>
-          <select class="inp-select inp" id="selSrTf">
-            <option value="5">5m</option>
-            <option value="15">15m</option>
-            <option value="60">1h</option>
-            <option value="240">4h</option>
-            <option value="1440" selected>1d</option>
-            <option value="10080">1w</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Market Structure -->
-      <div class="sb-section">
-        <div class="sb-title">🏗 Market Structure</div>
-        <div class="ms-toggle-grid">
-          <div class="ms-toggle on" data-ms="bos"><span class="ms-dot" style="background:var(--cyan)"></span>BOS</div>
-          <div class="ms-toggle on" data-ms="choch"><span class="ms-dot" style="background:var(--orange)"></span>CHoCH</div>
-          <div class="ms-toggle" data-ms="hh"><span class="ms-dot" style="background:var(--green)"></span>HH/HL</div>
-          <div class="ms-toggle" data-ms="ll"><span class="ms-dot" style="background:var(--red)"></span>LH/LL</div>
-          <div class="ms-toggle" data-ms="eqhl"><span class="ms-dot" style="background:var(--amber)"></span>Equal H/L</div>
-          <div class="ms-toggle" data-ms="sweeps"><span class="ms-dot" style="background:var(--purple)"></span>Sweeps</div>
-        </div>
-      </div>
-
-      <!-- Export -->
-      <div class="sb-section">
-        <button class="btn btn-ghost" id="btnExportCSV">📥 Export OHLCV CSV</button>
-        <div style="font-size:9px;color:var(--text-3);margin-top:10px;line-height:1.6;">
-          <b>Hotkeys:</b> 1–9=Timeframe · C=Chart type · O=Order book · T=Theme · Esc=Reset zoom · ?=Help
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: Indicators Settings -->
-    <div class="sb-page" id="page-indicators">
-      <div class="sb-section">
-        <div class="sb-title">📊 Moving Averages</div>
-        <div class="form-row"><label>EMA Fast Period</label><input type="number" class="inp inp-num" id="inpEmaFast" value="20" min="2"></div>
-        <div class="form-row"><label>EMA Slow Period</label><input type="number" class="inp inp-num" id="inpEmaSlow" value="50" min="2"></div>
-        <div class="form-row"><label>SMA Period</label><input type="number" class="inp inp-num" id="inpSmaPeriod" value="20" min="2"></div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">📉 Bollinger Bands</div>
-        <div class="form-row"><label>BB Period</label><input type="number" class="inp inp-num" id="inpBbPeriod" value="20" min="5"></div>
-        <div class="form-row"><label>BB Std Dev</label><input type="number" class="inp inp-num" id="inpBbStd" value="2" min="0.5" step="0.5"></div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">📈 Oscillators</div>
-        <div class="form-row"><label>RSI Period</label><input type="number" class="inp inp-num" id="inpRsiPeriod" value="14" min="2"></div>
-        <div class="form-row"><label>MACD Fast</label><input type="number" class="inp inp-num" id="inpMacdFast" value="12" min="2"></div>
-        <div class="form-row"><label>MACD Slow</label><input type="number" class="inp inp-num" id="inpMacdSlow" value="26" min="2"></div>
-        <div class="form-row"><label>MACD Signal</label><input type="number" class="inp inp-num" id="inpMacdSig" value="9" min="2"></div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">🕯 Candle Colors</div>
-        <div class="form-row"><label>Bull color</label><input type="color" id="inpBullColor" value="#26a69a" style="cursor:pointer;border:none;background:none;width:32px;height:24px;"></div>
-        <div class="form-row"><label>Bear color</label><input type="color" id="inpBearColor" value="#ef5350" style="cursor:pointer;border:none;background:none;width:32px;height:24px;"></div>
-      </div>
-    </div>
-
-    <!-- TAB: Risk Calculator -->
-    <div class="sb-page" id="page-risk">
-      <div class="sb-section">
-        <div class="sb-title">💰 Position Size Calculator</div>
-        <div class="form-row"><label>Account Size ($)</label><input type="number" class="inp inp-num" id="riskAccount" value="10000" min="1" step="100"></div>
-        <div class="form-row"><label>Risk per Trade (%)</label><input type="number" class="inp inp-num" id="riskPct" value="1" min="0.1" step="0.1" max="20"></div>
-        <div class="form-row"><label>Entry Price</label><input type="number" class="inp inp-num" id="riskEntry" placeholder="auto" step="1"></div>
-        <div class="form-row"><label>Stop Loss Price</label><input type="number" class="inp inp-num" id="riskStop" placeholder="required" step="1"></div>
-        <div class="form-row"><label>Take Profit</label><input type="number" class="inp inp-num" id="riskTP" placeholder="optional" step="1"></div>
-        <button class="btn btn-primary" id="btnCalcRisk" style="width:100%;margin-top:6px;">Calculate</button>
-      </div>
-      <div class="sb-section" id="riskResults" style="display:none;">
-        <div class="sb-title">📊 Risk Analysis</div>
-        <div class="risk-grid">
-          <div class="risk-card"><div class="risk-card-label">Position Size</div><div class="risk-card-val" id="rcSize">—</div></div>
-          <div class="risk-card"><div class="risk-card-label">$ at Risk</div><div class="risk-card-val bad" id="rcRisk">—</div></div>
-          <div class="risk-card"><div class="risk-card-label">Stop %</div><div class="risk-card-val" id="rcStopPct">—</div></div>
-          <div class="risk-card"><div class="risk-card-label">R:R Ratio</div><div class="risk-card-val good" id="rcRR">—</div></div>
-          <div class="risk-card"><div class="risk-card-label">Potential Gain</div><div class="risk-card-val good" id="rcGain">—</div></div>
-          <div class="risk-card"><div class="risk-card-label">Break-even %</div><div class="risk-card-val" id="rcBE">—</div></div>
-        </div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">📓 Trade Journal</div>
-        <div id="journalList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
-        <button class="btn btn-ghost" id="btnJournalExport">📤 Export Journal CSV</button>
-      </div>
-    </div>
-
-    <!-- TAB: Market Intel -->
-    <div class="sb-page" id="page-intel">
-      <!-- Fear & Greed -->
-      <div class="sb-section">
-        <div class="sb-title">🔥 Fear & Greed Index</div>
-        <div class="fng-wrap">
-          <canvas id="fngCanvas"></canvas>
-          <div class="fng-val" id="fngValue">—</div>
-          <div class="fng-lbl" id="fngLabel">—</div>
-        </div>
-      </div>
-      <!-- News -->
-      <div class="sb-section">
-        <div class="sb-title" style="display:flex;align-items:center;">
-          <span id="newsTitle">📰 News Impact</span>
-          <button class="btn btn-ghost btn-sm" id="btnNewsFilter" style="margin-left:auto;padding:2px 7px;font-size:9px;">All</button>
-        </div>
-        <div class="news-list" id="newsList">
-          <div style="font-size:11px;color:var(--text-3);">Loading headlines…</div>
-        </div>
-      </div>
-      <!-- Economic Events -->
-      <div class="sb-section">
-        <div class="sb-title" style="display:flex;align-items:center;">
-          <span>📅 Economic Events</span>
-          <button class="btn btn-ghost btn-sm" id="btnAddEvt" style="margin-left:auto;padding:2px 7px;font-size:9px;">+ Add</button>
-        </div>
-        <div id="addEvtForm" style="display:none;flex-direction:column;gap:5px;margin-bottom:8px;background:var(--bg-3);padding:8px;border-radius:var(--radius-sm);">
-          <input type="text" class="inp inp-full" id="evtTitle" placeholder="Event title…">
-          <input type="date" class="inp inp-full" id="evtDate">
-          <select class="inp-select inp inp-full" id="evtImpact">
-            <option value="high">🔥 High Impact</option>
-            <option value="med">⚡ Medium Impact</option>
-            <option value="low">⚙ Low Impact</option>
-          </select>
-          <button class="btn btn-primary btn-sm" id="btnSaveEvt" style="width:100%;">Save Event</button>
-        </div>
-        <div class="event-list" id="eventList"></div>
-      </div>
-    </div>
-
-    <!-- TAB: AI Assistant -->
-    <div class="sb-page" id="page-ai">
-      <div class="sb-section">
-        <div class="sb-title">⭐ AI Market Analyst</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <span style="font-size:11px;color:var(--text-2);">Current Bias:</span>
-          <span id="aiTrendBadge" class="ai-badge neutral">NEUTRAL</span>
-        </div>
-        <div id="aiReasonsList" style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px;"></div>
-        <div style="font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Directional Probability</div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);font-weight:600;margin-bottom:4px;">
-          <span style="color:var(--green);">LONG <span id="aiLongProb">50%</span></span>
-          <span style="color:var(--red);">SHORT <span id="aiShortProb">50%</span></span>
-        </div>
-        <div class="prob-bar">
-          <div class="prob-fill-l" id="aiLongBar" style="width:50%"></div>
-          <div class="prob-fill-s" id="aiShortBar" style="width:50%"></div>
-        </div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">🎯 Key Levels (Auto-Detected)</div>
-        <div id="aiLevelsList" style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-family:var(--mono);"></div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-title">📋 Trade Idea</div>
-        <div id="aiTradeIdea" style="font-size:11px;color:var(--text-2);line-height:1.6;"></div>
-      </div>
-    </div>
-  </div><!-- /sidebar -->
-
-</div><!-- /workspace -->
+</section>
 
 <!-- ═══════════════════════════════════════
-     CONTEXT MENU
+     3D STATISTICS TOWERS (SCROLL GROW)
      ═══════════════════════════════════════ -->
-<div class="ctx-menu" id="ctxMenu">
-  <div class="ctx-item" id="ctxAlert">🔔 Alert at <span id="ctxPrice">$0</span></div>
-  <div class="ctx-item" id="ctxCopy">📋 Copy Price</div>
-  <div class="ctx-item" id="ctxReset">🔄 Reset View</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-header">Quick Timeframe</div>
-  <div class="ctx-grid">
-    <div class="ctx-tf" data-tf="1">1m</div>
-    <div class="ctx-tf" data-tf="5">5m</div>
-    <div class="ctx-tf" data-tf="15">15m</div>
-    <div class="ctx-tf" data-tf="60">1h</div>
-    <div class="ctx-tf" data-tf="240">4h</div>
-    <div class="ctx-tf" data-tf="1440">1d</div>
-  </div>
-</div>
+<section class="metrics" id="metrics">
+  <div class="towers-3d-bg" id="dataTowersContainer"></div>
+  
+  <div class="section-container">
+    <div class="metrics-grid">
+      
+      <div class="metric-item reveal-on-scroll" data-tower-index="0">
+        <div class="metric-num-wrap">
+          <span class="metric-num" data-target="100" data-suffix="K">0</span>
+          <span class="text-gold">+</span>
+        </div>
+        <div class="metric-label">Signals Monthly</div>
+        <div class="metric-sub">Generated by AI Confluence Engine</div>
+      </div>
+      
+      <div class="metric-item reveal-on-scroll delay-1" data-tower-index="1">
+        <div class="metric-num-wrap">
+          <span class="metric-num" data-target="99.99" data-suffix="%">0</span>
+        </div>
+        <div class="metric-label">Platform Uptime</div>
+        <div class="metric-sub">Guaranteed by decentralized nodes</div>
+      </div>
+      
+      <div class="metric-item reveal-on-scroll delay-2" data-tower-index="2">
+        <div class="metric-num-wrap">
+          <span class="metric-num" data-target="50" data-suffix="ms">0</span>
+        </div>
+        <div class="metric-label">Execution Speed</div>
+        <div class="metric-sub">Average transaction round-trip</div>
+      </div>
+      
+      <div class="metric-item reveal-on-scroll delay-3" data-tower-index="3">
+        <div class="metric-num-wrap">
+          <span class="metric-num" data-target="12" data-suffix="B">0</span>
+          <span class="text-cyan">+$</span>
+        </div>
+        <div class="metric-label">Total Volume</div>
+        <div class="metric-sub">Aggregated monthly transactions</div>
+      </div>
 
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     AI TRADING BRAIN (NEURAL SPHERE)
+     ═══════════════════════════════════════ -->
+<section class="brain-section" id="brain">
+  <div class="section-container">
+    <div class="brain-grid">
+      
+      <!-- Neural canvas container -->
+      <div class="brain-visual-wrapper">
+        <div class="brain-canvas-container" id="aiBrainContainer"></div>
+        
+        <!-- Interactive Floating Labels around sphere -->
+        <div class="brain-labels-overlay">
+          <div class="brain-label bl-1" data-angle="0">Signal Detection</div>
+          <div class="brain-label bl-2" data-angle="90">Risk Analysis</div>
+          <div class="brain-label bl-3" data-angle="180">Pattern Recognition</div>
+          <div class="brain-label bl-4" data-angle="270">Market Forecasting</div>
+        </div>
+      </div>
+
+      <!-- Copy details -->
+      <div class="brain-content">
+        <div class="section-tag">🧠 Deep Learning Node</div>
+        <h2 class="section-title text-left">Neural AI Trading Core</h2>
+        <p class="section-desc text-left">Our autonomous neural sphere monitors 12+ exchanges simultaneously. By cross-referencing order book imbalance, funding rates, and historical confluences, the Brain predicts micro-trends in milliseconds.</p>
+        
+        <div class="brain-metrics-row">
+          <div class="bm-item">
+            <span class="bm-num">4.0TB</span>
+            <span class="bm-lbl">Processed Daily</span>
+          </div>
+          <div class="bm-item">
+            <span class="bm-num">24,000/s</span>
+            <span class="bm-lbl">Calculated Confluences</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     INTERACTIVE CRYPTO GALAXY (PLANETS)
+     ═══════════════════════════════════════ -->
+<section class="galaxy-section" id="galaxy">
+  <!-- Interactive solar system canvas backing -->
+  <div class="galaxy-canvas-container" id="cryptoGalaxyContainer"></div>
+
+  <div class="section-container">
+    <div class="galaxy-grid">
+      
+      <!-- Left side: Galaxy interface & live values -->
+      <div class="galaxy-content">
+        <div class="section-tag">🌌 Spatial Coin Galaxy</div>
+        <h2 class="section-title text-left">Interact with the Orbiting Nodes</h2>
+        <p class="section-desc text-left">Hover or click on the planets in the 3D crypto galaxy. Each celestial sphere represents a core asset, emitting energy flares relative to its volume and momentum.</p>
+        
+        <!-- Details widget mapped to galaxy planet clicks -->
+        <div class="galaxy-info-card glass-gold" id="galaxyInfoCard">
+          <div class="gic-header">
+            <div class="gic-badge" id="gicIcon">₿</div>
+            <div>
+              <h3 id="gicName">Bitcoin</h3>
+              <span id="gicSymbol">BTC/USDT</span>
+            </div>
+          </div>
+          <div class="gic-divider"></div>
+          <div class="gic-body">
+            <div class="gic-metric"><span class="gic-lbl">Planet core:</span> <span class="gic-val text-gold" id="gicCore">Golden Core</span></div>
+            <div class="gic-metric"><span class="gic-lbl">24h Vol:</span> <span class="gic-val" id="gicVol">$48.2B</span></div>
+            <div class="gic-metric"><span class="gic-lbl">Dominance:</span> <span class="gic-val" id="gicDom">54.8%</span></div>
+            <div class="gic-metric"><span class="gic-lbl">Plasma Status:</span> <span class="gic-val text-emerald" id="gicStatus">Highly Active</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right side: empty spacer pushing spatial scene to center-right -->
+      <div class="galaxy-spacer"></div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     3D WORKFLOW SECTION (CONNECTED NODE STATIONS)
+     ═══════════════════════════════════════ -->
+<section class="workflow-section" id="howitworks">
+  <div class="section-container">
+    <div style="text-align:center;">
+      <div class="section-tag">🔄 3D Execution Pipeline</div>
+      <h2 class="section-title">Algorithmic Confluence Path</h2>
+      <p class="section-desc">Our multi-stage spatial pipeline connects market events directly to execution via energy laser beams.</p>
+    </div>
+
+    <!-- Stations visual canvas container -->
+    <div class="workflow-canvas-container" id="workflow3dContainer"></div>
+
+    <!-- Floating details cards below canvas -->
+    <div class="workflow-steps-cards">
+      <div class="wf-card glass" data-station="0">
+        <span class="wf-num">01</span>
+        <h3>Analyze Market</h3>
+        <p>Aggregate WebSocket order books and order flow imbalances.</p>
+      </div>
+      <div class="wf-card glass" data-station="1">
+        <span class="wf-num">02</span>
+        <h3>Generate Signals</h3>
+        <p>Neural sphere detects key confluence thresholds.</p>
+      </div>
+      <div class="wf-card glass" data-station="2">
+        <span class="wf-num">03</span>
+        <h3>Backtest Strategy</h3>
+        <p>Run instant historical checks across 50,000 candles.</p>
+      </div>
+      <div class="wf-card glass" data-station="3">
+        <span class="wf-num">04</span>
+        <h3>Execute Trade</h3>
+        <p>Route orders to 12 exchanges in under 50ms.</p>
+      </div>
+      <div class="wf-card glass" data-station="4">
+        <span class="wf-num">05</span>
+        <h3>Track Performance</h3>
+        <p>Visualize visual portfolio assets in real-time space.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     TESTIMONIALS (3D PERSPECTIVE CARDS)
+     ═══════════════════════════════════════ -->
+<section class="testimonials" id="testimonials">
+  <div class="section-container">
+    <div style="text-align:center;">
+      <div class="section-tag">💬 Social Proof</div>
+      <h2 class="section-title">Trusted by Institutional Quants</h2>
+      <p class="section-desc">Join 500,000+ retail and institutional desks trading at the peak of precision.</p>
+    </div>
+
+    <div class="testimonials-grid-3d">
+      
+      <div class="testimonial-card-3d glass">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"The WebGL engine speed is staggering. Rendering 10k candles, multiple indicators, and volume profiles runs at a native 60 FPS. Essential for active execution."</p>
+        <div class="t-author">
+          <div class="t-avatar">PT</div>
+          <div class="t-author-info">
+            <h5>Peter Thiel</h5>
+            <span>Quant Desk Swing Trader</span>
+            <div class="t-profit">↑ +142% this quarter</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card-3d glass">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"Real-time volume profiles combined with the AI confluence brain is a complete game changer. Spotting liquidity pools and order sweeps is instant."</p>
+        <div class="t-author">
+          <div class="t-avatar">CI</div>
+          <div class="t-author-info">
+            <h5>Catherine Ivy</h5>
+            <span>Private Fund Manager</span>
+            <div class="t-profit">↑ +89% YTD</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card-3d glass">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"Having bank-grade encryption pipelines alongside high-polygon risk overlays gives our desk absolute peace of mind. Outstanding work."</p>
+        <div class="t-author">
+          <div class="t-avatar">QA</div>
+          <div class="t-author-info">
+            <h5>Quant desk</h5>
+            <span>Systematic Lead Developer</span>
+            <div class="t-profit">↑ +243% 3-Year CAGR</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     PRICING (PREMIUM BOXES)
+     ═══════════════════════════════════════ -->
+<section class="pricing" id="pricing">
+  <div class="section-container">
+    <div style="text-align:center;">
+      <div class="section-tag">💎 Institutional Tiers</div>
+      <h2 class="section-title">Uncompromising Tiers</h2>
+      <p class="section-desc">Unlock advanced spatial analytics at a tier that matches your desks' velocity.</p>
+    </div>
+
+    <div class="billing-toggle-wrap">
+      <button class="billing-btn active" id="btnMonthly">Monthly</button>
+      <div class="billing-toggle-slider" id="billingSlider">
+        <span class="slider-knob"></span>
+      </div>
+      <button class="billing-btn" id="btnYearly">Yearly <span class="save-badge">Save 20%</span></button>
+    </div>
+
+    <div class="pricing-grid">
+      
+      <div class="price-card glass">
+        <div class="pc-glare"></div>
+        <h4>Starter</h4>
+        <div class="price">$<span class="price-amount" data-monthly="29" data-yearly="23">29</span></div>
+        <div class="price-period">/month</div>
+        <div class="price-desc">Perfect for active retail traders.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Real-time candlestick charts</li>
+          <li>20 technical indicators</li>
+          <li>Smart S/R level mapping</li>
+          <li>Price alerts &amp; notifications</li>
+          <li>1 active watchlist</li>
+          <li class="locked">AI confluence matrix</li>
+          <li class="locked">Order flow analysis</li>
+        </ul>
+        <a href="/charts" class="btn btn-glass btn-full">Get Started</a>
+      </div>
+
+      <div class="price-card glass popular">
+        <div class="pc-glare"></div>
+        <div class="pop-badge">Most Popular</div>
+        <h4>Pro</h4>
+        <div class="price">$<span class="price-amount" data-monthly="79" data-yearly="63">79</span></div>
+        <div class="price-period">/month</div>
+        <div class="price-desc">For professional swing &amp; scalp traders.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Everything in Starter</li>
+          <li>AI confluence matrix</li>
+          <li>Real-time order flow &amp; depth</li>
+          <li>Smart Money FVG &amp; OBs</li>
+          <li>CSV trading journal export</li>
+          <li>80+ indicators &amp; overlays</li>
+          <li>Backtesting engine</li>
+        </ul>
+        <a href="/charts" class="btn btn-gold btn-full">Launch Pro Terminal</a>
+      </div>
+
+      <div class="price-card glass">
+        <div class="pc-glare"></div>
+        <h4>Enterprise</h4>
+        <div class="price">$<span class="price-amount" data-monthly="199" data-yearly="159">199</span></div>
+        <div class="price-period">/month</div>
+        <div class="price-desc">For hedge funds &amp; institutional desks.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Everything in Pro</li>
+          <li>Full API webhook endpoints</li>
+          <li>Unlimited parallel timeframes</li>
+          <li>Priority server mirrors</li>
+          <li>Dedicated account manager</li>
+          <li>Custom indicator scripting</li>
+          <li>White-label options</li>
+        </ul>
+        <a href="#" id="enterpriseCta" class="btn btn-glass btn-full">Contact Sales</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FINAL CTA
+     ═══════════════════════════════════════ -->
+<section class="cta-final">
+  <canvas id="ctaParticles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+  <div class="cta-final-content">
+    <div class="section-tag" style="margin:0 auto 28px;">🚀 Take Control</div>
+    <h2>Deploy Your Strategies<br><span class="text-gold">Into the Future</span></h2>
+    <p>Join over 500,000 traders operating with absolute mechanical confluences. Live setup takes under 3 minutes.</p>
+    
+    <div class="cta-btns">
+      <a href="/charts" class="btn btn-gold btn-lg">
+        <span>🚀</span> Start Trading Now
+      </a>
+      <a href="#markets" class="btn btn-glass btn-lg">
+        <span>🌌</span> View Universe
+      </a>
+    </div>
+    
+    <div class="cta-trust">
+      <div class="trust-item">No credit card required</div>
+      <div class="trust-item">Free 14-day trial</div>
+      <div class="trust-item">Cancel anytime</div>
+      <div class="trust-item">Bank-grade security</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FOOTER COMMAND CENTER
+     ═══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo">
+        <div class="logo-mark">A</div>
+        <span>ApexTrader Pro</span>
+      </div>
+      <p>Institutional charting, spatial data nodes, and neural signals designed to deliver absolute edge in volatile markets.</p>
+      <div class="footer-social">
+        <a href="#" title="Twitter">𝕏</a>
+        <a href="#" title="Discord">💬</a>
+        <a href="#" title="Telegram">✈️</a>
+        <a href="#" title="GitHub">⌥</a>
+      </div>
+    </div>
+    
+    <div class="footer-links">
+      <h5>Platform</h5>
+      <a href="#markets">Universe</a>
+      <a href="#chart-hologram">HoloChart</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/charts">Launch Terminal</a>
+    </div>
+    
+    <div class="footer-links">
+      <h5>Resources</h5>
+      <a href="#">Documentation</a>
+      <a href="#">API Mirror</a>
+      <a href="#">Trading Guides</a>
+      <a href="#">Node Status</a>
+    </div>
+    
+    <div class="footer-links">
+      <h5>Company</h5>
+      <a href="#">About Core</a>
+      <a href="#">Careers</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">SLA Agreement</a>
+    </div>
+  </div>
+
+  <!-- Futuristic Footer Command Center Ticker Bar -->
+  <div class="footer-command-bar">
+    <div class="fcc-item"><span class="fcc-lbl">System Status:</span> <span class="fcc-val text-emerald">● Optimal</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">Trading Nodes:</span> <span class="fcc-val">12/12 Online</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">Network Ping:</span> <span class="fcc-val text-cyan">14ms</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">API Mirror Load:</span> <span class="fcc-val">4.2%</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">Uptime SLA:</span> <span class="fcc-val text-emerald">99.998%</span></div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© 2026 ApexTrader Pro. Digital assets trading involves high risks. Not financial advice.</span>
+    <span>SLA mirror coverage global · SEC compliant authentication</span>
+  </div>
+</footer>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+<script src="three-scenes.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

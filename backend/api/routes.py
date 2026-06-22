@@ -6,7 +6,12 @@ import os
 import time
 import gzip
 import threading
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
+
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 import backend.services as services
 from backend.services.market_data import SUPPORTED_SYMBOLS, ALLOWED_INTERVALS, LIVE_INTERVALS
@@ -19,7 +24,7 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 # CSP Definition
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline'; "
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "connect-src 'self' wss://stream.binance.com:9443 https://api.alternative.me; "
@@ -111,6 +116,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
         self.wfile.write(payload)
 
+    def _send_json_with_cookie(self, data: bytes, cookie_header: str, status: int = 200) -> None:
+        ae = self.headers.get("Accept-Encoding", "")
+        payload, gz = maybe_gzip(data, ae)
+        extra = [("Set-Cookie", cookie_header)]
+        if gz:
+            extra.append(("Content-Encoding", "gzip"))
+        self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
+        self.wfile.write(payload)
+
+    def _read_json_body(self) -> Dict[str, Any] | None:
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length == 0:
+                return {}
+            body = self.rfile.read(content_length)
+            return json.loads(body)
+        except Exception:
+            return None
+
+
+
     def _error(self, msg: str, status: int = 502) -> None:
         body = json.dumps({"error": msg, "status": "error"}).encode()
         self._send_json(body, status)
@@ -134,6 +160,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         clean_path = rel_path.lstrip("/")
         if not clean_path or clean_path in ["", "index.html"]:
             clean_path = "index.html"
+
+        # Clean URL mapping for /charts
+        if clean_path in ["charts", "charts/"]:
+            clean_path = "charts.html"
 
         target_file = os.path.abspath(os.path.join(FRONTEND_DIR, clean_path))
         
@@ -194,6 +224,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 "/api/feargreed": lambda: self._feargreed(),
                 "/api/news":      lambda: self._news(),
                 "/api/health":    lambda: self._health(),
+                "/api/ai/analysis": lambda: self._ai_analysis(params),
+                "/api/auth/session": lambda: self._auth_session(),
+                "/api/auth/config": lambda: self._auth_config(),
             }
             fn = ROUTES.get(path)
             if fn:
@@ -203,6 +236,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         else:
             # Fall back to static file routing
             self._serve_static(path)
+
+    # ── POST Router ──
+    def do_POST(self) -> None:  # noqa: N802
+        ip = self.client_address[0]
+        if is_rate_limited(ip):
+            body = json.dumps({"error": "Rate limit exceeded"}).encode()
+            self._base_headers(429, "application/json", len(body), [("Retry-After", "60")])
+            self.wfile.write(body)
+            return
+
+        self._not_found()
 
     # ── Service Endpoints ──
     def _candles(self, params: Dict[str, str]) -> None:
@@ -256,4 +300,30 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _health(self) -> None:
         stats = telemetry.get_health_stats()
         body = json.dumps(stats).encode()
+        self._send_json(body, 200)
+
+    def _ai_analysis(self, params: Dict[str, str]) -> None:
+        symbol   = validated_symbol(params)
+        interval = validated_interval(params)
+        try:
+            from backend.ai.copilot import AICopilot
+            copilot = AICopilot()
+            analysis_dict = copilot.analyze_market_structure(symbol, interval)
+            self._send_json(json.dumps(analysis_dict).encode())
+        except Exception as e:
+            print(f"  [ai_analysis] {e}")
+            self._error(str(e))
+
+    # ── Authentication Endpoints ──
+    def _auth_session(self) -> None:
+        user = {"id": "guest", "email": "guest@apextrader.pro"}
+        body = json.dumps({"status": "success", "user": user}).encode()
+        self._send_json(body, 200)
+
+    def _auth_config(self) -> None:
+        body = json.dumps({
+            "supabaseEnabled": False,
+            "supabaseUrl": "",
+            "supabaseKey": ""
+        }).encode()
         self._send_json(body, 200)

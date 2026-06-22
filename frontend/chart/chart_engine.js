@@ -229,44 +229,65 @@ export function drawMainChart() {
   if (S.overlays.smartSR && S.srLevels) {
     const srTfLbl = TF_MAP[S.srTf] || '1d';
     const re = W - PAD.r;
-    ctx.font = '8px monospace';
-    (S.srLevels.demand || []).forEach(z => {
+    
+    // Draw Support Zones (Demand)
+    (S.srLevels.support || []).forEach(z => {
       const x1 = timestampToX(z.t_start, S, W);
-      if (x1 === null || x1 >= re) return;
-      const xv = Math.max(PAD.l, x1);
+      const xv = (x1 !== null) ? Math.max(PAD.l, x1) : PAD.l;
+      if (xv >= re) return;
+      
+      const y = toY(z.price);
       const y1 = toY(z.high), y2 = toY(z.low);
+      const h = Math.abs(y2 - y1);
+      
+      // Rectangular demand zone fill
       ctx.fillStyle = 'rgba(0,255,136,0.04)';
-      ctx.fillRect(xv, Math.min(y1,y2), re-xv, Math.abs(y2-y1));
+      ctx.fillRect(xv, Math.min(y1, y2), re - xv, h);
+      
+      // Border outline
       ctx.strokeStyle = 'rgba(0,255,136,0.15)'; ctx.lineWidth = 0.5;
-      ctx.strokeRect(xv, Math.min(y1,y2), re-xv, Math.abs(y2-y1));
+      ctx.strokeRect(xv, Math.min(y1, y2), re - xv, h);
+      
+      // Center line
+      ctx.strokeStyle = 'rgba(0,255,136,0.3)'; ctx.lineWidth = 0.8;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(re, y); ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Right-aligned institutional labels
+      ctx.fillStyle = 'rgba(0,255,136,0.85)'; ctx.textAlign = 'right';
+      ctx.font = '9px monospace';
+      ctx.fillText(`${z.label} - Score: ${z.score.toFixed(1)}/10`, re - 3, y - 2);
     });
-    (S.srLevels.supply || []).forEach(z => {
+
+    // Draw Resistance Zones (Supply)
+    (S.srLevels.resistance || []).forEach(z => {
       const x1 = timestampToX(z.t_start, S, W);
-      if (x1 === null || x1 >= re) return;
-      const xv = Math.max(PAD.l, x1);
+      const xv = (x1 !== null) ? Math.max(PAD.l, x1) : PAD.l;
+      if (xv >= re) return;
+      
+      const y = toY(z.price);
       const y1 = toY(z.high), y2 = toY(z.low);
+      const h = Math.abs(y2 - y1);
+      
+      // Rectangular supply zone fill
       ctx.fillStyle = 'rgba(255,51,102,0.04)';
-      ctx.fillRect(xv, Math.min(y1,y2), re-xv, Math.abs(y2-y1));
+      ctx.fillRect(xv, Math.min(y1, y2), re - xv, h);
+      
+      // Border outline
       ctx.strokeStyle = 'rgba(255,51,102,0.15)'; ctx.lineWidth = 0.5;
-      ctx.strokeRect(xv, Math.min(y1,y2), re-xv, Math.abs(y2-y1));
-    });
-    (S.srLevels.support || []).slice(-6).forEach(sl => {
-      const y = toY(sl.price);
-      ctx.strokeStyle='rgba(0,255,136,0.4)'; ctx.lineWidth=0.8;
-      ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(re,y); ctx.stroke();
+      ctx.strokeRect(xv, Math.min(y1, y2), re - xv, h);
+      
+      // Center line
+      ctx.strokeStyle = 'rgba(255,51,102,0.3)'; ctx.lineWidth = 0.8;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(re, y); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle='rgba(0,255,136,0.7)'; ctx.textAlign='right';
-      ctx.fillText(`S(${srTfLbl})`, re-3, y-2);
-    });
-    (S.srLevels.resistance || []).slice(-6).forEach(sh => {
-      const y = toY(sh.price);
-      ctx.strokeStyle='rgba(255,51,102,0.4)'; ctx.lineWidth=0.8;
-      ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(re,y); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle='rgba(255,51,102,0.7)'; ctx.textAlign='right';
-      ctx.fillText(`R(${srTfLbl})`, re-3, y-2);
+      
+      // Right-aligned institutional labels
+      ctx.fillStyle = 'rgba(255,51,102,0.85)'; ctx.textAlign = 'right';
+      ctx.font = '9px monospace';
+      ctx.fillText(`${z.label} - Score: ${z.score.toFixed(1)}/10`, re - 3, y - 2);
     });
   }
 

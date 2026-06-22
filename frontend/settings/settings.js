@@ -144,7 +144,7 @@ export function renderNews() {
   const coinLC = info.sym.toLowerCase();
   const rx = new RegExp(`\\b${coinLC}\\b|${info.name.toLowerCase()}|btc|crypto|fed|sec|etf|inflation|fomc|regulation`, 'i');
   let articles = S.newsArticles.filter(a => rx.test(a.title + ' ' + (a.body||'')));
-  if (_highImpactOnly) articles = articles.filter(a => getSentiment(a.title,a.body||'') !== 'neutral');
+  if (_highImpactOnly) articles = articles.filter(a => (a.sentiment || getSentiment(a.title, a.body||'')) !== 'neutral');
   const list = articles.slice(0, 10);
   if (!list.length) {
     D.newsList.innerHTML = `<div style="font-size:11px;color:var(--text-3);text-align:center;padding:8px;">No relevant news.</div>`;
@@ -152,7 +152,7 @@ export function renderNews() {
   }
   D.newsTitle.textContent = `📰 ${info.sym} News`;
   list.forEach(a => {
-    const s = getSentiment(a.title, a.body||'');
+    const s = a.sentiment || getSentiment(a.title, a.body||'');
     const t = new Date(a.published_on * 1000).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
     const el = document.createElement('div');
     el.className = `news-item ${s}`;

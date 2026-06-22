@@ -129,6 +129,7 @@ export const D = {
   // AI
   aiTrendBadge:document.getElementById('aiTrendBadge'),
   aiReasonsList:document.getElementById('aiReasonsList'),
+  aiTfMatrix:  document.getElementById('aiTfMatrix'),
   aiLongProb:  document.getElementById('aiLongProb'),
   aiShortProb: document.getElementById('aiShortProb'),
   aiLongBar:   document.getElementById('aiLongBar'),

@@ -1,4 +1,4 @@
-import { S, COINS } from '../settings/state.js';
+import { S, COINS, TF_MAP } from '../settings/state.js';
 import { D } from '../settings/dom.js';
 import { getEMA, getRSI, getMACD, getBB, getATR, getCloses } from '../indicators/indicators.js';
 
@@ -15,7 +15,88 @@ function fmtUSD(p) {
   return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
-export function updateAI() {
+export async function updateAI() {
+  const sym = S.coin;
+  const tf = TF_MAP[S.tf] || '1h';
+
+  try {
+    const r = await fetch(`/api/ai/analysis?symbol=${sym}&interval=${tf}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+
+    // Prevent race conditions
+    if (S.coin !== sym) return;
+
+    // 1. Update Trend Badge
+    const biasLower = data.bias.toLowerCase();
+    const tClass = biasLower.includes('strong bullish') || biasLower === 'bullish'
+      ? 'bullish'
+      : biasLower.includes('strong bearish') || biasLower === 'bearish'
+      ? 'bearish'
+      : 'neutral';
+    
+    D.aiTrendBadge.textContent = data.bias;
+    D.aiTrendBadge.className = `ai-badge ${tClass}`;
+
+    // 2. Render Confluences
+    D.aiReasonsList.innerHTML = (data.confluences || []).map(rc => {
+      const icon = rc.type === 'bullish' ? '✓' : rc.type === 'bearish' ? '✗' : '●';
+      const cName = rc.type === 'bullish' ? 'ok' : rc.type === 'bearish' ? 'ko' : 'neutral';
+      return `
+        <div class="ai-reason ${cName}">
+          <span>${icon}</span>
+          <span>${rc.txt}</span>
+        </div>`;
+    }).join('');
+
+    // 2.5 Render Confluence Matrix
+    if (data.matrix && D.aiTfMatrix) {
+      const tfs = ["5m", "15m", "1h", "4h", "1d"];
+      D.aiTfMatrix.innerHTML = tfs.map(tf => {
+        const m = data.matrix[tf] || { bias: "NEUTRAL" };
+        const biasLower = m.bias.toLowerCase();
+        const isBull = biasLower.includes("bullish");
+        const isBear = biasLower.includes("bearish");
+        const mClass = isBull ? "bullish" : isBear ? "bearish" : "neutral";
+        const shortBias = isBull ? "BULL" : isBear ? "BEAR" : "NEUT";
+        return `
+          <div class="tf-matrix-item ${mClass}">
+            <div style="font-size:9px;color:var(--text-3);margin-bottom:2px;">${tf}</div>
+            <div style="font-size:10px;font-weight:700;">${shortBias}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // 3. Probabilities
+    D.aiLongProb.textContent = `${data.longProb}%`;
+    D.aiShortProb.textContent = `${data.shortProb}%`;
+    D.aiLongBar.style.width = `${data.longProb}%`;
+    D.aiShortBar.style.width = `${data.shortProb}%`;
+
+    // 4. Support/Resistance Levels
+    const levels = data.levels || { support: [], resistance: [] };
+    const price = S.candles.length ? S.candles[S.candles.length - 1].c : 0;
+    D.aiLevelsList.innerHTML =
+      (levels.resistance || []).slice(-3).reverse().map(r => `<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/10)</span></div>`).join('') +
+      `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;font-size:10px;">📌 Current: ${price > 0 ? fmtUSD(price) : '—'}</div>` +
+      (levels.support || []).slice(-3).reverse().map(s => `<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/10)</span></div>`).join('');
+
+    // 5. Rich Recommendations Formatting
+    let formattedHtml = data.analysis || '';
+    formattedHtml = formattedHtml
+      .replace(/### \*\*(.*?)\*\*/g, '<h4 style="margin:10px 0 4px 0;color:var(--text);font-size:11px;font-weight:600">$1</h4>')
+      .replace(/\*\*(BIAS: [A-Z\s\/]+)\*\*/g, '<div style="margin:6px 0;padding:5px 8px;border-radius:4px;background:rgba(0,0,0,0.25);border-left:3px solid var(--border);"><strong style="color:var(--text)">$1</strong></div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text)">$1</strong>');
+
+    D.aiTradeIdea.innerHTML = formattedHtml;
+
+  } catch (e) {
+    console.warn('[AI Client] Backend analysis failed, loading fallback client calculation:', e);
+    runFallbackAI();
+  }
+}
+
+function runFallbackAI() {
   const n = S.candles.length;
   if (n < 50) return;
   const closes  = getCloses();
@@ -36,7 +117,6 @@ export function updateAI() {
   let score = 0;
   const reasons = [];
 
-  // 1. Price vs EMA structure
   if (efv && esv) {
     const aboveFast = price > efv, aboveSlow = price > esv, fastAboveSlow = efv > esv;
     if (aboveFast && aboveSlow && fastAboveSlow) {
@@ -49,33 +129,28 @@ export function updateAI() {
       reasons.push({ ok:null,  txt:`Mixed EMA structure (choppy range)` });
     }
   }
-  // 2. RSI momentum
   if (rv) {
     if (rv > 70)      { score -= 1; reasons.push({ ok:false, txt:`RSI ${rv.toFixed(1)} — Overbought, elevated reversal risk` }); }
     else if (rv < 30) { score += 2; reasons.push({ ok:true,  txt:`RSI ${rv.toFixed(1)} — Oversold, watch for bounce` }); }
     else if (rv > 50) { score += 1; reasons.push({ ok:true,  txt:`RSI ${rv.toFixed(1)} — Bullish momentum zone` }); }
     else              { score -= 1; reasons.push({ ok:false, txt:`RSI ${rv.toFixed(1)} — Bearish momentum zone` }); }
   }
-  // 3. MACD histogram
   if (mhv !== undefined && !isNaN(mhv)) {
     const bull = mhv > 0;
     score += bull ? 2 : -2;
     reasons.push({ ok:bull, txt:`MACD histogram ${bull?'positive':'negative'} (${mhv.toFixed(4)})` });
   }
-  // 4. BB position
   if (bbMv && bbUv && bbLv) {
     if (price > bbUv)      { score -= 1; reasons.push({ ok:false, txt:`Price above upper BB — extended, potential mean-reversion` }); }
     else if (price < bbLv) { score += 1; reasons.push({ ok:true,  txt:`Price below lower BB — compressed, watch for reversal` }); }
     else if (price > bbMv) { score += 1; reasons.push({ ok:true,  txt:`Price above BB midline — upper half bias` }); }
     else                   { score -= 1; reasons.push({ ok:false, txt:`Price below BB midline — lower half bias` }); }
   }
-  // 5. ATR-based volatility
   if (atrV) {
     const atrPct = (atrV / price) * 100;
     reasons.push({ ok:null, txt:`ATR: ${fmtUSD(atrV)} (${atrPct.toFixed(2)}% of price) — ${atrPct>3?'high':'normal'} volatility` });
   }
 
-  // Determine bias
   let trend = 'NEUTRAL', tClass = 'neutral';
   if (score >= 3)       { trend = 'BULLISH';       tClass = 'bullish'; }
   else if (score >= 1)  { trend = 'MILD BULLISH';  tClass = 'bullish'; }
@@ -98,16 +173,15 @@ export function updateAI() {
   D.aiLongBar.style.width    = `${longPct}%`;
   D.aiShortBar.style.width   = `${shrtPct}%`;
 
-  // Auto-detected key levels
   if (S.srLevels.support?.length || S.srLevels.resistance?.length) {
     const sup  = (S.srLevels.support  ||[]).slice(-3).reverse();
     const res  = (S.srLevels.resistance||[]).slice(-3).reverse();
     D.aiLevelsList.innerHTML =
-      res.map(r=>`<div style="color:var(--red)">⬆ R: ${fmtUSD(r.price)}</div>`).join('') +
-      `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;">📌 Current: ${fmtUSD(price)}</div>` +
-      sup.map(s=>`<div style="color:var(--green)">⬇ S: ${fmtUSD(s.price)}</div>`).join('');
+      res.map(r=>`<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/10)</span></div>`).join('') +
+      `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;font-size:10px;">📌 Current: ${fmtUSD(price)}</div>` +
+      sup.map(s=>`<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/10)</span></div>`).join('');
   }
-  // Trade idea
+
   const idea = score >= 3
     ? `<b style="color:var(--green)">LONG BIAS:</b> Trend, momentum, and structure all align bullishly. Consider entries on pullbacks to EMA${getInpVal(D.inpEmaFast,20)} or BB midline with stop below EMA${getInpVal(D.inpEmaSlow,50)}.`
     : score <= -3
