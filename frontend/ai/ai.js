@@ -1,6 +1,7 @@
 import { S, COINS, TF_MAP } from '../settings/state.js';
 import { D } from '../settings/dom.js';
 import { getEMA, getRSI, getMACD, getBB, getATR, getCloses } from '../indicators/indicators.js';
+import { setAiSnapshot } from '../paper/engine.js';
 
 function getInpVal(el, def) {
   const v = parseFloat(el.value);
@@ -26,6 +27,21 @@ export async function updateAI() {
 
     // Prevent race conditions
     if (S.coin !== sym) return;
+
+    setAiSnapshot(data);
+
+    if (data.executionSteps?.length) {
+      const slStep = data.executionSteps.find(s => (s.label || '').toLowerCase().includes('stop loss'));
+      const tpStep = data.executionSteps.find(s => (s.label || '').toLowerCase().includes('take profit 1'));
+      if (slStep && D.riskStop) {
+        const sl = parseFloat(String(slStep.val).replace(/[^0-9.-]/g, ''));
+        if (sl > 0) D.riskStop.value = sl.toFixed(2);
+      }
+      if (tpStep && D.riskTP) {
+        const tp = parseFloat(String(tpStep.val).replace(/[^0-9.-]/g, ''));
+        if (tp > 0) D.riskTP.value = tp.toFixed(2);
+      }
+    }
 
     // 1. Update Trend Badge
     const biasLower = data.bias.toLowerCase();
@@ -77,9 +93,9 @@ export async function updateAI() {
     const levels = data.levels || { support: [], resistance: [] };
     const price = S.candles.length ? S.candles[S.candles.length - 1].c : 0;
     D.aiLevelsList.innerHTML =
-      (levels.resistance || []).slice(-3).reverse().map(r => `<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/10)</span></div>`).join('') +
+      (levels.resistance || []).slice(0, 3).reverse().map(r => `<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/100)</span></div>`).join('') +
       `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;font-size:10px;">📌 Current: ${price > 0 ? fmtUSD(price) : '—'}</div>` +
-      (levels.support || []).slice(-3).reverse().map(s => `<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/10)</span></div>`).join('');
+      (levels.support || []).slice(0, 3).map(s => `<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/100)</span></div>`).join('');
 
     // 5. Rich Recommendations Formatting
     let formattedHtml = data.analysis || '';
@@ -174,12 +190,12 @@ function runFallbackAI() {
   D.aiShortBar.style.width   = `${shrtPct}%`;
 
   if (S.srLevels.support?.length || S.srLevels.resistance?.length) {
-    const sup  = (S.srLevels.support  ||[]).slice(-3).reverse();
-    const res  = (S.srLevels.resistance||[]).slice(-3).reverse();
+    const sup  = (S.srLevels.support  ||[]).slice(0, 3);
+    const res  = (S.srLevels.resistance||[]).slice(0, 3).reverse();
     D.aiLevelsList.innerHTML =
-      res.map(r=>`<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/10)</span></div>`).join('') +
+      res.map(r=>`<div style="color:var(--red);font-size:10px;line-height:1.4;">⬆ ${r.label || 'R'}: ${fmtUSD(r.price)} <span style="color:var(--text-3);font-size:8px;">(${r.score ? r.score.toFixed(1) : '0.0'}/100)</span></div>`).join('') +
       `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;font-size:10px;">📌 Current: ${fmtUSD(price)}</div>` +
-      sup.map(s=>`<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/10)</span></div>`).join('');
+      sup.map(s=>`<div style="color:var(--green);font-size:10px;line-height:1.4;">⬇ ${s.label || 'S'}: ${fmtUSD(s.price)} <span style="color:var(--text-3);font-size:8px;">(${s.score ? s.score.toFixed(1) : '0.0'}/100)</span></div>`).join('');
   }
 
   const idea = score >= 3

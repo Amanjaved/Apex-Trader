@@ -122,9 +122,18 @@ export function drawMainChart() {
   }
   const pRange = pMax - pMin || 1;
   const pPad   = pRange * 0.06;
-  const pLo    = pMin - pPad;
-  const pHi    = pMax + pPad;
-  const pSpan  = pHi - pLo;
+  
+  let pLo, pHi;
+  if (S.yScaleMode === 'manual') {
+    const autoCenter = (pMax + pMin) / 2;
+    const currentSpan = pRange * (S.yScaleMultiplier ?? 1.0);
+    pLo = autoCenter - currentSpan / 2 + (S.yScaleOffset ?? 0);
+    pHi = autoCenter + currentSpan / 2 + (S.yScaleOffset ?? 0);
+  } else {
+    pLo = pMin - pPad;
+    pHi = pMax + pPad;
+  }
+  const pSpan  = pHi - pLo || 1;
 
   const toY = p  => PAD.t + ch * (1 - (p  - pLo) / pSpan);
   const toX = i  => PAD.l + (i + 0.5) * (cw / n);
@@ -227,68 +236,187 @@ export function drawMainChart() {
 
   // ── OVERLAYS: Smart S/R Zones ──
   if (S.overlays.smartSR && S.srLevels) {
-    const srTfLbl = TF_MAP[S.srTf] || '1d';
     const re = W - PAD.r;
+    const currentCandle = S.candles[S.candles.length - 1];
+    const livePrice = currentCandle ? currentCandle.c : 0;
     
-    // Draw Support Zones (Demand)
-    (S.srLevels.support || []).forEach(z => {
-      const x1 = timestampToX(z.t_start, S, W);
+    // Oscillation factor for pulsing at 1Hz (alpha osc.)
+    const pulseFactor = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin((Date.now() / 1000) * 2 * Math.PI));
+
+    // Get hovered zone tooltip element
+    let tooltipEl = document.getElementById('srTooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'srTooltip';
+      tooltipEl.style.position = 'absolute';
+      tooltipEl.style.background = 'rgba(15, 23, 42, 0.95)';
+      tooltipEl.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+      tooltipEl.style.padding = '8px 12px';
+      tooltipEl.style.borderRadius = '6px';
+      tooltipEl.style.color = '#fff';
+      tooltipEl.style.fontFamily = 'monospace';
+      tooltipEl.style.fontSize = '11px';
+      tooltipEl.style.pointerEvents = 'none';
+      tooltipEl.style.zIndex = '1000';
+      tooltipEl.style.display = 'none';
+      tooltipEl.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+      document.body.appendChild(tooltipEl);
+    }
+
+    let hoveredZone = null;
+    let hoveredMouseX = 0, hoveredMouseY = 0;
+
+    const allSRZones = (S.srLevels.support || []).concat(S.srLevels.resistance || []);
+
+    // Sort to determine nearest support and nearest resistance relative to active livePrice
+    const dynamicSupports = allSRZones.filter(z => z.price < livePrice).sort((a, b) => b.price - a.price);
+    const dynamicResistances = allSRZones.filter(z => z.price >= livePrice).sort((a, b) => a.price - b.price);
+    const drawnLabelYs = [];
+
+    allSRZones.forEach(z => {
+      // Find starting X coordinate using zone's originTimestamp
+      const x1 = timestampToX(z.originTimestamp, S, W);
       const xv = (x1 !== null) ? Math.max(PAD.l, x1) : PAD.l;
       if (xv >= re) return;
-      
+
       const y = toY(z.price);
       const y1 = toY(z.high), y2 = toY(z.low);
       const h = Math.abs(y2 - y1);
+      const isSupport = z.price < livePrice;
+
+      // Determine label dynamically based on active price position
+      const listToSearch = isSupport ? dynamicSupports : dynamicResistances;
+      const isNearest = listToSearch.length > 0 && listToSearch[0].id === z.id;
       
-      // Rectangular demand zone fill
-      ctx.fillStyle = 'rgba(0,255,136,0.04)';
+      const typeStr = isSupport ? 'Support' : 'Resistance';
+      const gradeBadge = z.isConfluence 
+        ? `⚡ CONFLUENCE ${isSupport ? 'S' : 'R'}` 
+        : `${z.score >= 75 ? '⚡ STRONG' : z.score >= 45 ? 'MEDIUM' : 'WEAK'} ${isSupport ? 'S' : 'R'}`;
+      const displayLabel = `${isNearest ? 'Nearest' : 'Major'} ${typeStr} (${gradeBadge})`;
+
+      // Check if mouse is hovering over this zone
+      if (S.mouseXY) {
+        const mousePrice = xyToCandle(S.mouseXY.x, S.mouseXY.y).price;
+        if (mousePrice >= z.low && mousePrice <= z.high && S.mouseXY.x >= xv && S.mouseXY.x <= re) {
+          hoveredZone = z;
+          hoveredMouseX = S.mouseXY.clientX;
+          hoveredMouseY = S.mouseXY.clientY;
+        }
+      }
+
+      // Check if live price is inside zone to trigger pulsing
+      const isPriceInside = livePrice >= z.low && livePrice <= z.high;
+
+      // Styling based on score: Strong, Medium, Weak
+      let fillStyle = '';
+      let borderStyle = '';
+      let borderAlpha = 1.0;
+      let strokeWidth = 1.0;
+      let lineDash = [];
+
+      if (z.score >= 75) { // Strong
+        fillStyle = isSupport ? 'rgba(0, 200, 83, 0.25)' : 'rgba(255, 59, 59, 0.25)';
+        borderStyle = isSupport ? 'rgba(0, 200, 83, ' : 'rgba(255, 59, 59, ';
+        strokeWidth = 2.0;
+        borderAlpha = 1.0;
+      } else if (z.score >= 45) { // Medium
+        fillStyle = isSupport ? 'rgba(0, 200, 83, 0.15)' : 'rgba(255, 59, 59, 0.15)';
+        borderStyle = isSupport ? 'rgba(0, 200, 83, ' : 'rgba(255, 59, 59, ';
+        strokeWidth = 1.5;
+        borderAlpha = 0.7;
+        lineDash = [6, 4];
+      } else { // Weak
+        fillStyle = isSupport ? 'rgba(0, 200, 83, 0.08)' : 'rgba(255, 59, 59, 0.08)';
+        borderStyle = isSupport ? 'rgba(0, 200, 83, ' : 'rgba(255, 59, 59, ';
+        strokeWidth = 1.0;
+        borderAlpha = 0.4;
+        lineDash = [2, 3];
+      }
+
+      // If price inside, apply pulsing oscillation to border opacity
+      if (isPriceInside) {
+        borderAlpha *= pulseFactor;
+      }
+
+      ctx.save();
+
+      // If confluence zone, apply glowing border shadow
+      if (z.isConfluence) {
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = isSupport ? 'rgba(0, 200, 83, 0.8)' : 'rgba(255, 59, 59, 0.8)';
+      }
+
+      // Fill rectangular zone
+      ctx.fillStyle = fillStyle;
       ctx.fillRect(xv, Math.min(y1, y2), re - xv, h);
+
+      // Draw border lines (top and bottom of rectangle)
+      ctx.strokeStyle = `${borderStyle}${borderAlpha})`;
+      ctx.lineWidth = strokeWidth;
+      ctx.setLineDash(lineDash);
       
-      // Border outline
-      ctx.strokeStyle = 'rgba(0,255,136,0.15)'; ctx.lineWidth = 0.5;
-      ctx.strokeRect(xv, Math.min(y1, y2), re - xv, h);
-      
-      // Center line
-      ctx.strokeStyle = 'rgba(0,255,136,0.3)'; ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(xv, y1);
+      ctx.lineTo(re, y1);
+      ctx.moveTo(xv, y2);
+      ctx.lineTo(re, y2);
+      ctx.stroke();
+
+      // Center dashed line
+      ctx.strokeStyle = isSupport ? 'rgba(0, 200, 83, 0.3)' : 'rgba(255, 59, 59, 0.3)';
+      ctx.lineWidth = 0.8;
       ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(re, y); ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Right-aligned institutional labels
-      ctx.fillStyle = 'rgba(0,255,136,0.85)'; ctx.textAlign = 'right';
-      ctx.font = '9px monospace';
-      ctx.fillText(`${z.label} - Score: ${z.score.toFixed(1)}/10`, re - 3, y - 2);
+      ctx.beginPath();
+      ctx.moveTo(PAD.l, y);
+      ctx.lineTo(re, y);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Draw label (pinned to right of zone) with collision avoidance on Y-axis
+      ctx.fillStyle = isSupport ? 'rgba(0, 200, 83, 0.9)' : 'rgba(255, 59, 59, 0.9)';
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 9px monospace';
+
+      let labelY = y - 3;
+      let collision = true;
+      let attempts = 0;
+      while (collision && attempts < 15) {
+        collision = false;
+        for (const prevY of drawnLabelYs) {
+          if (Math.abs(prevY - labelY) < 11) {
+            labelY = y < prevY ? labelY - 5 : labelY + 5;
+            collision = true;
+            break;
+          }
+        }
+        attempts++;
+      }
+      drawnLabelYs.push(labelY);
+
+      ctx.fillText(`${displayLabel} (Score: ${Math.round(z.score)})`, re - 4, labelY);
     });
 
-    // Draw Resistance Zones (Supply)
-    (S.srLevels.resistance || []).forEach(z => {
-      const x1 = timestampToX(z.t_start, S, W);
-      const xv = (x1 !== null) ? Math.max(PAD.l, x1) : PAD.l;
-      if (xv >= re) return;
+    // Update hovered zone HTML tooltip
+    if (hoveredZone) {
+      const typeLabel = hoveredZone.type === 'role_reversal' ? '🔄 FLIP' : hoveredZone.type.toUpperCase();
+      const tfBadges = hoveredZone.timeframes.map(t => `<span style="background:rgba(255,255,255,0.15);padding:1px 4px;margin-right:2px;border-radius:2px;font-size:9px;">${t.toUpperCase()}</span>`).join('');
       
-      const y = toY(z.price);
-      const y1 = toY(z.high), y2 = toY(z.low);
-      const h = Math.abs(y2 - y1);
-      
-      // Rectangular supply zone fill
-      ctx.fillStyle = 'rgba(255,51,102,0.04)';
-      ctx.fillRect(xv, Math.min(y1, y2), re - xv, h);
-      
-      // Border outline
-      ctx.strokeStyle = 'rgba(255,51,102,0.15)'; ctx.lineWidth = 0.5;
-      ctx.strokeRect(xv, Math.min(y1, y2), re - xv, h);
-      
-      // Center line
-      ctx.strokeStyle = 'rgba(255,51,102,0.3)'; ctx.lineWidth = 0.8;
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(re, y); ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Right-aligned institutional labels
-      ctx.fillStyle = 'rgba(255,51,102,0.85)'; ctx.textAlign = 'right';
-      ctx.font = '9px monospace';
-      ctx.fillText(`${z.label} - Score: ${z.score.toFixed(1)}/10`, re - 3, y - 2);
-    });
+      tooltipEl.innerHTML = `
+        <div style="font-weight:bold;margin-bottom:4px;color:${hoveredZone.type === 'resistance' ? 'rgba(255, 59, 59, 0.9)' : 'rgba(0, 200, 83, 0.9)'}">${typeLabel} ZONE</div>
+        <div>Price center: <b>${fmtUSD(hoveredZone.price)}</b></div>
+        <div>Range: <b>${fmtUSD(hoveredZone.low)} - ${fmtUSD(hoveredZone.high)}</b></div>
+        <div>Touches: <b>${hoveredZone.touchCount}</b></div>
+        <div>Score: <b>${Math.round(hoveredZone.score)}/100</b></div>
+        <div style="margin-top:4px;">TFs: ${tfBadges}</div>
+        <div style="margin-top:2px;">Volume: <b>${fmtVol(hoveredZone.volumeAtZone)}</b></div>
+      `;
+      tooltipEl.style.left = (hoveredMouseX + 15) + 'px';
+      tooltipEl.style.top = (hoveredMouseY + 15) + 'px';
+      tooltipEl.style.display = 'block';
+    } else {
+      tooltipEl.style.display = 'none';
+    }
   }
 
   // ── OVERLAYS: Order Blocks ──
@@ -431,6 +559,9 @@ export function drawMainChart() {
 
   // ── USER DRAWINGS ──
   drawUserOverlays(ctx, toX, toY, W, H);
+
+  // ── DEMO PAPER TRADING OVERLAYS ──
+  drawDemoPositionsOverlay(ctx, toX, toY, W, H);
 
   // ── LIVE PRICE LINE ──
   const liveC = S.candles[S.candles.length - 1].c;
@@ -663,26 +794,44 @@ export function initChartInteractions() {
   D.mainCanvas.addEventListener('mousedown', e => {
     if (e.button === 2) return;
     const { x, y } = getXY(e, D.mainCanvas);
-    const { absIdx, price } = xyToCandle(x, y);
+    const L = S.layout;
+    if (!L) return;
 
-    if (S.drawTool !== 'none' && S.drawTool !== 'crosshair') {
-      const colors = { trendline:var_amber(), hline:var_red(), vline:'rgba(255,255,255,0.4)',
-                       rect:var_blue_hex(), channel:var_cyan(), fib:var_green(), fibext:var_cyan() };
-      S.currentDrawing = { type:S.drawTool, x1:absIdx, y1:price, color:colors[S.drawTool]||var_amber() };
-      if (S.drawTool === 'hline' || S.drawTool === 'vline') {
-        S.drawings.push({ ...S.currentDrawing });
-        S.currentDrawing = null;
-        S.drawTool = 'none';
-        document.querySelectorAll('.lbar-btn[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === 'none'));
-        document.querySelectorAll('.tp-btn[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === 'none'));
-        saveState();
+    const isYScaleClick = (x >= L.W - L.PAD.r);
+    if (isYScaleClick) {
+      if (S.yScaleMode !== 'manual') {
+        S.yScaleMode = 'manual';
+        S.yScaleMultiplier = 1.12;
+        S.yScaleOffset = 0;
       }
-      if (queueRenderCallback) queueRenderCallback();
+      S.isDraggingYScale = true;
+      S.yDragStartY = e.clientY;
+      S.yDragStartMultiplier = S.yScaleMultiplier;
+      S.yDragStartOffset = S.yScaleOffset;
+      D.mainCanvas.style.cursor = 'ns-resize';
     } else {
-      S.isPanning = true;
-      S.panStartX = e.clientX;
-      S.panStartView = S.viewStart;
-      D.mainCanvas.style.cursor = 'grabbing';
+      const { absIdx, price } = xyToCandle(x, y);
+      if (S.drawTool !== 'none' && S.drawTool !== 'crosshair') {
+        const colors = { trendline:var_amber(), hline:var_red(), vline:'rgba(255,255,255,0.4)',
+                         rect:var_blue_hex(), channel:var_cyan(), fib:var_green(), fibext:var_cyan() };
+        S.currentDrawing = { type:S.drawTool, x1:absIdx, y1:price, color:colors[S.drawTool]||var_amber() };
+        if (S.drawTool === 'hline' || S.drawTool === 'vline') {
+          S.drawings.push({ ...S.currentDrawing });
+          S.currentDrawing = null;
+          S.drawTool = 'none';
+          document.querySelectorAll('.lbar-btn[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === 'none'));
+          document.querySelectorAll('.tp-btn[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === 'none'));
+          saveState();
+        }
+        if (queueRenderCallback) queueRenderCallback();
+      } else {
+        S.isPanning = true;
+        S.panStartX = e.clientX;
+        S.panStartY = e.clientY;
+        S.panStartView = S.viewStart;
+        S.panStartOffset = S.yScaleOffset ?? 0;
+        D.mainCanvas.style.cursor = 'grabbing';
+      }
     }
   });
 
@@ -693,25 +842,65 @@ export function initChartInteractions() {
     const step = L.cw / L.n;
     const idx = Math.floor((x - L.PAD.l) / step);
     S.hoverIdx = (x >= L.PAD.l && x <= L.PAD.l + L.cw) ? idx : -1;
+    S.mouseXY = { x, y, clientX: e.clientX, clientY: e.clientY };
 
     if (S.currentDrawing) {
       const { absIdx, price } = xyToCandle(x, y);
       S.currentDrawing.x2 = absIdx;
       S.currentDrawing.y2 = price;
     }
-    if (S.isPanning) {
+
+    if (S.isDraggingYScale) {
+      const dy = e.clientY - S.yDragStartY;
+      S.yScaleMultiplier = clamp(S.yDragStartMultiplier * Math.exp(dy / 200), 0.02, 50.0);
+    } else if (S.isPanning) {
+      // Horizontal panning
       const dx = Math.round((e.clientX - S.panStartX) / step);
       const w  = S.viewEnd - S.viewStart;
       let ns = S.panStartView - dx;
       ns = clamp(ns, 0, Math.max(0, S.candles.length - w));
       S.viewStart = ns;
       S.viewEnd   = ns + w;
+
+      // Vertical panning
+      if (S.yScaleMode === 'manual') {
+        const dy = e.clientY - S.panStartY;
+        S.yScaleOffset = S.panStartOffset + dy * (L.pSpan / L.ch);
+      }
     }
+
+    // Update cursor dynamically based on state and hover region
+    if (S.isDraggingYScale) {
+      D.mainCanvas.style.cursor = 'ns-resize';
+    } else if (S.isPanning) {
+      D.mainCanvas.style.cursor = 'grabbing';
+    } else {
+      const isOverYScale = (x >= L.W - L.PAD.r);
+      if (isOverYScale) {
+        D.mainCanvas.style.cursor = 'ns-resize';
+      } else if (S.drawTool !== 'none' && S.drawTool !== 'crosshair') {
+        D.mainCanvas.style.cursor = 'default';
+      } else {
+        D.mainCanvas.style.cursor = 'crosshair';
+      }
+    }
+
     if (queueRenderCallback) queueRenderCallback();
   });
 
   D.mainCanvas.addEventListener('mouseup', e => {
-    if (S.isPanning) { S.isPanning = false; D.mainCanvas.style.cursor = 'crosshair'; }
+    S.isPanning = false;
+    S.isDraggingYScale = false;
+
+    // Set cursor based on position after release
+    const { x } = getXY(e, D.mainCanvas);
+    const L = S.layout;
+    if (L && x >= L.W - L.PAD.r) {
+      D.mainCanvas.style.cursor = 'ns-resize';
+    } else {
+      D.mainCanvas.style.cursor = 'crosshair';
+    }
+
     if (S.currentDrawing) {
       if (S.currentDrawing.x2 !== undefined) S.drawings.push({ ...S.currentDrawing });
       S.currentDrawing = null;
@@ -724,8 +913,20 @@ export function initChartInteractions() {
   });
 
   D.mainCanvas.addEventListener('mouseleave', () => {
-    S.hoverIdx = -1; S.isPanning = false;
+    S.hoverIdx = -1;
+    S.isPanning = false;
+    S.isDraggingYScale = false;
+    S.mouseXY = null;
+    const tooltipEl = document.getElementById('srTooltip');
+    if (tooltipEl) tooltipEl.style.display = 'none';
     D.mainCanvas.style.cursor = 'crosshair';
+    if (queueRenderCallback) queueRenderCallback();
+  });
+
+  D.mainCanvas.addEventListener('dblclick', () => {
+    S.yScaleMode = 'auto';
+    S.yScaleMultiplier = 1.0;
+    S.yScaleOffset = 0;
     if (queueRenderCallback) queueRenderCallback();
   });
 
@@ -866,5 +1067,113 @@ export function initChartInteractions() {
 
   document.addEventListener('click', () => {
     D.ctxMenu.style.display = 'none';
+  });
+}
+
+// ── DEMO PAPER TRADING OVERLAYS RENDERER ──
+export function drawDemoPositionsOverlay(ctx, toX, toY, W, H) {
+  if (!S.demoPositions || !S.demoPositions.length) return;
+  
+  const re = W - PAD.r;
+  const currentCandle = S.candles[S.candles.length - 1];
+  const livePrice = currentCandle ? currentCandle.c : 0;
+
+  S.demoPositions.forEach(p => {
+    if (p.symbol !== S.coin || p.status !== 'Running') return;
+
+    const entryY = toY(p.entryPrice);
+    const slY = p.sl ? toY(p.sl) : null;
+    const tpY = p.tp ? toY(p.tp) : null;
+
+    // Draw Risk/Reward shaded regions (polygons)
+    ctx.save();
+    
+    // Profit target box (green)
+    if (tpY !== null) {
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.07)';
+      const h = Math.abs(tpY - entryY);
+      ctx.fillRect(PAD.l, Math.min(entryY, tpY), re - PAD.l, h);
+    }
+    
+    // Stop loss box (red)
+    if (slY !== null) {
+      ctx.fillStyle = 'rgba(255, 59, 111, 0.07)';
+      const h = Math.abs(slY - entryY);
+      ctx.fillRect(PAD.l, Math.min(entryY, slY), re - PAD.l, h);
+    }
+
+    ctx.restore();
+
+    // Draw Entry Line (Cyan / Blue accent)
+    ctx.save();
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(PAD.l, entryY);
+    ctx.lineTo(re, entryY);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`DEMO ENTRY (${p.type}): ${fmtUSD(p.entryPrice)}`, PAD.l + 4, entryY - 4);
+    ctx.restore();
+
+    // Draw Stop Loss Line (Red dashed)
+    if (slY !== null) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 59, 111, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(PAD.l, slY);
+      ctx.lineTo(re, slY);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 59, 111, 0.95)';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`DEMO SL: ${fmtUSD(p.sl)}`, PAD.l + 4, slY - 4);
+      ctx.restore();
+    }
+
+    // Draw Take Profit Line (Green dashed)
+    if (tpY !== null) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 255, 136, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(PAD.l, tpY);
+      ctx.lineTo(re, tpY);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.95)';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`DEMO TP: ${fmtUSD(p.tp)}`, PAD.l + 4, tpY - 4);
+      ctx.restore();
+    }
+
+    // Renders active floating P&L/ROI pill on the right price axis
+    if (livePrice) {
+      ctx.save();
+      const pnlVal = p.pnl || 0;
+      const roiVal = p.roi || 0;
+      const labelText = `${pnlVal >= 0 ? '+' : ''}${fmtUSD(pnlVal)} (${roiVal >= 0 ? '+' : ''}${roiVal.toFixed(1)}%)`;
+      ctx.font = 'bold 9px monospace';
+      const textWidth = ctx.measureText(labelText).width;
+
+      ctx.fillStyle = pnlVal >= 0 ? 'rgba(0, 255, 102, 0.18)' : 'rgba(255, 59, 111, 0.18)';
+      ctx.fillRect(W - PAD.r + 2, entryY - 8, textWidth + 10, 16);
+
+      ctx.strokeStyle = pnlVal >= 0 ? 'rgba(0, 255, 102, 0.5)' : 'rgba(255, 59, 111, 0.5)';
+      ctx.strokeRect(W - PAD.r + 2, entryY - 8, textWidth + 10, 16);
+
+      ctx.fillStyle = pnlVal >= 0 ? var_green() : var_red();
+      ctx.textAlign = 'left';
+      ctx.fillText(labelText, W - PAD.r + 5, entryY + 3.5);
+      ctx.restore();
+    }
   });
 }

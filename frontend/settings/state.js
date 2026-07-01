@@ -59,6 +59,15 @@ export const S = {
   isPanning:      false,
   panStartX:      0,
   panStartView:   0,
+  panStartY:      0,
+  panStartOffset: 0,
+  yScaleMode:     'auto',        // auto|manual
+  yScaleMultiplier: 1.0,
+  yScaleOffset:   0,
+  isDraggingYScale: false,
+  yDragStartY:    0,
+  yDragStartMultiplier: 1.0,
+  yDragStartOffset: 0,
 
   // S/R
   srLevels: { support:[], resistance:[], demand:[], supply:[] },
@@ -67,6 +76,34 @@ export const S = {
   orderBook: { bids:[], asks:[] },
   fng:       { value:50, label:'Neutral' },
   newsArticles: [],
+
+  // Latest AI analysis snapshot (shared by charts + paper trading)
+  aiSnapshot: null,
+
+  // Paper Trading Simulator State
+  demoAccount: {
+    balance: 10000,
+    equity: 10000,
+    todayPnl: 0,
+    openTrades: 0,
+    winRate: 100,
+    freeMargin: 10000,
+    usedMargin: 0,
+    openRisk: 0,
+    realizedToday: 0,
+    feesPaid: 0,
+    netProfit: 0,
+    dailyReturn: 0,
+    weeklyReturn: 0
+  },
+  demoPositions: [], // [{ id, symbol, type, size, leverage, entryPrice, sl, tp, margin, pnl, roi, status, timestamp }]
+  demoHistory: [],   // [{ id, symbol, type, size, leverage, entryPrice, exitPrice, sl, tp, pnl, roi, fees, openTime, closeTime, grade, reason, aiConfidence, aiReasoning, userNotes, exitReason }]
+  achievements: {
+    '100-wins': false,
+    '5-days': false,
+    '10r-trade': false,
+    'no-rule-breaks': true
+  },
 
   // Candle colors (user-configurable)
   bullColor: '#26a69a',
@@ -95,20 +132,41 @@ export function var_blue_hex() { return '#3b82f6'; }
 // ─────────────────────────────────────────────
 export function saveState() {
   try {
-    localStorage.setItem('apex_pro_state', JSON.stringify({
+    const stateObj = {
       coin: S.coin, tf: S.tf, mode: S.mode, theme: S.theme,
       overlays: S.overlays, subs: S.subs, srTf: S.srTf,
       showDepth: S.showDepth, sidebarOpen: S.sidebarOpen,
       alerts: S.alerts, drawings: S.drawings,
       bullColor: S.bullColor, bearColor: S.bearColor,
-      settings: {
-        emaFast: D.inpEmaFast.value, emaSlow: D.inpEmaSlow.value,
-        sma: D.inpSmaPeriod.value, bbP: D.inpBbPeriod.value,
-        bbS: D.inpBbStd.value, rsi: D.inpRsiPeriod.value,
-        macdF: D.inpMacdFast.value, macdS: D.inpMacdSlow.value,
+      demoAccount: S.demoAccount,
+      demoPositions: S.demoPositions,
+      demoHistory: S.demoHistory,
+      achievements: S.achievements
+    };
+
+    // Safely save settings only if input elements exist on the active page
+    if (D.inpEmaFast) {
+      stateObj.settings = {
+        emaFast: D.inpEmaFast.value,
+        emaSlow: D.inpEmaSlow.value,
+        sma: D.inpSmaPeriod.value,
+        bbP: D.inpBbPeriod.value,
+        bbS: D.inpBbStd.value,
+        rsi: D.inpRsiPeriod.value,
+        macdF: D.inpMacdFast.value,
+        macdS: D.inpMacdSlow.value,
         macdSig: D.inpMacdSig.value
+      };
+    } else {
+      // Preserve existing settings from localStorage if we are on a page without inputs
+      const raw = localStorage.getItem('apex_pro_state');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.settings) stateObj.settings = p.settings;
       }
-    }));
+    }
+
+    localStorage.setItem('apex_pro_state', JSON.stringify(stateObj));
   } catch(e) {
     console.error('[saveState]', e);
   }
@@ -132,7 +190,13 @@ export function loadState() {
     if (p.drawings) S.drawings = p.drawings;
     if (p.bullColor) S.bullColor = p.bullColor;
     if (p.bearColor) S.bearColor = p.bearColor;
-    if (p.settings) {
+    if (p.demoAccount) S.demoAccount = p.demoAccount;
+    if (p.demoPositions) S.demoPositions = p.demoPositions;
+    if (p.demoHistory) S.demoHistory = p.demoHistory;
+    if (p.achievements) S.achievements = p.achievements;
+    
+    // Safely load settings into inputs only if they exist on the active page
+    if (p.settings && D.inpEmaFast) {
       const s = p.settings;
       if (s.emaFast) D.inpEmaFast.value  = s.emaFast;
       if (s.emaSlow) D.inpEmaSlow.value  = s.emaSlow;

@@ -3495,8 +3495,8 @@ function updateAI() {
 
   // Auto-detected key levels
   if (S.srLevels.support?.length || S.srLevels.resistance?.length) {
-    const sup  = (S.srLevels.support  ||[]).slice(-3).reverse();
-    const res  = (S.srLevels.resistance||[]).slice(-3).reverse();
+    const sup  = (S.srLevels.support  ||[]).slice(0, 3);
+    const res  = (S.srLevels.resistance||[]).slice(0, 3).reverse();
     D.aiLevelsList.innerHTML =
       res.map(r=>`<div style="color:var(--red)">⬆ R: ${fmtUSD(r.price)}</div>`).join('') +
       `<div style="color:var(--cyan);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px 0;margin:2px 0;">📌 Current: ${fmtUSD(price)}</div>` +

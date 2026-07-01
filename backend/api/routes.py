@@ -39,6 +39,8 @@ _rl_db: Dict[str, List[float]] = {}
 _rl_lock = threading.Lock()
 
 def is_rate_limited(ip: str, limit: int = 120, window: int = 60) -> bool:
+    if ip in ("127.0.0.1", "localhost", "::1"):
+        return False
     now = time.time()
     with _rl_lock:
         timestamps = _rl_db.get(ip, [])
@@ -161,9 +163,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not clean_path or clean_path in ["", "index.html"]:
             clean_path = "index.html"
 
-        # Clean URL mapping for /charts
+        # Clean URL mapping for /charts and /analysis
         if clean_path in ["charts", "charts/"]:
             clean_path = "charts.html"
+        elif clean_path in ["analysis", "analysis/"]:
+            clean_path = "analysis.html"
 
         target_file = os.path.abspath(os.path.join(FRONTEND_DIR, clean_path))
         
@@ -246,6 +250,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        path, params = parse_qs(self.path)
+        if path == "/api/ai/chat":
+            self._ai_chat()
+            return
+
         self._not_found()
 
     # ── Service Endpoints ──
@@ -312,6 +321,30 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(json.dumps(analysis_dict).encode())
         except Exception as e:
             print(f"  [ai_analysis] {e}")
+            self._error(str(e))
+
+    def _ai_chat(self) -> None:
+        body = self._read_json_body()
+        if body is None:
+            self._error("Invalid JSON body", 400)
+            return
+        
+        symbol   = body.get("symbol", "BTCUSDT").upper().strip()
+        interval = body.get("interval", "1h").lower().strip()
+        message  = body.get("message", "").strip()
+        
+        if symbol not in SUPPORTED_SYMBOLS:
+            symbol = "BTCUSDT"
+        if interval not in ALLOWED_INTERVALS:
+            interval = "1h"
+            
+        try:
+            from backend.ai.copilot import AICopilot
+            copilot = AICopilot()
+            reply = copilot.chat_query(symbol, interval, message)
+            self._send_json(json.dumps({"response": reply}).encode())
+        except Exception as e:
+            print(f"  [ai_chat] {e}")
             self._error(str(e))
 
     # ── Authentication Endpoints ──

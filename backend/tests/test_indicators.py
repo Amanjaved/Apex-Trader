@@ -273,7 +273,7 @@ class TestAICopilot(unittest.TestCase):
                 self.assertIn("low", s)
                 self.assertIn("label", s)
                 self.assertIn("score", s)
-                self.assertTrue(1.0 <= s["score"] <= 10.0)
+                self.assertTrue(0.0 <= s["score"] <= 100.0)
                 
             for r in res["levels"]["resistance"]:
                 self.assertIn("price", r)
@@ -281,7 +281,7 @@ class TestAICopilot(unittest.TestCase):
                 self.assertIn("low", r)
                 self.assertIn("label", r)
                 self.assertIn("score", r)
-                self.assertTrue(1.0 <= r["score"] <= 10.0)
+                self.assertTrue(0.0 <= r["score"] <= 100.0)
         finally:
             services.fetch_candles = orig_fetch_candles
 

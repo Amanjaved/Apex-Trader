@@ -135,6 +135,11 @@
   <button class="tool-btn" id="btnSnap"   title="Screenshot">📷</button>
   <button class="tool-btn" id="btnFull"   title="Fullscreen">⛶</button>
   <button class="tool-btn on" id="btnSidebar" title="Sidebar">⚙</button>
+  
+  <div class="sep"></div>
+  <a href="/analysis" id="btnAiHub" class="btn btn-glass btn-sm" style="text-decoration:none; display:flex; align-items:center; gap:4px; font-weight:700; color:var(--gold); border-color:rgba(247, 147, 26, 0.3); background:rgba(247, 147, 26, 0.05); box-shadow: 0 0 10px rgba(247, 147, 26, 0.15);" title="Launch Dedicated AI Analyst Hub">
+    <span>🧠</span> AI Hub
+  </a>
 
   <div class="sep"></div>
   <div class="nav-actions" id="navActions" style="display:flex; align-items:center; gap:6px;">
@@ -189,6 +194,12 @@
 
   <!-- Chart Area -->
   <div class="chart-area" id="chartArea">
+
+    <!-- Chart Loading Overlay -->
+    <div class="chart-loading-overlay" id="chartLoadingOverlay">
+      <div class="loader-spinner"></div>
+      <div class="loader-text" id="loaderText">Initializing ApexTrader Pro...</div>
+    </div>
 
     <!-- Main Canvas -->
     <div class="chart-wrap" id="mainWrap">
@@ -388,6 +399,39 @@
         <div id="journalList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
         <button class="btn btn-ghost" id="btnJournalExport">📤 Export Journal CSV</button>
       </div>
+
+      <!-- Virtual Paper Trading Console -->
+      <div class="sb-section paper-trading-panel">
+        <div class="sb-title">📈 Demo Trading</div>
+        <div id="demoPreTradeBanner" class="paper-ai-banner" style="display:none;font-size:10px;line-height:1.5;padding:6px 8px;margin-bottom:8px;border-radius:6px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);color:var(--text-2);"></div>
+        <table class="terminal-table compact-table" style="width:100%;font-size:11px;margin-bottom:8px;border-collapse:collapse;">
+          <tbody>
+            <tr><td style="color:var(--text-3);padding:4px 0;">Balance</td><td style="text-align:right;font-weight:700;" id="sbDemoBalance">$10,000.00</td></tr>
+            <tr><td style="color:var(--text-3);padding:4px 0;">Equity</td><td style="text-align:right;font-weight:700;" id="sbDemoEquity">$10,000.00</td></tr>
+            <tr><td style="color:var(--text-3);padding:4px 0;">Unrealized</td><td style="text-align:right;font-weight:700;color:var(--green);" id="sbDemoUnrealized">+$0.00</td></tr>
+            <tr><td style="color:var(--text-3);padding:4px 0;">Today's P&L</td><td style="text-align:right;font-weight:700;color:var(--green);" id="sbDemoTodayPnl">+$0.00</td></tr>
+            <tr><td style="color:var(--text-3);padding:4px 0;">Open Positions</td><td style="text-align:right;font-weight:700;" id="sbDemoOpenCount">0</td></tr>
+          </tbody>
+        </table>
+        <div class="form-row" style="margin-bottom:6px;">
+          <label>Leverage</label>
+          <input type="range" id="riskLeverage" min="1" max="100" value="10" style="flex:1;">
+          <span id="riskLevVal" style="font-family:var(--mono);font-size:10px;min-width:32px;text-align:right;">10x</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <button class="btn btn-primary" id="btnSbBuy" style="background:var(--green)!important;color:#010306!important;font-weight:800;border:none;padding:8px;">BUY</button>
+          <button class="btn btn-danger" id="btnSbSell" style="background:var(--red)!important;color:#fff!important;font-weight:800;border:none;padding:8px;">SELL</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px;">
+          <button class="btn btn-ghost btn-sm" id="btnSbCloseHalf" style="font-size:10px;padding:4px;">Close 50%</button>
+          <button class="btn btn-ghost btn-sm" id="btnSbCloseAll" style="font-size:10px;padding:4px;">Close All</button>
+          <button class="btn btn-ghost btn-sm" id="btnSbMoveSL" style="font-size:10px;padding:4px;">Move SL</button>
+          <button class="btn btn-ghost btn-sm" id="btnSbTrail" style="font-size:10px;padding:4px;">Trail Stop</button>
+          <button class="btn btn-ghost btn-sm" id="btnSbReverse" style="font-size:10px;padding:4px;">Reverse</button>
+          <button class="btn btn-ghost btn-sm" id="btnSbReset" style="font-size:10px;padding:4px;">Reset</button>
+        </div>
+        <div style="font-size:9px;color:var(--text-3);line-height:1.4;">SL/TP auto-filled from AI analysis. Uses Risk tab account size &amp; risk %.</div>
+      </div>
     </div>
 
     <!-- TAB: Market Intel -->
@@ -458,7 +502,10 @@
       </div>
       <div class="sb-section">
         <div class="sb-title">📋 Trade Idea</div>
-        <div id="aiTradeIdea" style="font-size:11px;color:var(--text-2);line-height:1.6;"></div>
+        <div id="aiTradeIdea" style="font-size:11px;color:var(--text-2);line-height:1.6;margin-bottom:12px;"></div>
+        <a href="/analysis" id="lnkDeepAiReport" class="btn btn-primary" style="text-decoration:none; display:block; text-align:center; font-weight:700; width:100%;" title="Launch Dedicated AI Analyst Hub">
+          Launch Deep AI Report ↗
+        </a>
       </div>
     </div>
   </div><!-- /sidebar -->

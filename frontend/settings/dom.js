@@ -147,18 +147,22 @@ export const D = {
   toastContainer: document.getElementById('toastContainer'),
   btnExportCSV:   document.getElementById('btnExportCSV'),
   minimapPanel:   document.getElementById('minimapPanel'),
+
+  // Loading Screen Overlay
+  chartLoadingOverlay: document.getElementById('chartLoadingOverlay'),
+  loaderText:          document.getElementById('loaderText'),
 };
 
-// Canvas 2D Contexts
+// Canvas 2D Contexts (safely guarded for pages without all canvases)
 export const CTX = {
-  main:    D.mainCanvas.getContext('2d'),
-  vp:      D.vpCanvas.getContext('2d'),
-  vol:     D.volCanvas.getContext('2d'),
-  rsi:     D.rsiCanvas.getContext('2d'),
-  macd:    D.macdCanvas.getContext('2d'),
-  stoch:   D.stochCanvas.getContext('2d'),
-  obv:     D.obvCanvas.getContext('2d'),
-  depth:   D.depthCanvas.getContext('2d'),
-  minimap: D.minimapCanvas.getContext('2d'),
-  fng:     D.fngCanvas.getContext('2d'),
+  main:    D.mainCanvas ? D.mainCanvas.getContext('2d') : null,
+  vp:      D.vpCanvas ? D.vpCanvas.getContext('2d') : null,
+  vol:     D.volCanvas ? D.volCanvas.getContext('2d') : null,
+  rsi:     D.rsiCanvas ? D.rsiCanvas.getContext('2d') : null,
+  macd:    D.macdCanvas ? D.macdCanvas.getContext('2d') : null,
+  stoch:   D.stochCanvas ? D.stochCanvas.getContext('2d') : null,
+  obv:     D.obvCanvas ? D.obvCanvas.getContext('2d') : null,
+  depth:   D.depthCanvas ? D.depthCanvas.getContext('2d') : null,
+  minimap: D.minimapCanvas ? D.minimapCanvas.getContext('2d') : null,
+  fng:     D.fngCanvas ? D.fngCanvas.getContext('2d') : null,
 };

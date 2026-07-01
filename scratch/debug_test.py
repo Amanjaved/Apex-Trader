@@ -104,5 +104,6 @@ def analyze_override(self, symbol, interval):
 
 res = copilot.analyze_market_structure("BTCUSDT", "1h", calculate_matrix=False)
 
-import pprint
-pprint.pprint(res["levels"])
+import json
+with open("out.txt", "w", encoding="utf-8") as f:
+    json.dump(res["levels"], f, indent=2)

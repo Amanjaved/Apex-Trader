@@ -1,0 +1,34 @@
+{
+  "support": [
+    {
+      "price": 65500.0,
+      "high": 65552.4,
+      "low": 65447.6,
+      "label": "Nearest Support (\u26a1 CONFLUENCE S)",
+      "score": 30.0
+    },
+    {
+      "price": 48500.0,
+      "high": 48538.799999999996,
+      "low": 48461.2,
+      "label": "Major Support (\u26a1 CONFLUENCE S)",
+      "score": 30.0
+    },
+    {
+      "price": 48000.0,
+      "high": 48038.399999999994,
+      "low": 47961.6,
+      "label": "Major Support (\u26a1 CONFLUENCE S)",
+      "score": 35.0
+    }
+  ],
+  "resistance": [
+    {
+      "price": 70000.0,
+      "high": 70056.0,
+      "low": 69944.0,
+      "label": "Nearest Resistance (\u26a1 CONFLUENCE R)",
+      "score": 40.0
+    }
+  ]
+}

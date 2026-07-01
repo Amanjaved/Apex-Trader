@@ -73,28 +73,53 @@ export async function fetchOrderBook() {
   } catch(e) { console.error('[fetchOrderBook]', e); }
 }
 
+let lastFetchTime = {};
+
 export async function fetchSrCandles() {
   if (!S.overlays.smartSR) return;
   const sym = S.coin;
+  const tfs = ["1m", "5m", "15m", "1h", "4h"];
+  const now = Date.now();
+
+  const promises = tfs.map(async tf => {
+    const cacheKey = `${sym}_${tf}`;
+    const tfMs = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000, '4h': 14400000 }[tf];
+
+    // Only refetch if cache is empty, or stale (time elapsed > tf time)
+    if (!S.srCandlesMTF || !S.srCandlesMTF[tf] || !lastFetchTime[cacheKey] || (now - lastFetchTime[cacheKey] >= tfMs)) {
+      try {
+        const r = await fetch(`/api/candles?symbol=${sym}&interval=${tf}&limit=300`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const raw = await r.json();
+        if (Array.isArray(raw)) {
+          lastFetchTime[cacheKey] = now;
+          return { tf, data: raw.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })) };
+        }
+      } catch (e) {
+        console.error(`[fetchSrCandles] Error fetching ${tf}:`, e);
+      }
+    }
+    return { tf, data: S.srCandlesMTF ? S.srCandlesMTF[tf] : [] };
+  });
+
   try {
-    const [rawW, rawD, raw4h, raw1h] = await Promise.all([
-      fetch(`/api/candles?symbol=${sym}&interval=1w&limit=300`).then(r => r.json()),
-      fetch(`/api/candles?symbol=${sym}&interval=1d&limit=300`).then(r => r.json()),
-      fetch(`/api/candles?symbol=${sym}&interval=4h&limit=300`).then(r => r.json()),
-      fetch(`/api/candles?symbol=${sym}&interval=1h&limit=300`).then(r => r.json())
-    ]);
+    const results = await Promise.all(promises);
     if (S.coin !== sym) return;
-    S.srCandlesMTF = {
-      "1w": rawW.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
-      "1d": rawD.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
-      "4h": raw4h.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] })),
-      "1h": raw1h.map(k => ({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5] }))
-    };
+
+    if (!S.srCandlesMTF) S.srCandlesMTF = {};
+    results.forEach(res => {
+      if (res.data && res.data.length > 0) {
+        S.srCandlesMTF[res.tf] = res.data;
+      }
+    });
+
     calculateSmartSR();
-    try { updateAI(); } catch(e) { console.error(e); }
     if (queueRenderCallback) queueRenderCallback();
-  } catch(e) { console.error('[fetchSrCandles]', e); }
+  } catch (e) {
+    console.error('[fetchSrCandles] error:', e);
+  }
 }
+
 
 export async function fetchCoinsList() {
   try {
@@ -132,11 +157,58 @@ export async function fetchNews() {
 }
 
 export async function initData() {
-  await fetchCandles();
-  fetchOrderBook();
-  fetchSrCandles();
+  const overlay = D.chartLoadingOverlay;
+  const loaderText = D.loaderText;
+
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.classList.remove('hidden');
+  }
+
+  if (loaderText) {
+    loaderText.textContent = `Connecting to ${S.coin} Live Feed...`;
+  }
+
+  // 1. Connect to live WebSocket concurrently with HTTP data fetches
   connectWS();
-  renderNews();
+
+  if (loaderText) {
+    loaderText.textContent = `Fetching ${S.coin} market history...`;
+  }
+
+  // 2. Fetch critical and auxiliary data. We ONLY block the initial rendering on the primary
+  // candles fetch (which is required to draw the chart). The auxiliary datasets (orderbook,
+  // multi-timeframe S/R levels, news) are fetched in parallel and load progressively in the background.
+  const candlesPromise = fetchCandles();
+  const orderBookPromise = fetchOrderBook();
+  const srCandlesPromise = fetchSrCandles();
+  const newsPromise = fetchNews();
+
+  await candlesPromise;
+
+  if (loaderText) {
+    loaderText.textContent = 'Synchronizing terminal...';
+  }
+
+  // 3. Block overlay fade-out until WebSocket connection is open and candles are populated
+  let retries = 0;
+  const maxRetries = 25; // 2.5 seconds max wait before fallback
+  while (retries < maxRetries) {
+    const wsConnected = ws && ws.readyState === WebSocket.OPEN;
+    if (wsConnected && S.candles && S.candles.length > 0) {
+      break;
+    }
+    await new Promise(r => setTimeout(r, 100));
+    retries++;
+  }
+
+  // 4. Smoothly fade out the loading overlay
+  if (overlay) {
+    overlay.classList.add('hidden');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+    }, 400); // matches the CSS transition time
+  }
 }
 
 function wsSend(payload) {
@@ -271,6 +343,9 @@ function onKlineMsg(data) {
   }
   IC.clear();
   try { updateAI(); } catch(e) { console.error(e); }
+  if (k.x) {
+    fetchSrCandles();
+  }
   if (queueRenderCallback) queueRenderCallback();
 }
 

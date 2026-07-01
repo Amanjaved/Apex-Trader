@@ -1,13 +1,19 @@
 import { S, COINS, TF_MAP, saveState, loadState, var_red, var_green, var_text } from './settings/state.js';
 import { D } from './settings/dom.js';
-import { getEMA, getRSI, getATR, getVWAP, IC, getCloses } from './indicators/indicators.js';
+import { getEMA, getRSI, getATR, getVWAP, IC, getCloses, registerSrUpdateCallback } from './indicators/indicators.js';
 import { drawMainChart, drawVolChart, drawRsiChart, drawMacdChart, drawStochChart, drawObvChart, drawMinimap, initChartInteractions, registerRenderQueuer } from './chart/chart_engine.js';
 import { drawDepthChart } from './orderflow/orderflow.js';
 import { updateAI } from './ai/ai.js';
 import { initWatchlist, registerWatchlistInitDataCallback } from './watchlist/watchlist.js';
 import { initAlerts, renderAlertList } from './alerts/alerts.js';
-import { initEvents, loadEvents, initNewsFilter, renderNews, drawFngGauge, toast } from './settings/settings.js';
+import { initRiskCalculator, initEvents, loadEvents, initNewsFilter, renderNews, drawFngGauge, toast } from './settings/settings.js';
 import { initData, connectWS, fetchCoinsList, fetchFearGreed, fetchNews, fetchSrCandles, registerApiRenderQueuer, updateWSSubscriptions, setStatus } from './settings/api.js';
+import {
+  initPaperEngine, tickPaperPositions, openPaperPosition, closeAllPositions,
+  closeHalfPosition, moveSlToBreakeven, trailStop, reversePosition, resetPaperAccount,
+  ensurePaperState,
+} from './paper/engine.js';
+import { renderPaperAccountSummary, renderPreTradeBanner, setupGlobalCloseHandler } from './paper/ui.js';
 
 // Render loop queueing flag
 let renderQueued = false;
@@ -25,6 +31,10 @@ function queueRender() {
 function render() {
   if (!S.candles.length) return;
   updateStats();
+  tickPaperPositions(getLivePrice(), S.coin);
+  window.__paperLastPrice = getLivePrice();
+  renderPaperAccountSummary('sb');
+  renderPreTradeBanner();
   drawMainChart();
   if (S.showDepth)   drawDepthChart();
   if (S.subs.vol)    drawVolChart();
@@ -41,6 +51,24 @@ function getInpVal(el, def) {
 }
 
 function clamp(v, mn, mx) { return v < mn ? mn : v > mx ? mx : v; }
+
+function getLivePrice() {
+  const n = S.candles.length;
+  return n ? S.candles[n - 1].c : 0;
+}
+
+function getPaperOrderOpts() {
+  return {
+    price: getLivePrice(),
+    symbol: S.coin,
+    capital: parseFloat(document.getElementById('riskAccount')?.value) || S.demoAccount?.balance || 10000,
+    riskPct: parseFloat(document.getElementById('riskPct')?.value) || 1,
+    leverage: parseInt(document.getElementById('riskLeverage')?.value, 10) || 10,
+    sl: parseFloat(document.getElementById('riskStop')?.value) || 0,
+    tp: parseFloat(document.getElementById('riskTP')?.value) || 0,
+    useAi: true,
+  };
+}
 
 function fmtUSD(p) {
   const n = Math.abs(p);
@@ -466,6 +494,13 @@ function initListeners() {
   loadEvents();
   renderAlertList();
 
+  // Expose global state and rendering for external scripting/testing
+  window.S = S;
+  window.saveState = saveState;
+  window.queueRender = queueRender;
+  window.toast = toast;
+  window.renderAlertList = renderAlertList;
+
   // Initialize modular handlers
   initListeners();
   initWatchlist();
@@ -473,11 +508,14 @@ function initListeners() {
   initEvents();
   initNewsFilter();
   initChartInteractions();
+  initRiskCalculator();
+  initPaperTradingSidebar();
 
   // Register coordination hooks
   registerWatchlistInitDataCallback(initData);
   registerRenderQueuer(queueRender, initData);
   registerApiRenderQueuer(queueRender);
+  registerSrUpdateCallback(queueRender);
 
 
 
@@ -497,3 +535,43 @@ function initListeners() {
 
   console.log('%cApexTrader Pro — Modular Boot Complete', 'color:#00d4ff;font-size:14px;font-weight:bold');
 })();
+
+// ─────────────────────────────────────────────
+//  PAPER TRADING (charts sidebar)
+// ─────────────────────────────────────────────
+function initPaperTradingSidebar() {
+  ensurePaperState();
+  setupGlobalCloseHandler();
+
+  initPaperEngine({
+    toast,
+    onChange: () => {
+      queueRender();
+      renderPaperAccountSummary('sb');
+      renderPreTradeBanner();
+    },
+  });
+
+  const btnBuy = document.getElementById('btnSbBuy');
+  const btnSell = document.getElementById('btnSbSell');
+  if (!btnBuy || !btnSell) return;
+
+  btnBuy.addEventListener('click', () => openPaperPosition('LONG', getPaperOrderOpts()));
+  btnSell.addEventListener('click', () => openPaperPosition('SHORT', getPaperOrderOpts()));
+
+  document.getElementById('btnSbCloseHalf')?.addEventListener('click', () => closeHalfPosition());
+  document.getElementById('btnSbCloseAll')?.addEventListener('click', () => closeAllPositions(getLivePrice()));
+  document.getElementById('btnSbMoveSL')?.addEventListener('click', () => moveSlToBreakeven());
+  document.getElementById('btnSbTrail')?.addEventListener('click', () => trailStop(getLivePrice()));
+  document.getElementById('btnSbReverse')?.addEventListener('click', () => reversePosition(getLivePrice(), getPaperOrderOpts()));
+  document.getElementById('btnSbReset')?.addEventListener('click', () => resetPaperAccount());
+
+  const lev = document.getElementById('riskLeverage');
+  const levVal = document.getElementById('riskLevVal');
+  if (lev && levVal) {
+    lev.addEventListener('input', () => { levVal.textContent = `${lev.value}x`; });
+  }
+
+  renderPaperAccountSummary('sb');
+  renderPreTradeBanner();
+}
