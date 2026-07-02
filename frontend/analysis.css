@@ -2807,7 +2807,7 @@ body {
   font-family: var(--mono);
   font-size: 9.5px;
   color: var(--text-3);
-  height: 90px;
+  height: 120px;
   overflow-y: auto;
   line-height: 1.5;
   display: flex;
@@ -2822,4 +2822,146 @@ body {
 @keyframes pulse-border {
   0% { border-color: rgba(0, 200, 83, 0.2); box-shadow: 0 0 5px rgba(0, 200, 83, 0.05); }
   100% { border-color: rgba(0, 200, 83, 0.6); box-shadow: 0 0 12px rgba(0, 200, 83, 0.15); }
+}
+
+/* ─────────────────────────────────────────────
+   AI BOT DECISION CARD
+   ───────────────────────────────────────────── */
+.bot-decision-card {
+  margin-top: 12px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.03) 0%, rgba(130, 80, 255, 0.03) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  animation: botCardFadeIn 0.4s ease-out;
+}
+@keyframes botCardFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bot-decision-card.long-card {
+  border-color: rgba(0, 200, 83, 0.25);
+  background: linear-gradient(135deg, rgba(0, 200, 83, 0.04) 0%, rgba(0, 80, 40, 0.03) 100%);
+}
+.bot-decision-card.short-card {
+  border-color: rgba(255, 51, 102, 0.25);
+  background: linear-gradient(135deg, rgba(255, 51, 102, 0.04) 0%, rgba(120, 20, 50, 0.03) 100%);
+}
+.bot-decision-card.exit-card {
+  border-color: rgba(255, 193, 7, 0.25);
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.04) 0%, rgba(120, 80, 0, 0.03) 100%);
+}
+.bot-decision-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.bot-decision-icon { font-size: 14px; }
+.bot-decision-title {
+  font-family: var(--font-title);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.bot-decision-time {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-3);
+}
+.bot-decision-direction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.bot-dir-label {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.bot-dir-badge {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+.bot-dir-badge.long {
+  background: rgba(0, 200, 83, 0.15);
+  color: #00ff88;
+  border: 1px solid rgba(0, 200, 83, 0.3);
+}
+.bot-dir-badge.short {
+  background: rgba(255, 51, 102, 0.15);
+  color: #ff3366;
+  border: 1px solid rgba(255, 51, 102, 0.3);
+}
+.bot-dir-badge.exit {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+.bot-decision-levels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.bot-level-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+.bot-level-label {
+  font-size: 9px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.bot-level-value {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+.bot-level-value.cyan { color: var(--cyan); }
+.bot-level-value.red { color: var(--red); }
+.bot-level-value.green { color: var(--green); }
+.bot-level-value.gold { color: var(--gold); }
+.bot-decision-reasoning,
+.bot-decision-thinking {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  border-left: 2px solid rgba(0, 240, 255, 0.2);
+}
+.bot-decision-thinking {
+  border-left-color: rgba(130, 80, 255, 0.3);
+}
+.bot-reason-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.bot-reason-text,
+.bot-thinking-text {
+  font-size: 10px;
+  color: var(--text-2);
+  line-height: 1.55;
+  font-family: var(--font-body);
 }

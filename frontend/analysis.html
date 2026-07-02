@@ -1091,6 +1091,46 @@
               <span class="status-badge inactive" id="botStatusBadge">OFFLINE</span>
             </div>
             <button class="btn-demo-action buy" id="btnToggleBotState" style="background:var(--gold) !important; color:#010306 !important;">START AUTOMATED BOT</button>
+
+            <!-- Bot Decision Card -->
+            <div id="botDecisionCard" class="bot-decision-card" style="display:none;">
+              <div class="bot-decision-header">
+                <span class="bot-decision-icon">🧠</span>
+                <span class="bot-decision-title">AI Bot Decision</span>
+                <span class="bot-decision-time" id="botDecisionTime">—</span>
+              </div>
+              <div class="bot-decision-direction" id="botDecisionDirection">
+                <span class="bot-dir-label">Direction:</span>
+                <span class="bot-dir-badge" id="botDirBadge">—</span>
+              </div>
+              <div class="bot-decision-levels">
+                <div class="bot-level-item">
+                  <span class="bot-level-label">Entry</span>
+                  <span class="bot-level-value cyan" id="botDecEntry">—</span>
+                </div>
+                <div class="bot-level-item">
+                  <span class="bot-level-label">Stop Loss</span>
+                  <span class="bot-level-value red" id="botDecSL">—</span>
+                </div>
+                <div class="bot-level-item">
+                  <span class="bot-level-label">Take Profit</span>
+                  <span class="bot-level-value green" id="botDecTP">—</span>
+                </div>
+                <div class="bot-level-item">
+                  <span class="bot-level-label">Risk:Reward</span>
+                  <span class="bot-level-value gold" id="botDecRR">—</span>
+                </div>
+              </div>
+              <div class="bot-decision-reasoning">
+                <div class="bot-reason-title">💡 Reasoning</div>
+                <div class="bot-reason-text" id="botDecReason">—</div>
+              </div>
+              <div class="bot-decision-thinking">
+                <div class="bot-reason-title">🔍 Thinking</div>
+                <div class="bot-thinking-text" id="botDecThinking">—</div>
+              </div>
+            </div>
+
             <div class="bot-log-box" id="botLogBox">
               <div class="bot-log-entry">[System] Bot ready. Select a strategy and click Start.</div>
             </div>
@@ -1278,38 +1318,99 @@
       </div>
 
       <!-- In-Browser Simple Backtester -->
-      <div class="glass-card backtest-card">
+      <div class="glass-card backtest-card" style="grid-column: span 2;">
         <div class="card-glow"></div>
         <div class="card-header">
           <span class="card-title-icon">🧪</span>
-          <h3>Confluence Strategy Backtester</h3>
+          <h3>Advanced Strategy Backtester & Leaderboard</h3>
         </div>
         <div class="backtest-body">
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; gap:10px;">
-              <div style="flex:1;">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; align-items: end;">
+              <div>
                 <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy</label>
                 <select class="inp inp-full" id="btStrategy" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
-                  <option value="ema_smc">EMA Stacks + SMC Zones</option>
-                  <option value="rsi_vwap">RSI Divergence + VWAP Sweep</option>
+                  <!-- Dynamically populated -->
                 </select>
               </div>
-              <div style="width:100px;">
+              <div>
                 <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Capital ($)</label>
                 <input type="number" class="inp inp-full" id="btCapital" value="10000" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
               </div>
+              <div style="display:flex; align-items:center; height:32px;">
+                <label class="retro-checkbox" style="font-size:10px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                  <input type="checkbox" id="btCompareMode"> Compare Mode
+                </label>
+              </div>
             </div>
+
+            <!-- Compare Selection List -->
+            <div id="btCompareListContainer" style="display:none; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:10px; max-height:110px; overflow-y:auto;">
+              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block; margin-bottom:6px;">Select Strategies to Compare</span>
+              <div id="btCompareCheckboxes" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px; color:var(--text-2);">
+                <!-- Dynamically populated checkboxes -->
+              </div>
+            </div>
+
             <button class="btn btn-primary" id="btnRunBt" style="width:100%; font-weight:700;">Run Strategy Backtest</button>
-            <div id="btResults" style="display:none; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); font-size:11px; line-height:1.6;">
-              <table style="width:100%; border-collapse:collapse;">
-                <tbody>
-                  <tr><td>Win Rate:</td><td id="btWinRate" style="font-weight:700; color:var(--gold);">—</td></tr>
-                  <tr><td>Net Profit:</td><td id="btNetProfit" style="font-weight:700; color:var(--green);">—</td></tr>
-                  <tr><td>Max Drawdown:</td><td id="btMaxDD" style="color:var(--red);">—</td></tr>
-                  <tr><td>Sharpe Ratio:</td><td id="btSharpe" style="font-weight:700;">—</td></tr>
-                  <tr><td>Profit Factor:</td><td id="btProfitFactor" style="color:var(--green);">—</td></tr>
-                </tbody>
-              </table>
+
+            <!-- Results Section with Tab Layout -->
+            <div id="btResults" style="display:none; background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; border:1px solid rgba(0, 240, 255, 0.1); margin-top:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text);">Backtest Results Detail</span>
+                <div class="bot-decision-time" id="btCompletedTime" style="font-family:var(--mono); font-size:9px; color:var(--text-3);">—</div>
+              </div>
+              
+              <div style="display:flex; gap:6px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:6px;">
+                <button class="btn-demo-ctrl btn-sm active" id="btnTabBtStats" style="padding:4px 10px;">Metrics</button>
+                <button class="btn-demo-ctrl btn-sm" id="btnTabBtEquity" style="padding:4px 10px;">Equity Curves</button>
+                <button class="btn-demo-ctrl btn-sm" id="btnTabBtTrades" style="padding:4px 10px;">Trade Logs</button>
+              </div>
+
+              <!-- Tab 1: Stats Table -->
+              <div id="panelBtStats" style="display:block;">
+                <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:10px;" id="btStatsTable">
+                  <thead>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                      <th style="text-align:left; padding:4px;">Metric</th>
+                      <th style="text-align:right; padding:4px;" id="btStatsHeaderPrimary">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="btStatsTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Tab 2: Equity Curve Chart -->
+              <div id="panelBtEquity" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:9.5px; color:var(--text-2); text-transform:uppercase; font-weight:700;">Account Equity Over Time</span>
+                  <div id="btChartLegend" style="display:flex; gap:10px; font-size:9px;"></div>
+                </div>
+                <canvas id="btEquityChart" width="500" height="150" style="width:100%; height:140px; background:rgba(0,0,0,0.3); border-radius:4px; border:1px solid rgba(255,255,255,0.05);"></canvas>
+              </div>
+
+              <!-- Tab 3: Simulated Trade List -->
+              <div id="panelBtTrades" style="display:none;">
+                <div class="terminal-table-container" style="max-height:180px; overflow-y:auto;">
+                  <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:9.5px;">
+                    <thead>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <th style="text-align:left; padding:4px;">Time</th>
+                        <th style="text-align:center; padding:4px;">Type</th>
+                        <th style="text-align:right; padding:4px;">Entry</th>
+                        <th style="text-align:right; padding:4px;">Exit</th>
+                        <th style="text-align:right; padding:4px;">P&L ($)</th>
+                        <th style="text-align:right; padding:4px;">R:R</th>
+                      </tr>
+                    </thead>
+                    <tbody id="btTradesTableBody">
+                      <!-- Filled dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1331,6 +1432,110 @@
           <div><span style="color:var(--text-3);">Expectancy</span><div id="perfExpectancy" style="font-weight:700;">$0</div></div>
           <div><span style="color:var(--text-3);">Largest Win</span><div id="perfLargestWin" style="font-weight:700;color:var(--green);">$0</div></div>
           <div><span style="color:var(--text-3);">Largest Loss</span><div id="perfLargestLoss" style="font-weight:700;color:var(--red);">$0</div></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Custom Strategy Maker Row -->
+    <div class="grid-row row-1" style="margin-top: 20px;">
+      <div class="glass-card strategy-maker-card">
+        <div class="card-glow"></div>
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center;">
+            <span class="card-title-icon">🛠</span>
+            <h3>Custom Strategy Maker (Visual Builder)</h3>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary btn-sm" id="btnNewStrategy" style="padding:4px 8px;">+ Reset Builder</button>
+            <button class="btn btn-primary btn-sm" id="btnSaveStrategy" style="padding:4px 8px;">💾 Save Strategy</button>
+          </div>
+        </div>
+        <div class="maker-body" style="padding:15px; display:grid; grid-template-columns: 2fr 1fr; gap:15px;">
+          <!-- Left: Builder Canvas -->
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Meta & SL/TP -->
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px;">
+              <div>
+                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy Name</label>
+                <input type="text" id="makerStrategyName" class="inp inp-full" placeholder="My Custom Strategy" style="padding:5px; font-size:11px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; width:100%;">
+              </div>
+              <div>
+                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Trade Direction</label>
+                <select id="makerDirection" class="inp inp-full" style="padding:5px; font-size:11px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; width:100%;">
+                  <option value="both">LONG & SHORT</option>
+                  <option value="long">LONG ONLY</option>
+                  <option value="short">SHORT ONLY</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Stop Loss</label>
+                <div style="display:flex; gap:2px;">
+                  <select id="makerSLType" style="width:60px; font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
+                    <option value="fixed_percent">%</option>
+                    <option value="atr_multiple">ATR</option>
+                    <option value="structural">Str</option>
+                  </select>
+                  <input type="number" id="makerSLValue" value="2.0" step="0.1" style="width:40px; font-size:11px; text-align:center; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
+                </div>
+              </div>
+              <div>
+                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Take Profit</label>
+                <div style="display:flex; gap:2px;">
+                  <select id="makerTPType" style="width:60px; font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
+                    <option value="r_multiple">R-Mult</option>
+                    <option value="fixed_percent">%</option>
+                    <option value="structural">Str</option>
+                  </select>
+                  <input type="number" id="makerTPValue" value="2.5" step="0.1" style="width:40px; font-size:11px; text-align:center; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Rules Blocks Container -->
+            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.03); border-radius:8px; padding:12px; min-height:150px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:10px; font-weight:800; color:var(--text-2); text-transform:uppercase;">Entry Rules Configuration</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:9px; color:var(--text-3);">Group Operator:</span>
+                  <select id="makerGroupOperator" style="font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px 6px;">
+                    <option value="AND">AND (All Conditions)</option>
+                    <option value="OR">OR (Any Condition)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Live blocks list -->
+              <div id="makerRulesList" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- Dynamically added blocks -->
+              </div>
+
+              <!-- Add Rule Buttons -->
+              <div style="display:flex; gap:10px; margin-top:10px; border-top:1px solid rgba(255,255,255,0.04); padding-top:10px;">
+                <button class="btn btn-secondary btn-sm" id="btnAddIndicatorRule" style="flex:1; padding:5px; font-size:10px;">+ Add Indicator Condition</button>
+                <button class="btn btn-secondary btn-sm" id="btnAddPatternRule" style="flex:1; padding:5px; font-size:10px;">+ Add Candle Pattern</button>
+                <button class="btn btn-secondary btn-sm" id="btnAddSmcRule" style="flex:1; padding:5px; font-size:10px;">+ Add SMC / Structure</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live Win-Rate Preview & Saved Strategies -->
+          <div style="display:flex; flex-direction:column; gap:12px; border-left:1px solid rgba(255,255,255,0.05); padding-left:15px;">
+            <!-- Live Preview Indicator Card -->
+            <div style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:12px; text-align:center;">
+              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">Real-Time Win-Rate Preview</span>
+              <div id="makerLiveWinRate" style="font-size:24px; font-weight:800; color:var(--gold); font-family:var(--mono);">— %</div>
+              <div id="makerLiveSignalsCount" style="font-size:10px; color:var(--text-2); margin-top:4px;">0 entry signals generated</div>
+            </div>
+
+            <!-- Saved Custom Strategies List -->
+            <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block;">My Custom Registries</span>
+              <div id="makerSavedStrategiesList" style="flex:1; max-height:170px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+                <!-- Saved custom strategies loaded from LocalStorage -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

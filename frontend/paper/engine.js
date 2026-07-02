@@ -1,11 +1,11 @@
 /**
- * ApexTrader Paper Trading Engine
- * Virtual portfolio, P&L, journal, and AI-assisted trade evaluation.
+ * ApexTrader Paper Trading Engine (Database Persistent Edition)
+ * Integrates directly with the FastAPI backend endpoints.
  */
 import { S, saveState } from '../settings/state.js';
 import { getEMA, getBB, getRSI, getStoch, getCloses } from '../indicators/indicators.js';
 
-export const FEE_RATE = 0.0006;
+export const FEE_RATE = 0.0004; // Matches backend fee structure (0.04%)
 export const DEFAULT_BALANCE = 10000;
 
 let _toast = (msg, type) => console.log(`[paper] ${type}: ${msg}`);
@@ -56,19 +56,353 @@ export function ensurePaperState() {
   if (!S.achievements) {
     S.achievements = { '100-wins': false, '5-days': false, '10r-trade': false, 'no-rule-breaks': true };
   }
-  if (S.demoAccount.aiBalance == null) S.demoAccount.aiBalance = DEFAULT_BALANCE;
 }
 
-export function resetPaperAccount() {
-  S.demoAccount = defaultAccount();
-  S.demoPositions = [];
-  S.demoHistory = [];
-  S.achievements = { '100-wins': false, '5-days': false, '10r-trade': false, 'no-rule-breaks': true };
-  saveState();
-  notify();
-  _toast('Demo account reset to $10,000.', 'info');
+// ──────────────────────────────────────────────
+//  Backend API Synchronization
+// ──────────────────────────────────────────────
+export async function syncDemoData() {
+  ensurePaperState();
+  try {
+    // 1. Portfolio Summary
+    const r1 = await fetch('/demo/portfolio');
+    if (r1.ok) {
+      const d1 = await r1.json();
+      S.demoAccount.balance = d1.balance;
+      S.demoAccount.equity = d1.equity;
+      S.demoAccount.usedMargin = d1.used_margin;
+      S.demoAccount.freeMargin = d1.free_margin;
+      S.demoAccount.openRisk = d1.open_risk_pct;
+      S.demoAccount.todayPnl = d1.equity - d1.balance;
+    }
+
+    // 2. Open Positions
+    const r2 = await fetch('/demo/positions');
+    if (r2.ok) {
+      const d2 = await r2.json();
+      S.demoPositions = d2.map(p => ({
+        id: p.id,
+        symbol: p.symbol,
+        type: p.side === 'BUY' ? 'LONG' : 'SHORT',
+        size: p.size,
+        leverage: p.leverage,
+        entryPrice: p.entry_price,
+        sl: p.sl,
+        tp: p.tp,
+        pnl: p.pnl,
+        roi: p.pnl_pct,
+        status: 'Running',
+        openTime: p.created_at
+      }));
+      S.demoAccount.openTrades = S.demoPositions.length;
+    }
+
+    // 3. Closed Trades Journal
+    const r3 = await fetch('/demo/trades?limit=50');
+    if (r3.ok) {
+      const d3 = await r3.json();
+      S.demoHistory = d3.map(h => ({
+        id: h.id,
+        symbol: h.symbol,
+        type: h.side === 'BUY' ? 'LONG' : 'SHORT',
+        size: h.size,
+        leverage: h.leverage,
+        entryPrice: h.entry_price,
+        exitPrice: h.exit_price,
+        sl: h.sl,
+        tp: h.tp,
+        rr: h.ai_reasoning_snapshot?.rr !== undefined ? h.ai_reasoning_snapshot.rr : (h.sl && h.sl > 0 ? parseFloat((Math.abs(h.exit_price - h.entry_price) / Math.abs(h.entry_price - h.sl)).toFixed(2)) : 0.0),
+        pnl: h.pnl,
+        roi: h.leverage > 0 ? (h.pnl / (h.size * h.entry_price / h.leverage) * 100) : 0,
+        fees: h.fees,
+        openTime: h.entry_time,
+        closeTime: h.exit_time,
+        closeDate: h.exit_time ? h.exit_time.slice(0, 10) : '',
+        grade: h.ai_reasoning_snapshot?.grade || (h.pnl >= 0 ? 'B' : 'D'),
+        exitReason: h.ai_reasoning_snapshot?.recommendation || h.user_notes || 'Respect invalidation levels.',
+        aiConfidence: h.ai_confidence || 75,
+        aiReasoning: h.ai_reasoning_snapshot?.ai_notes || 'Standard technical evaluation.',
+        userNotes: h.ai_reasoning_snapshot?.summary || h.user_notes || 'No review notes.',
+        aiReasons: h.ai_reasoning_snapshot?.tags || [],
+        followedAi: h.ai_confidence > 0,
+        source: h.ai_confidence > 0 ? 'ai-guided' : 'manual'
+      }));
+
+      // Compute and update achievements
+      const prevAchs = { ...(S.achievements || {}) };
+      const wins = S.demoHistory.filter(t => t.pnl > 0);
+      
+      const ach100Wins = wins.length >= 100;
+      
+      // 5 Days Streak
+      const dailyPnls = {};
+      S.demoHistory.forEach(h => {
+        const d = h.closeDate || '';
+        if (d) dailyPnls[d] = (dailyPnls[d] || 0) + h.pnl;
+      });
+      const dates = Object.keys(dailyPnls).sort();
+      let maxStreak = 0;
+      let currentStreak = 0;
+      for (let i = 0; i < dates.length; i++) {
+        const pnl = dailyPnls[dates[i]];
+        if (pnl > 0) {
+          currentStreak++;
+          if (currentStreak > maxStreak) maxStreak = currentStreak;
+        } else {
+          currentStreak = 0;
+        }
+      }
+      const ach5Days = maxStreak >= 5;
+
+      // 10R Trade
+      const ach10R = S.demoHistory.some(t => t.rr >= 10.0);
+
+      // No Rule Breaks
+      let hasRuleBreaks = false;
+      const sorted = [...S.demoHistory].sort((a, b) => new Date(a.openTime.replace(' ', 'T')) - new Date(b.openTime.replace(' ', 'T')));
+      for (let i = 0; i < sorted.length; i++) {
+        const t = sorted[i];
+        if (t.leverage > 20) hasRuleBreaks = true;
+        if (i > 0) {
+          const prev = sorted[i - 1];
+          if (prev.pnl < 0 && prev.closeTime && t.openTime) {
+            const diffMs = new Date(t.openTime.replace(' ', 'T')) - new Date(prev.closeTime.replace(' ', 'T'));
+            if (diffMs > 0 && diffMs <= 5 * 60 * 1000) {
+              hasRuleBreaks = true;
+            }
+          }
+        }
+        const hasOverbought = (t.aiReasons || []).some(r => r.toLowerCase().includes('overbought'));
+        if (t.type === 'LONG' && hasOverbought) {
+          hasRuleBreaks = true;
+        }
+      }
+      const achNoRuleBreaks = !hasRuleBreaks;
+
+      S.achievements = {
+        '100-wins': ach100Wins,
+        '5-days': ach5Days,
+        '10r-trade': ach10R,
+        'no-rule-breaks': achNoRuleBreaks
+      };
+
+      // Consolidate Win Rate
+      const stats = getPerformanceStats();
+      S.demoAccount.winRate = stats.winRate;
+
+      saveState();
+
+      // Check for new unlocks (only triggers if previously false, not undefined on startup)
+      const keys = ['100-wins', '5-days', '10r-trade', 'no-rule-breaks'];
+      keys.forEach(k => {
+        if (S.achievements[k] && prevAchs[k] === false) {
+          window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { key: k } }));
+        }
+      });
+    }
+  } catch (e) {
+    console.error('[syncDemoData] Sync failed:', e);
+  }
 }
 
+// ──────────────────────────────────────────────
+//  Trade Operation Triggers (REST Endpoints)
+// ──────────────────────────────────────────────
+export async function resetPaperAccount() {
+  try {
+    const r = await fetch('/demo/reset?balance=10000', { method: 'POST' });
+    if (r.ok) {
+      await syncDemoData();
+      notify();
+      _toast('Demo account reset to $10,000.', 'info');
+    }
+  } catch (e) {
+    _toast('Failed to reset account.', 'error');
+  }
+}
+
+export async function openPaperPosition(type, opts = {}) {
+  ensurePaperState();
+  const currentPrice = opts.price;
+  if (!currentPrice) {
+    _toast('No live price available to execute order.', 'error');
+    return null;
+  }
+
+  const sizing = resolveOrderSizing(type, currentPrice, opts);
+  sizing.entry = currentPrice;
+
+  const warnings = preTradeCheck(type, sizing);
+  warnings.forEach(w => _toast(`⚠️ ${w}`, 'error'));
+
+  const payload = {
+    symbol: opts.symbol || S.coin,
+    side: type === 'LONG' ? 'BUY' : 'SELL',
+    size: sizing.sizeUnits,
+    leverage: sizing.leverage,
+    sl: sizing.sl || null,
+    tp: sizing.tp || null,
+    price: currentPrice
+  };
+
+  const snap = S.aiSnapshot;
+  const followedAi = !!(snap && biasMatchesType(snap.bias, type) && opts.useAi !== false);
+  if (followedAi) {
+    payload.linked_ai_signal = {
+      interval: S.tf,
+      bias: snap.bias,
+      entry_price: snap.entryPrice || currentPrice,
+      sl: snap.sl || null,
+      tp: snap.tp || null,
+      confidence: snap.score || 0.0,
+      reasoning_tags: (snap.confluences || []).slice(0, 5).map(c => c.txt)
+    };
+  }
+
+  try {
+    const r = await fetch('/demo/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const err = await r.json();
+      _toast(`Error: ${err.detail || r.statusText}`, 'error');
+      return null;
+    }
+    await syncDemoData();
+    notify();
+    _toast(`${followedAi ? 'AI-guided' : 'Manual'} ${type} opened.`, 'success');
+  } catch (e) {
+    _toast('Failed to open position.', 'error');
+  }
+}
+
+export async function closePaperPosition(idx, exitReason = 'Manual Close', exitPriceOverride) {
+  ensurePaperState();
+  const p = S.demoPositions[idx];
+  if (!p) return null;
+
+  try {
+    const r = await fetch('/demo/close', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        position_id: p.id,
+        price: exitPriceOverride || null
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json();
+      _toast(`Error: ${err.detail || r.statusText}`, 'error');
+      return null;
+    }
+    const trade = await r.json();
+    await syncDemoData();
+    notify();
+    _toast(`Closed: ${trade.pnl >= 0 ? '+' : ''}${fmtUSD(trade.pnl)}`, trade.pnl >= 0 ? 'success' : 'info');
+    return trade;
+  } catch (e) {
+    _toast('Failed to close position.', 'error');
+    return null;
+  }
+}
+
+export async function closeHalfPosition() {
+  if (!S.demoPositions.length) {
+    _toast('No open positions.', 'info');
+    return;
+  }
+  const p = S.demoPositions[0];
+  const halfSize = p.size / 2;
+  try {
+    const r = await fetch('/demo/close', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        position_id: p.id,
+        size: halfSize
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json();
+      _toast(`Error: ${err.detail || r.statusText}`, 'error');
+      return;
+    }
+    await syncDemoData();
+    notify();
+    _toast('Closed 50% of position size.', 'info');
+  } catch (e) {
+    _toast('Failed to close 50% of position.', 'error');
+  }
+}
+
+export async function moveSlToBreakeven() {
+  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
+  const p = S.demoPositions[0];
+  try {
+    const r = await fetch('/demo/modify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        position_id: p.id,
+        sl: p.entryPrice,
+        tp: p.tp
+      })
+    });
+    if (r.ok) {
+      await syncDemoData();
+      notify();
+      _toast('Stop loss moved to breakeven.', 'success');
+    }
+  } catch (e) {
+    _toast('Failed to modify stop loss.', 'error');
+  }
+}
+
+export async function trailStop(currentPrice) {
+  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
+  const p = S.demoPositions[0];
+  const px = currentPrice || p.entryPrice;
+  const newSl = p.type === 'LONG' ? px * 0.995 : px * 1.005;
+  try {
+    const r = await fetch('/demo/modify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        position_id: p.id,
+        sl: newSl,
+        tp: p.tp
+      })
+    });
+    if (r.ok) {
+      await syncDemoData();
+      notify();
+      _toast('Trailing stop adjusted.', 'success');
+    }
+  } catch (e) {
+    _toast('Failed to adjust trailing stop.', 'error');
+  }
+}
+
+export async function reversePosition(currentPrice, openOpts) {
+  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
+  const p = S.demoPositions[0];
+  const newType = p.type === 'LONG' ? 'SHORT' : 'LONG';
+  await closePaperPosition(0, 'Position Reversed', currentPrice);
+  await openPaperPosition(newType, { ...openOpts, price: currentPrice });
+}
+
+export async function closeAllPositions(currentPrice) {
+  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
+  for (let i = S.demoPositions.length - 1; i >= 0; i--) {
+    await closePaperPosition(i, 'Manual Close All', currentPrice);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Trade Sizing & Indicator Helpers
+// ──────────────────────────────────────────────
 function parseStepVal(steps, labelPart) {
   if (!steps) return 0;
   const step = steps.find(s => (s.label || '').toLowerCase().includes(labelPart.toLowerCase()));
@@ -112,8 +446,8 @@ export function getAiTradeLevels(type, currentPrice) {
 
 export function biasMatchesType(bias, type) {
   const b = (bias || '').toLowerCase();
-  if (type === 'LONG') return b.includes('bullish');
-  if (type === 'SHORT') return b.includes('bearish');
+  if (type === 'LONG') return b.includes('bullish') || b.includes('long');
+  if (type === 'SHORT') return b.includes('bearish') || b.includes('short');
   return false;
 }
 
@@ -165,7 +499,6 @@ export function preTradeCheck(type, sizing) {
   const warnings = [];
   if (sizing.riskPct > 2.0) {
     warnings.push(`Position risks ${sizing.riskPct}% of account (recommended max 1%).`);
-    S.achievements['no-rule-breaks'] = false;
   }
   if (sizing.riskPct > 1.0) {
     warnings.push(`Open risk ${sizing.riskPct.toFixed(1)}% exceeds 1% guideline.`);
@@ -190,76 +523,6 @@ export function preTradeCheck(type, sizing) {
   return warnings;
 }
 
-export function openPaperPosition(type, opts = {}) {
-  ensurePaperState();
-  const currentPrice = opts.price;
-  if (!currentPrice) {
-    _toast('No live price available to execute order.', 'error');
-    return null;
-  }
-
-  const sizing = resolveOrderSizing(type, currentPrice, opts);
-  sizing.entry = currentPrice;
-
-  const warnings = preTradeCheck(type, sizing);
-  warnings.forEach(w => _toast(`⚠️ ${w}`, 'error'));
-
-  const acc = S.demoAccount;
-  if (sizing.marginRequired > acc.freeMargin) {
-    _toast(`Insufficient margin: need ${fmtUSD(sizing.marginRequired)}, free ${fmtUSD(acc.freeMargin)}`, 'error');
-    return null;
-  }
-
-  const snap = S.aiSnapshot;
-  const followedAi = !!(snap && biasMatchesType(snap.bias, type) && opts.useAi !== false);
-
-  const pos = {
-    id: Date.now(),
-    symbol: opts.symbol || S.coin,
-    type,
-    size: sizing.sizeUnits,
-    leverage: sizing.leverage,
-    entryPrice: currentPrice,
-    sl: sizing.sl,
-    tp: sizing.tp,
-    tp2: sizing.tp2,
-    tp3: sizing.tp3,
-    margin: sizing.marginRequired,
-    pnl: 0,
-    roi: 0,
-    status: 'Running',
-    openTime: new Date().toISOString(),
-    openTimeLabel: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-    aiConfidence: snap?.score ?? null,
-    aiBias: snap?.bias ?? null,
-    aiConfluences: (snap?.confluences || []).slice(0, 5).map(c => c.txt),
-    followedAi,
-    source: followedAi ? 'ai-guided' : 'manual',
-  };
-
-  S.demoPositions.push(pos);
-  acc.usedMargin += sizing.marginRequired;
-  acc.freeMargin = acc.balance - acc.usedMargin;
-  acc.openTrades = S.demoPositions.length;
-  recomputeOpenRisk();
-
-  saveState();
-  notify();
-  _toast(`${followedAi ? 'AI-guided' : 'Manual'} ${type} @ ${fmtUSD(currentPrice)}`, 'success');
-  return pos;
-}
-
-function recomputeOpenRisk() {
-  const acc = S.demoAccount;
-  let riskSum = 0;
-  S.demoPositions.forEach(p => {
-    if (!p.entryPrice || !p.sl) return;
-    const stopPct = (Math.abs(p.entryPrice - p.sl) / p.entryPrice) * 100;
-    riskSum += stopPct * (p.margin / Math.max(acc.balance, 1));
-  });
-  acc.openRisk = riskSum;
-}
-
 export function calcPositionPnl(p, currentPrice) {
   const priceDiff = p.type === 'LONG' ? (currentPrice - p.entryPrice) : (p.entryPrice - currentPrice);
   const openFee = p.entryPrice * p.size * FEE_RATE;
@@ -269,230 +532,23 @@ export function calcPositionPnl(p, currentPrice) {
   return { pnl, roi, fees: openFee + closeFee };
 }
 
+// Recalculates position P&L locally on price updates to show ticking digits
 export function tickPaperPositions(currentPrice, symbol) {
   ensurePaperState();
-  if (!currentPrice || !S.demoPositions.length) {
-    recomputeAccountEquity(0);
-    notify();
-    return;
-  }
+  if (!currentPrice || !S.demoPositions.length) return;
 
   let runningPnl = 0;
-  let triggered = false;
-
-  for (let idx = S.demoPositions.length - 1; idx >= 0; idx--) {
-    const p = S.demoPositions[idx];
-    if (p.symbol !== symbol || p.status !== 'Running') continue;
-
+  S.demoPositions.forEach(p => {
+    if (p.symbol !== symbol) return;
     const { pnl, roi } = calcPositionPnl(p, currentPrice);
     p.pnl = pnl;
     p.roi = roi;
     runningPnl += pnl;
-
-    let exitReason = null;
-    if (p.sl) {
-      if (p.type === 'LONG' && currentPrice <= p.sl) exitReason = 'Stop Loss Hit';
-      if (p.type === 'SHORT' && currentPrice >= p.sl) exitReason = 'Stop Loss Hit';
-    }
-    if (p.tp) {
-      if (p.type === 'LONG' && currentPrice >= p.tp) exitReason = 'Take Profit Hit';
-      if (p.type === 'SHORT' && currentPrice <= p.tp) exitReason = 'Take Profit Hit';
-    }
-
-    const liq = p.type === 'LONG'
-      ? p.entryPrice * (1 - 1 / p.leverage)
-      : p.entryPrice * (1 + 1 / p.leverage);
-    if (p.type === 'LONG' && currentPrice <= liq) exitReason = 'Liquidated';
-    if (p.type === 'SHORT' && currentPrice >= liq) exitReason = 'Liquidated';
-
-    if (exitReason) {
-      closePaperPosition(idx, exitReason, currentPrice);
-      triggered = true;
-    }
-  }
-
-  recomputeAccountEquity(runningPnl);
-  if (triggered) saveState();
-  notify();
-}
-
-function recomputeAccountEquity(unrealizedPnl) {
-  const acc = S.demoAccount;
-  acc.equity = acc.balance + unrealizedPnl;
-  acc.todayPnl = acc.realizedToday + unrealizedPnl;
-  acc.netProfit = acc.balance - DEFAULT_BALANCE;
-  acc.dailyReturn = acc.balance > 0 ? (acc.realizedToday / DEFAULT_BALANCE) * 100 : 0;
-  acc.openTrades = S.demoPositions.length;
-}
-
-function gradeTrade(finalPnl, rr) {
-  if (finalPnl > 0) {
-    if (rr >= 10) return 'A+';
-    if (rr >= 3) return 'A+';
-    if (rr >= 2) return 'A';
-    return 'B';
-  }
-  return 'D';
-}
-
-function buildAiReview(p, finalPnl, exitReason) {
-  const confs = p.aiConfluences || [];
-  const confStr = confs.slice(0, 4).join(', ') || 'EMA stack, momentum, structure';
-
-  if (finalPnl >= 0) {
-    return {
-      summary: `Excellent execution. ${confStr}. Held through noise to target.`,
-      reasoning: `AI confidence was ${p.aiConfidence ?? '—'}% at entry. Exit: ${exitReason}.`,
-      reasons: confs.length ? confs : ['Trend alignment', 'VWAP support', 'Order block confluence'],
-    };
-  }
-
-  return {
-    summary: 'Entered before full confirmation. Market reversed against the setup.',
-    reasoning: `Confidence at entry: ${p.aiConfidence ?? '—'}%. ${exitReason}. Wait for candle close confirmation next time.`,
-    reasons: ['Premature entry', 'Macro reversal', 'Stop loss respected (risk managed)'],
-  };
-}
-
-export function closePaperPosition(idx, exitReason = 'Manual Close', exitPriceOverride) {
-  ensurePaperState();
-  const p = S.demoPositions[idx];
-  if (!p) return null;
-
-  const currentPrice = exitPriceOverride ?? p.entryPrice;
-  const { pnl: finalPnl, roi: finalRoi, fees } = calcPositionPnl(p, currentPrice);
-
-  S.demoPositions.splice(idx, 1);
-
-  const acc = S.demoAccount;
-  acc.balance += finalPnl;
-  acc.usedMargin -= p.margin;
-  acc.freeMargin = acc.balance - acc.usedMargin;
-  acc.realizedToday += finalPnl;
-  acc.feesPaid += fees;
-  acc.todayPnl = acc.realizedToday;
-
-  const stopDist = Math.abs(p.entryPrice - p.sl);
-  const rr = stopDist > 0 ? Math.abs(currentPrice - p.entryPrice) / stopDist : 0;
-  const grade = gradeTrade(finalPnl, rr);
-  const review = buildAiReview(p, finalPnl, exitReason);
-
-  if (grade === 'A+' && rr >= 10) {
-    S.achievements['10r-trade'] = true;
-    _toast('💎 Achievement: 10R Ratio Legend!', 'success');
-  }
-
-  const journalItem = {
-    id: (S.demoHistory.length ? Math.max(...S.demoHistory.map(h => h.id)) : 100) + 1,
-    symbol: p.symbol,
-    type: p.type,
-    size: p.size,
-    leverage: p.leverage,
-    entryPrice: p.entryPrice,
-    exitPrice: currentPrice,
-    sl: p.sl,
-    tp: p.tp,
-    rr,
-    pnl: finalPnl,
-    roi: finalRoi,
-    fees,
-    openTime: p.openTimeLabel || p.openTime,
-    closeTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-    closeDate: new Date().toISOString().slice(0, 10),
-    grade,
-    exitReason,
-    aiConfidence: p.aiConfidence ?? 0,
-    aiBias: p.aiBias,
-    aiReasoning: review.reasoning,
-    userNotes: review.summary,
-    aiReasons: review.reasons,
-    followedAi: p.followedAi,
-    source: p.source,
-  };
-
-  S.demoHistory.push(journalItem);
-
-  const wins = S.demoHistory.filter(h => h.pnl > 0).length;
-  acc.winRate = S.demoHistory.length ? (wins / S.demoHistory.length) * 100 : 100;
-
-  if (wins >= 100) {
-    S.achievements['100-wins'] = true;
-    _toast('🏆 Achievement: 100 Winning Trades!', 'success');
-  }
-
-  checkWinningDayStreak();
-  updateAiShadowBalance(journalItem);
-
-  saveState();
-  notify();
-  _toast(`Closed (${exitReason}): ${finalPnl >= 0 ? '+' : ''}${fmtUSD(finalPnl)}`, finalPnl >= 0 ? 'success' : 'info');
-  return journalItem;
-}
-
-function checkWinningDayStreak() {
-  const byDay = {};
-  S.demoHistory.forEach(h => {
-    const d = h.closeDate || new Date().toISOString().slice(0, 10);
-    byDay[d] = (byDay[d] || 0) + h.pnl;
   });
-  const days = Object.keys(byDay).sort().slice(-5);
-  if (days.length >= 5 && days.every(d => byDay[d] > 0)) {
-    S.achievements['5-days'] = true;
-    _toast('🔥 Achievement: 5 Winning Days!', 'success');
-  }
-}
 
-function updateAiShadowBalance(trade) {
   const acc = S.demoAccount;
-  if (trade.followedAi) {
-    acc.aiBalance = (acc.aiBalance ?? DEFAULT_BALANCE) + trade.pnl;
-  }
-}
-
-export function closeHalfPosition() {
-  if (!S.demoPositions.length) {
-    _toast('No open positions.', 'info');
-    return;
-  }
-  const p = S.demoPositions[0];
-  p.size /= 2;
-  p.margin /= 2;
-  saveState();
-  notify();
-  _toast('Closed 50% of position size.', 'info');
-}
-
-export function moveSlToBreakeven() {
-  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
-  S.demoPositions[0].sl = S.demoPositions[0].entryPrice;
-  saveState();
-  notify();
-  _toast('Stop loss moved to breakeven.', 'success');
-}
-
-export function trailStop(currentPrice) {
-  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
-  const p = S.demoPositions[0];
-  const px = currentPrice || p.entryPrice;
-  p.sl = p.type === 'LONG' ? px * 0.995 : px * 1.005;
-  saveState();
-  notify();
-  _toast('Trailing stop adjusted.', 'success');
-}
-
-export function reversePosition(currentPrice, openOpts) {
-  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
-  const p = S.demoPositions[0];
-  const newType = p.type === 'LONG' ? 'SHORT' : 'LONG';
-  closePaperPosition(0, 'Position Reversed', currentPrice);
-  openPaperPosition(newType, { ...openOpts, price: currentPrice });
-}
-
-export function closeAllPositions(currentPrice) {
-  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
-  while (S.demoPositions.length) {
-    closePaperPosition(0, 'Manual Close All', currentPrice);
-  }
+  acc.equity = acc.balance + runningPnl;
+  acc.todayPnl = acc.realizedToday + runningPnl;
 }
 
 export function getPerformanceStats() {
@@ -531,8 +587,6 @@ export function getChallengeReturns() {
   let aiReturn = 0;
   if (aiTrades.length) {
     aiReturn = (aiTrades.reduce((s, h) => s + h.pnl, 0) / DEFAULT_BALANCE) * 100;
-  } else if (acc.aiBalance != null) {
-    aiReturn = ((acc.aiBalance - DEFAULT_BALANCE) / DEFAULT_BALANCE) * 100;
   }
   return { userReturn, aiReturn, aiTradeCount: aiTrades.length };
 }
@@ -577,107 +631,8 @@ export function getCoachAdvice(position, currentPrice) {
 export function getDailyPnlMap() {
   const map = {};
   S.demoHistory.forEach(h => {
-    const d = h.closeDate || new Date().toISOString().slice(0, 10);
-    map[d] = (map[d] || 0) + h.pnl;
+    const d = h.closeDate || '';
+    if (d) map[d] = (map[d] || 0) + h.pnl;
   });
   return map;
-}
-
-export function logBotAction(msg) {
-  if (!S.botLogs) S.botLogs = [];
-  const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  S.botLogs.push(`[${timestamp}] ${msg}`);
-  if (S.botLogs.length > 50) S.botLogs.shift();
-  notify();
-}
-
-let lastCheckTime = 0;
-
-export function tickTradingBot(currentPrice, symbol) {
-  ensurePaperState();
-  if (!S.botActive) return;
-
-  // Run strategy evaluation at most once every 3 seconds to avoid spamming indicators logic
-  const now = Date.now();
-  if (now - lastCheckTime < 3000) return;
-  lastCheckTime = now;
-
-  // If there are already active positions, let's wait until they exit
-  if (S.demoPositions.length >= 1) return;
-
-  const strategy = S.botStrategy || 'ai_consensus';
-  const snap = S.aiSnapshot;
-
-  if (strategy === 'ai_consensus') {
-    if (!snap || snap.score == null) return;
-    if (snap.score >= 80) {
-      const bias = (snap.bias || '').toLowerCase();
-      if (bias.includes('long') || bias.includes('bullish')) {
-        logBotAction(`AI Consensus trigger: Placing BUY (LONG) @ ${fmtUSD(currentPrice)} (Confidence ${snap.score}%)`);
-        openPaperPosition('LONG', { symbol, price: currentPrice, useAi: true, leverage: 20 });
-      } else if (bias.includes('short') || bias.includes('bearish')) {
-        logBotAction(`AI Consensus trigger: Placing SELL (SHORT) @ ${fmtUSD(currentPrice)} (Confidence ${snap.score}%)`);
-        openPaperPosition('SHORT', { symbol, price: currentPrice, useAi: true, leverage: 20 });
-      }
-    }
-  } 
-  else if (strategy === 'ema_rsi') {
-    if (S.candles.length < 60) return;
-    const closes = getCloses();
-    const ema20 = getEMA(closes, 20);
-    const ema50 = getEMA(closes, 50);
-    const rsi = getRSI(closes, 14);
-
-    const len = closes.length;
-    const last20 = ema20[len - 1];
-    const last50 = ema50[len - 1];
-    const lastRsi = rsi[len - 1];
-
-    if (last20 > last50 && lastRsi < 40) {
-      logBotAction(`EMA+RSI trigger: Placing BUY (LONG) @ ${fmtUSD(currentPrice)} (EMA Cross Up, RSI: ${lastRsi.toFixed(0)})`);
-      openPaperPosition('LONG', { symbol, price: currentPrice, useAi: false, leverage: 15 });
-    } else if (last20 < last50 && lastRsi > 60) {
-      logBotAction(`EMA+RSI trigger: Placing SELL (SHORT) @ ${fmtUSD(currentPrice)} (EMA Cross Down, RSI: ${lastRsi.toFixed(0)})`);
-      openPaperPosition('SHORT', { symbol, price: currentPrice, useAi: false, leverage: 15 });
-    }
-  }
-  else if (strategy === 'smc_fvg') {
-    if (!snap || !snap.levels) return;
-    const bias = (snap.bias || '').toLowerCase();
-    const isBullish = bias.includes('long') || bias.includes('bullish');
-    
-    // Check if price is inside entry range target (within 0.5% of target entry price)
-    const targetEntry = snap.entryPrice || (isBullish ? snap.levels.support?.[0]?.price : snap.levels.resistance?.[0]?.price) || currentPrice;
-    const pctDiff = Math.abs(currentPrice - targetEntry) / targetEntry;
-    
-    if (pctDiff <= 0.005) {
-      if (isBullish) {
-        logBotAction(`SMC FVG trigger: Placing BUY (LONG) @ ${fmtUSD(currentPrice)} (Entry zone retest: ${fmtUSD(targetEntry)})`);
-        openPaperPosition('LONG', { symbol, price: currentPrice, useAi: true, leverage: 25 });
-      } else {
-        logBotAction(`SMC FVG trigger: Placing SELL (SHORT) @ ${fmtUSD(currentPrice)} (Entry zone retest: ${fmtUSD(targetEntry)})`);
-        openPaperPosition('SHORT', { symbol, price: currentPrice, useAi: true, leverage: 25 });
-      }
-    }
-  }
-  else if (strategy === 'mean_reversion') {
-    if (S.candles.length < 30) return;
-    const closes = getCloses();
-    const bb = getBB(closes, 20, 2);
-    const stoch = getStoch(S.candles, 14, 3);
-    
-    const len = closes.length;
-    const lastClose = closes[len - 1];
-    const lastUpper = bb.upper[len - 1];
-    const lastLower = bb.lower[len - 1];
-    const lastStochK = stoch.k[len - 1];
-    
-    if (lastClose <= lastLower && lastStochK < 20) {
-      logBotAction(`Mean Reversion trigger: Placing BUY (LONG) @ ${fmtUSD(currentPrice)} (Price below Lower BB, Stochastic: ${lastStochK.toFixed(0)})`);
-      openPaperPosition('LONG', { symbol, price: currentPrice, useAi: false, leverage: 10 });
-    } else if (lastClose >= lastUpper && lastStochK > 80) {
-      logBotAction(`Mean Reversion trigger: Placing SELL (SHORT) @ ${fmtUSD(currentPrice)} (Price above Upper BB, Stochastic: ${lastStochK.toFixed(0)})`);
-      openPaperPosition('SHORT', { symbol, price: currentPrice, useAi: false, leverage: 10 });
-    }
-  }
 }

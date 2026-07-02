@@ -11,7 +11,7 @@ import { initData, connectWS, fetchCoinsList, fetchFearGreed, fetchNews, fetchSr
 import {
   initPaperEngine, tickPaperPositions, openPaperPosition, closeAllPositions,
   closeHalfPosition, moveSlToBreakeven, trailStop, reversePosition, resetPaperAccount,
-  ensurePaperState,
+  ensurePaperState, syncDemoData
 } from './paper/engine.js';
 import { renderPaperAccountSummary, renderPreTradeBanner, setupGlobalCloseHandler } from './paper/ui.js';
 
@@ -525,6 +525,13 @@ function initListeners() {
 
   await initData();
 
+  // Check for Replay Mode parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const replayId = urlParams.get('replay');
+  if (replayId) {
+    await initReplayMode(parseInt(replayId, 10));
+  }
+
   // Register interval loops
   setInterval(fetchFearGreed,  5 * 60 * 1000);  // 5min
   setInterval(fetchNews,       1 * 60 * 1000);  // 1min
@@ -552,19 +559,61 @@ function initPaperTradingSidebar() {
     },
   });
 
+  // Listen to backend push notifications for trade updates
+  window.addEventListener('demo-trade-update', () => {
+    syncDemoData().then(() => {
+      queueRender();
+      renderPaperAccountSummary('sb');
+      renderPreTradeBanner();
+    });
+  });
+
+  // Call initial backend sync
+  syncDemoData().then(() => {
+    renderPaperAccountSummary('sb');
+    renderPreTradeBanner();
+  });
+
   const btnBuy = document.getElementById('btnSbBuy');
   const btnSell = document.getElementById('btnSbSell');
   if (!btnBuy || !btnSell) return;
 
-  btnBuy.addEventListener('click', () => openPaperPosition('LONG', getPaperOrderOpts()));
-  btnSell.addEventListener('click', () => openPaperPosition('SHORT', getPaperOrderOpts()));
+  btnBuy.addEventListener('click', async () => {
+    btnBuy.disabled = true;
+    try {
+      await openPaperPosition('LONG', getPaperOrderOpts());
+    } finally {
+      btnBuy.disabled = false;
+    }
+  });
 
-  document.getElementById('btnSbCloseHalf')?.addEventListener('click', () => closeHalfPosition());
-  document.getElementById('btnSbCloseAll')?.addEventListener('click', () => closeAllPositions(getLivePrice()));
-  document.getElementById('btnSbMoveSL')?.addEventListener('click', () => moveSlToBreakeven());
-  document.getElementById('btnSbTrail')?.addEventListener('click', () => trailStop(getLivePrice()));
-  document.getElementById('btnSbReverse')?.addEventListener('click', () => reversePosition(getLivePrice(), getPaperOrderOpts()));
-  document.getElementById('btnSbReset')?.addEventListener('click', () => resetPaperAccount());
+  btnSell.addEventListener('click', async () => {
+    btnSell.disabled = true;
+    try {
+      await openPaperPosition('SHORT', getPaperOrderOpts());
+    } finally {
+      btnSell.disabled = false;
+    }
+  });
+
+  document.getElementById('btnSbCloseHalf')?.addEventListener('click', async () => {
+    await closeHalfPosition();
+  });
+  document.getElementById('btnSbCloseAll')?.addEventListener('click', async () => {
+    await closeAllPositions(getLivePrice());
+  });
+  document.getElementById('btnSbMoveSL')?.addEventListener('click', async () => {
+    await moveSlToBreakeven();
+  });
+  document.getElementById('btnSbTrail')?.addEventListener('click', async () => {
+    await trailStop(getLivePrice());
+  });
+  document.getElementById('btnSbReverse')?.addEventListener('click', async () => {
+    await reversePosition(getLivePrice(), getPaperOrderOpts());
+  });
+  document.getElementById('btnSbReset')?.addEventListener('click', async () => {
+    await resetPaperAccount();
+  });
 
   const lev = document.getElementById('riskLeverage');
   const levVal = document.getElementById('riskLevVal');
@@ -574,4 +623,117 @@ function initPaperTradingSidebar() {
 
   renderPaperAccountSummary('sb');
   renderPreTradeBanner();
+}
+
+async function initReplayMode(replayId) {
+  try {
+    const res = await fetch(`/demo/trades/${replayId}`);
+    if (!res.ok) {
+      toast(`Failed to load replay for trade #${replayId}`, 'error');
+      return;
+    }
+    const trade = await res.json();
+    
+    const h = {
+      id: trade.id,
+      symbol: trade.symbol,
+      type: trade.side === 'BUY' ? 'LONG' : 'SHORT',
+      entryPrice: trade.entry_price,
+      exitPrice: trade.exit_price,
+      sl: trade.sl,
+      tp: trade.tp,
+      pnl: trade.pnl,
+      fees: trade.fees,
+      openTime: trade.entry_time,
+      closeTime: trade.exit_time,
+      grade: trade.ai_reasoning_snapshot?.grade || (trade.pnl >= 0 ? 'B' : 'D'),
+      summary: trade.ai_reasoning_snapshot?.summary || trade.user_notes || 'Manual Close',
+      aiNotes: trade.ai_reasoning_snapshot?.ai_notes || 'Standard Trade',
+      recommendation: trade.ai_reasoning_snapshot?.recommendation || 'Respect invalidation levels.',
+      tags: trade.ai_reasoning_snapshot?.tags || []
+    };
+
+    const entryIdx = findClosestCandleIndex(h.openTime);
+    const exitIdx = findClosestCandleIndex(h.closeTime);
+
+    if (entryIdx !== -1) {
+      const midpoint = exitIdx !== -1 ? Math.round((entryIdx + exitIdx) / 2) : entryIdx;
+      const w = S.viewEnd - S.viewStart || 160;
+      S.viewStart = Math.max(0, midpoint - Math.round(w / 2));
+      S.viewEnd = Math.min(S.candles.length, S.viewStart + w);
+    }
+
+    S.replayTrade = h;
+    
+    const overlay = document.getElementById('replayOverlayCard');
+    const content = document.getElementById('replayContent');
+    if (overlay && content) {
+      const isWin = h.pnl >= 0;
+      const tagsHtml = h.tags.map(t => `<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:2px 5px;font-size:8.5px;color:var(--text-2);">${t}</span>`).join(' ');
+      
+      content.innerHTML = `
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span>Trade #${h.id} (${h.symbol})</span>
+          <span style="background:var(--gold);color:#000;font-weight:900;padding:2px 6px;border-radius:4px;font-size:10px;">GRADE ${h.grade}</span>
+        </div>
+        <div class="replay-metric-grid">
+          <div class="replay-metric">
+            <span class="replay-metric-lbl">Side</span>
+            <span class="replay-metric-val" style="color:${h.type === 'LONG' ? 'var(--green)' : 'var(--red)'};">${h.type}</span>
+          </div>
+          <div class="replay-metric">
+            <span class="replay-metric-lbl">P&L</span>
+            <span class="replay-metric-val" style="color:${isWin ? 'var(--green)' : 'var(--red)'};">${isWin ? '+' : ''}${fmtUSD(h.pnl)}</span>
+          </div>
+          <div class="replay-metric">
+            <span class="replay-metric-lbl">Entry</span>
+            <span class="replay-metric-val">${fmtUSD(h.entryPrice)}</span>
+          </div>
+          <div class="replay-metric">
+            <span class="replay-metric-lbl">Exit</span>
+            <span class="replay-metric-val">${fmtUSD(h.exitPrice)}</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;margin-bottom:8px;">
+          <div style="font-weight:700;margin-bottom:3px;color:var(--text-2);">${isWin ? '✅ Win Analysis' : '❌ Loss Analysis'}</div>
+          <div style="color:var(--text-2);margin-bottom:6px;line-height:1.4;">${h.summary}</div>
+          <div style="color:var(--text-3);line-height:1.4;margin-bottom:6px;">🔬 ${h.aiNotes}</div>
+          ${tagsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${tagsHtml}</div>` : ''}
+        </div>
+        <div style="border-top:1px dashed rgba(255,255,255,0.05);padding-top:8px;margin-top:8px;">
+          <div style="font-weight:700;margin-bottom:3px;color:var(--gold);">💡 AI Coach Advice</div>
+          <div style="color:var(--text-3);font-style:italic;line-height:1.4;">${h.recommendation}</div>
+        </div>
+      `;
+      overlay.style.display = 'flex';
+      
+      document.getElementById('btnExitReplay').onclick = () => {
+        S.replayTrade = null;
+        overlay.style.display = 'none';
+        queueRender();
+        toast('Replay Mode closed', 'info');
+      };
+    }
+
+    queueRender();
+    toast(`Replaying Trade #${replayId}`, 'info');
+  } catch (e) {
+    console.error(e);
+    toast('Error initializing Replay Mode', 'error');
+  }
+}
+
+function findClosestCandleIndex(timeStr) {
+  if (!timeStr || !S.candles) return -1;
+  const targetMs = new Date(timeStr.replace(' ', 'T')).getTime();
+  let closestIdx = -1;
+  let minDiff = Infinity;
+  for (let i = 0; i < S.candles.length; i++) {
+    const diff = Math.abs(S.candles[i].t - targetMs);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestIdx = i;
+    }
+  }
+  return closestIdx;
 }

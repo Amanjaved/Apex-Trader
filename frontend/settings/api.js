@@ -11,6 +11,7 @@ let wsKlineStream = null;
 let wsDepthStream = null;
 let wsReconnectTimer = null;
 let wsReconnectDelay = 1000;
+let backendWs = null;
 
 const TICKER_STREAMS = Object.keys(COINS).map(s => `${s.toLowerCase()}@ticker`);
 
@@ -235,6 +236,40 @@ export function updateWSSubscriptions() {
   if (sub.length)   wsSend({ method:'SUBSCRIBE',   params:sub,   id:3 });
 }
 
+export function connectBackendWS() {
+  if (backendWs && (backendWs.readyState === WebSocket.OPEN || backendWs.readyState === WebSocket.CONNECTING)) return;
+  if (backendWs) { try { backendWs.close(); } catch(e) {} backendWs = null; }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  // Use host of frontend connection (e.g. localhost:8000)
+  const host = window.location.host || 'localhost:8000';
+  const url = `${protocol}//${host}/api/ws/ticks`;
+
+  backendWs = new WebSocket(url);
+
+  backendWs.onopen = () => {
+    console.log('[Backend WS] Connected to paper trading tick sync');
+  };
+
+  backendWs.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "trade_closed") {
+        toast(`Position closed: ${msg.side} ${msg.symbol} at $${msg.exit_price}. PnL: $${msg.pnl.toFixed(2)}`, 'info');
+        window.dispatchEvent(new CustomEvent('demo-trade-update'));
+      } else if (msg.type === "trade_opened") {
+        toast(`Position opened: ${msg.side} ${msg.symbol} at $${msg.entry_price}`, 'info');
+        window.dispatchEvent(new CustomEvent('demo-trade-update'));
+      }
+    } catch (ex) { /* ignore */ }
+  };
+
+  backendWs.onclose = () => {
+    backendWs = null;
+    setTimeout(connectBackendWS, 3000);
+  };
+}
+
 export function connectWS() {
   if (ws && ws.readyState === WebSocket.OPEN) { updateWSSubscriptions(); return; }
   if (ws) { ws.close(); ws = null; }
@@ -243,6 +278,7 @@ export function connectWS() {
   if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
 
   ws = new WebSocket('wss://stream.binance.com:9443/stream');
+  connectBackendWS();
 
   ws.onopen = () => {
     setStatus('Live — WebSocket', 'live');
@@ -296,6 +332,14 @@ function onTickerMsg(data) {
   };
   if (D.coinDropdown.classList.contains('open')) {
     renderCoinList(D.coinSearch.value);
+  }
+
+  if (backendWs && backendWs.readyState === WebSocket.OPEN) {
+    backendWs.send(JSON.stringify({
+      type: 'ticker',
+      symbol: sym,
+      price: parseFloat(data.c)
+    }));
   }
 
   if (sym === S.coin) {

@@ -563,6 +563,9 @@ export function drawMainChart() {
   // ── DEMO PAPER TRADING OVERLAYS ──
   drawDemoPositionsOverlay(ctx, toX, toY, W, H);
 
+  // ── DEMO REPLAY OVERLAYS ──
+  drawDemoReplayOverlay(ctx, toX, toY, W, H);
+
   // ── LIVE PRICE LINE ──
   const liveC = S.candles[S.candles.length - 1].c;
   const liveY = toY(liveC);
@@ -1176,4 +1179,159 @@ export function drawDemoPositionsOverlay(ctx, toX, toY, W, H) {
       ctx.restore();
     }
   });
+}
+
+// ── DEMO REPLAY OVERLAYS RENDERER ──
+export function drawDemoReplayOverlay(ctx, toX, toY, W, H) {
+  if (!S.replayTrade) return;
+
+  const h = S.replayTrade;
+  const entryY = toY(h.entryPrice);
+  const slY = h.sl ? toY(h.sl) : null;
+  const tpY = h.tp ? toY(h.tp) : null;
+  const exitY = toY(h.exitPrice);
+
+  const re = W - PAD.r;
+
+  // 1. Shaded R:R regions
+  ctx.save();
+  if (tpY !== null) {
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.04)';
+    const rectH = Math.abs(tpY - entryY);
+    ctx.fillRect(PAD.l, Math.min(entryY, tpY), re - PAD.l, rectH);
+  }
+  if (slY !== null) {
+    ctx.fillStyle = 'rgba(255, 59, 111, 0.04)';
+    const rectH = Math.abs(slY - entryY);
+    ctx.fillRect(PAD.l, Math.min(entryY, slY), re - PAD.l, rectH);
+  }
+  ctx.restore();
+
+  // 2. Horizontal lines
+  ctx.save();
+  
+  // Entry line
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, entryY);
+  ctx.lineTo(re, entryY);
+  ctx.stroke();
+
+  ctx.fillStyle = '#00f0ff';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`REPLAY ENTRY (${h.type}): ${fmtUSD(h.entryPrice)}`, PAD.l + 4, entryY - 4);
+
+  // SL line
+  if (slY !== null) {
+    ctx.strokeStyle = 'rgba(255, 59, 111, 0.8)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PAD.l, slY);
+    ctx.lineTo(re, slY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255, 59, 111, 0.9)';
+    ctx.fillText(`REPLAY SL: ${fmtUSD(h.sl)}`, PAD.l + 4, slY - 4);
+  }
+
+  // TP line
+  if (tpY !== null) {
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.8)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PAD.l, tpY);
+    ctx.lineTo(re, tpY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.9)';
+    ctx.fillText(`REPLAY TP: ${fmtUSD(h.tp)}`, PAD.l + 4, tpY - 4);
+  }
+
+  // Exit price line
+  ctx.strokeStyle = 'rgba(247, 147, 26, 0.7)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, exitY);
+  ctx.lineTo(re, exitY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(247, 147, 26, 0.9)';
+  ctx.fillText(`REPLAY EXIT: ${fmtUSD(h.exitPrice)}`, PAD.l + 4, exitY - 4);
+
+  ctx.restore();
+
+  // 3. Entry and Exit Candle Markers
+  const entryIdx = findClosestCandleIndex(h.openTime);
+  const exitIdx = findClosestCandleIndex(h.closeTime);
+  const n = S.layout.n;
+
+  if (entryIdx !== -1) {
+    const iVis = entryIdx - S.viewStart;
+    if (iVis >= 0 && iVis < n) {
+      const x = toX(iVis);
+      const candle = S.candles[entryIdx];
+      const y = h.type === 'LONG' ? toY(candle.l) + 15 : toY(candle.h) - 15;
+      
+      ctx.save();
+      ctx.fillStyle = h.type === 'LONG' ? '#00ff88' : '#ff3b6f';
+      ctx.beginPath();
+      if (h.type === 'LONG') {
+        ctx.moveTo(x, y + 5);
+        ctx.lineTo(x - 5, y + 12);
+        ctx.lineTo(x + 5, y + 12);
+      } else {
+        ctx.moveTo(x, y - 5);
+        ctx.lineTo(x - 5, y - 12);
+        ctx.lineTo(x + 5, y - 12);
+      }
+      ctx.fill();
+      
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(h.type === 'LONG' ? '▲ BUY' : '▼ SELL', x, h.type === 'LONG' ? y + 22 : y - 16);
+      ctx.restore();
+    }
+  }
+
+  if (exitIdx !== -1) {
+    const iVis = exitIdx - S.viewStart;
+    if (iVis >= 0 && iVis < n) {
+      const x = toX(iVis);
+      const candle = S.candles[exitIdx];
+      const y = h.type === 'LONG' ? toY(candle.h) - 15 : toY(candle.l) + 15;
+      
+      ctx.save();
+      ctx.fillStyle = 'rgba(247, 147, 26, 0.95)';
+      ctx.beginPath();
+      ctx.moveTo(x, y - 6);
+      ctx.lineTo(x + 6, y);
+      ctx.lineTo(x, y + 6);
+      ctx.lineTo(x - 6, y);
+      ctx.fill();
+      
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`◆ EXIT`, x, h.type === 'LONG' ? y - 12 : y + 18);
+      ctx.restore();
+    }
+  }
+}
+
+function findClosestCandleIndex(timeStr) {
+  if (!timeStr || !S.candles) return -1;
+  const targetMs = new Date(timeStr.replace(' ', 'T')).getTime();
+  let closestIdx = -1;
+  let minDiff = Infinity;
+  for (let i = 0; i < S.candles.length; i++) {
+    const diff = Math.abs(S.candles[i].t - targetMs);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestIdx = i;
+    }
+  }
+  return closestIdx;
 }

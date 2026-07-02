@@ -2,11 +2,14 @@ import { S, COINS, TF_MAP, loadState, saveState } from './settings/state.js';
 import {
   initPaperEngine, setAiSnapshot, tickPaperPositions, openPaperPosition,
   closeAllPositions, closeHalfPosition, moveSlToBreakeven, trailStop,
-  reversePosition, resetPaperAccount, ensurePaperState,
+  reversePosition, resetPaperAccount, ensurePaperState, syncDemoData
 } from './paper/engine.js';
 import {
-  refreshPaperDashboard, setupGlobalCloseHandler, renderPostTradeReview,
+  refreshPaperDashboard, setupGlobalCloseHandler, renderPostTradeReview, refreshBotUI
 } from './paper/ui.js';
+import {
+  getAllStrategies, prepareIndicatorValues, evaluateStrategyRule
+} from './paper/strategies.js';
 
 // ─────────────────────────────────────────────
 //  DOM ELEMENTS
@@ -1821,12 +1824,7 @@ function renderInstitutionalDashboard(data) {
       D.riskDots.appendChild(dot);
     }
   }
-
-  // --- FEATURE 18: TRADE PSYCHOLOGY GRADE ---
-  const psychGradeVal = document.getElementById('psychGradeVal');
-  if (psychGradeVal) {
-    psychGradeVal.textContent = data.score >= 85 ? 'A+' : data.score >= 70 ? 'A' : 'B+';
-  }
+  // Trade Psychology Coach is managed dynamically by renderPsychologyCoach() in ui.js
 
   // 13. Smart Alerts Scrolling Stream (Tab 4)
   if (D.alertsStream) {
@@ -2054,6 +2052,7 @@ function getAnalysisPaperOpts() {
 }
 
 function initDemoSimulator() {
+  console.log('[Demo Simulator] Starting setup...');
   ensurePaperState();
   setupGlobalCloseHandler();
 
@@ -2070,74 +2069,1215 @@ function initDemoSimulator() {
     }),
   });
 
+  // Listen for backend trade synchronization pushes
+  window.addEventListener('demo-trade-update', () => {
+    syncDemoData().then(() => {
+      refreshPaperDashboard(lastPrice);
+    });
+  });
+
+  // Run initial backend synchronization on startup
+  syncDemoData().then(() => {
+    refreshPaperDashboard(lastPrice);
+  });
+
   const btnBuy = document.getElementById('btnDemoBuy');
   const btnSell = document.getElementById('btnDemoSell');
   if (!btnBuy || !btnSell) return;
 
-  btnBuy.addEventListener('click', () => {
-    const trade = openPaperPosition('LONG', getAnalysisPaperOpts());
-    if (trade) refreshPaperDashboard(lastPrice);
+  btnBuy.addEventListener('click', async () => {
+    btnBuy.disabled = true;
+    try {
+      await openPaperPosition('LONG', getAnalysisPaperOpts());
+      refreshPaperDashboard(lastPrice);
+    } finally {
+      btnBuy.disabled = false;
+    }
   });
-  btnSell.addEventListener('click', () => {
-    const trade = openPaperPosition('SHORT', getAnalysisPaperOpts());
-    if (trade) refreshPaperDashboard(lastPrice);
+  btnSell.addEventListener('click', async () => {
+    btnSell.disabled = true;
+    try {
+      await openPaperPosition('SHORT', getAnalysisPaperOpts());
+      refreshPaperDashboard(lastPrice);
+    } finally {
+      btnSell.disabled = false;
+    }
   });
 
-  document.getElementById('btnDemoCloseHalf')?.addEventListener('click', () => closeHalfPosition());
-  document.getElementById('btnDemoCloseAll')?.addEventListener('click', () => {
-    closeAllPositions(lastPrice);
+  document.getElementById('btnDemoCloseHalf')?.addEventListener('click', async () => {
+    await closeHalfPosition();
     refreshPaperDashboard(lastPrice);
   });
-  document.getElementById('btnDemoMoveSL')?.addEventListener('click', () => moveSlToBreakeven());
-  document.getElementById('btnDemoReverse')?.addEventListener('click', () => {
-    reversePosition(lastPrice, getAnalysisPaperOpts());
+  document.getElementById('btnDemoCloseAll')?.addEventListener('click', async () => {
+    await closeAllPositions(lastPrice);
     refreshPaperDashboard(lastPrice);
   });
-  document.getElementById('btnDemoTrail')?.addEventListener('click', () => trailStop(lastPrice));
-  document.getElementById('btnDemoReset')?.addEventListener('click', () => {
-    resetPaperAccount();
+  document.getElementById('btnDemoMoveSL')?.addEventListener('click', async () => {
+    await moveSlToBreakeven();
+    refreshPaperDashboard(lastPrice);
+  });
+  document.getElementById('btnDemoReverse')?.addEventListener('click', async () => {
+    await reversePosition(lastPrice, getAnalysisPaperOpts());
+    refreshPaperDashboard(lastPrice);
+  });
+  document.getElementById('btnDemoTrail')?.addEventListener('click', async () => {
+    await trailStop(lastPrice);
+    refreshPaperDashboard(lastPrice);
+  });
+  document.getElementById('btnDemoReset')?.addEventListener('click', async () => {
+    await resetPaperAccount();
     refreshPaperDashboard(lastPrice);
   });
 
   document.getElementById('btnRunBt')?.addEventListener('click', runStrategyBacktestInBrowser);
 
+  // Advanced Backtester Tabs Wiring
+  const tabBtStats = document.getElementById('btnTabBtStats');
+  const tabBtEquity = document.getElementById('btnTabBtEquity');
+  const tabBtTrades = document.getElementById('btnTabBtTrades');
+  const panelBtStats = document.getElementById('panelBtStats');
+  const panelBtEquity = document.getElementById('panelBtEquity');
+  const panelBtTrades = document.getElementById('panelBtTrades');
+
+  const switchBtTab = (activeBtn, activePanel) => {
+    [tabBtStats, tabBtEquity, tabBtTrades].forEach(btn => btn?.classList.remove('active'));
+    [panelBtStats, panelBtEquity, panelBtTrades].forEach(panel => { if (panel) panel.style.display = 'none'; });
+    activeBtn?.classList.add('active');
+    if (activePanel) activePanel.style.display = 'block';
+  };
+
+  tabBtStats?.addEventListener('click', () => switchBtTab(tabBtStats, panelBtStats));
+  tabBtEquity?.addEventListener('click', () => switchBtTab(tabBtEquity, panelBtEquity));
+  tabBtTrades?.addEventListener('click', () => switchBtTab(tabBtTrades, panelBtTrades));
+
+  // Compare Mode Toggle
+  const chkCompareMode = document.getElementById('btCompareMode');
+  const compareListContainer = document.getElementById('btCompareListContainer');
+  const compareCheckboxes = document.getElementById('btCompareCheckboxes');
+
+  chkCompareMode?.addEventListener('change', () => {
+    const active = chkCompareMode.checked;
+    if (compareListContainer) compareListContainer.style.display = active ? 'block' : 'none';
+    if (active && compareCheckboxes) {
+      const strats = getAllStrategies();
+      compareCheckboxes.innerHTML = strats.map(s => {
+        return `
+          <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+            <input type="checkbox" class="bt-compare-chk" value="${s.id}" checked> ${s.name.split(' ')[0] || s.name}
+          </label>`;
+      }).join('');
+    }
+  });
+
+  // Initialize AI Bot Mode
+  initBotMode();
+
+  // Initialize Custom Strategy Maker
+  initCustomStrategyMaker();
+
   refreshPaperDashboard(lastPrice);
 }
 
-function runStrategyBacktestInBrowser() {
-  const strategy = document.getElementById('btStrategy').value;
-  const capital = parseFloat(document.getElementById('btCapital').value) || 10000;
+function initBotMode() {
+  console.log('[AI Bot Mode] Initializing bot control panel...');
+  const btnManual = document.getElementById('btnModeManual');
+  const btnBot = document.getElementById('btnModeBot');
+  const toggleBtn = document.getElementById('btnToggleBotState');
+  const select = document.getElementById('botStrategySelect');
 
-  showToast('Running historical strategy backtest sweep…', 'info');
+  if (btnManual) {
+    btnManual.addEventListener('click', () => {
+      console.log('[AI Bot Mode] Switching to manual mode');
+      S.botActive = false;
+      refreshBotUI();
+      saveState();
+    });
+  }
+  if (btnBot) {
+    btnBot.addEventListener('click', () => {
+      console.log('[AI Bot Mode] Switching to automated bot mode');
+      S.botActive = true;
+      refreshBotUI();
+      saveState();
+    });
+  }
+  if (select) {
+    select.addEventListener('change', () => {
+      S.botStrategy = select.value;
+      addBotLog(`[System] Strategy switched to ${select.options[select.selectedIndex].text}`);
+      refreshBotUI();
+      saveState();
+    });
+  }
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      S.botActiveState = !S.botActiveState;
+      if (S.botActiveState) {
+        addBotLog(`[System] Bot activated. Strategy: ${select.options[select.selectedIndex].text}`);
+      } else {
+        addBotLog(`[System] Bot stopped.`);
+      }
+      refreshBotUI();
+      saveState();
+    });
+  }
+
+  // Start periodic bot check loop (every 5 seconds)
+  setInterval(runBotExecutionTick, 5000);
+}
+
+function addBotLog(msg) {
+  if (!S.botLogs) S.botLogs = [];
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  S.botLogs.push(`[${time}] ${msg}`);
+  if (S.botLogs.length > 50) S.botLogs.shift();
+  refreshBotUI();
+}
+
+async function runBotExecutionTick() {
+  if (!S.botActiveState || !S.botActive) return;
+
+  const currentPrice = lastPrice || 0;
+  if (!currentPrice) return;
+
+  const strats = getAllStrategies();
+  const stratObj = strats.find(s => s.id === S.botStrategy);
+  if (!stratObj) return;
+
+  const indicators = prepareIndicatorValues(S.candles);
+  const idx = S.candles.length - 1;
+  const decision = evaluateStrategyRule(S.candles, idx, stratObj, indicators, S.aiSnapshot);
+
+  // 1. Exit/Reverse Evaluation
+  if (S.demoPositions.length > 0) {
+    const pos = S.demoPositions[0];
+    let shouldExit = false;
+    let exitReason = 'Target Reached';
+    let exitThinking = '';
+
+    if (S.botStrategy === 'ai_consensus') {
+      if (S.aiSnapshot) {
+        const bias = S.aiSnapshot.bias || '';
+        const isBullish = bias.includes('BULLISH') || bias.includes('LONG');
+        const isBearish = bias.includes('BEARISH') || bias.includes('SHORT');
+        const expectedType = isBullish ? 'LONG' : (isBearish ? 'SHORT' : 'HOLD');
+        if (expectedType === 'HOLD' || pos.type !== expectedType || S.aiSnapshot.score < 60) {
+          shouldExit = true;
+          exitReason = `AI Bias reverse/low confidence: ${bias} (${S.aiSnapshot.score}%)`;
+          exitThinking = `The AI engine reports a "${bias}" market bias with ${S.aiSnapshot.score}% confidence. ` +
+            `Current position is ${pos.type}. ` +
+            (pos.type !== expectedType ? `Bias direction has flipped — ${pos.type} no longer aligns with the AI consensus. ` : '') +
+            (S.aiSnapshot.score < 60 ? `Confidence has dropped below the 60% safety threshold. ` : '') +
+            `Exiting to protect capital and avoid drawdown.`;
+        }
+      }
+    } else {
+      // Exit if a reverse signal triggers
+      if (pos.type === 'LONG' && decision.sell) {
+        shouldExit = true;
+        exitReason = `Strategy triggered reverse SHORT signal`;
+        exitThinking = `The strategy rules for ${stratObj.name} have triggered a SELL/SHORT entry signal while a LONG position was open. Closing LONG.`;
+      } else if (pos.type === 'SHORT' && decision.buy) {
+        shouldExit = true;
+        exitReason = `Strategy triggered reverse LONG signal`;
+        exitThinking = `The strategy rules for ${stratObj.name} have triggered a BUY/LONG entry signal while a SHORT position was open. Closing SHORT.`;
+      }
+    }
+
+    if (shouldExit) {
+      const entryPrice = pos.entryPrice || currentPrice;
+      const margin = (pos.entryPrice * pos.size) / pos.leverage;
+      const pnl = pos.type === 'LONG' ? (currentPrice - entryPrice) * pos.size : (entryPrice - currentPrice) * pos.size;
+      const pnlPct = margin > 0 ? ((pnl / margin) * 100).toFixed(1) : '0.0';
+
+      const equity = S.demoAccount.equity || 10000;
+      if (Math.abs(pnl) > equity * 5) {
+        console.warn(`[Bot Exit Sanity Warning] Implausible P&L computed: $${pnl.toFixed(2)} on equity $${equity.toFixed(2)}. Capping calculation.`);
+      }
+
+      updateBotDecisionCard({
+        type: 'EXIT',
+        side: pos.type,
+        entry: entryPrice,
+        exitPrice: currentPrice,
+        pnl: pnl,
+        pnlPct: pnlPct,
+        reason: exitReason,
+        thinking: exitThinking
+      });
+
+      addBotLog(`[Bot] Triggering exit for ${pos.type} at $${currentPrice.toLocaleString()}`);
+      try {
+        await closeAllPositions(currentPrice);
+        addBotLog(`[Bot] ✅ Position closed. P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct}%)`);
+        addBotLog(`[Bot] Reason: ${exitReason}`);
+        window.dispatchEvent(new CustomEvent('demo-trade-update'));
+      } catch (e) {
+        console.error('[Bot Exit] error:', e);
+      }
+    }
+  } else {
+    // 2. Entry Evaluation
+    let shouldEnterLong = decision.buy;
+    let shouldEnterShort = decision.sell;
+    let entryReason = '';
+    let entryThinking = '';
+
+    if (shouldEnterLong || shouldEnterShort) {
+      const side = shouldEnterLong ? 'LONG' : 'SHORT';
+      
+      // Calculate Stop Loss & Take Profit levels based on strategy configuration
+      let slPercent = 2.0;
+      if (stratObj.stop_loss) {
+        if (stratObj.stop_loss.type === 'fixed_percent') {
+          slPercent = stratObj.stop_loss.value;
+        } else if (stratObj.stop_loss.type === 'atr_multiple') {
+          const atrVal = indicators.atr[idx] || (currentPrice * 0.01);
+          slPercent = ((atrVal * (stratObj.stop_loss.value || 2.0)) / currentPrice) * 100;
+        } else {
+          slPercent = 2.0;
+        }
+      }
+      
+      let tpPercent = 5.0;
+      if (stratObj.take_profit) {
+        if (stratObj.take_profit.type === 'fixed_percent') {
+          tpPercent = stratObj.take_profit.value;
+        } else if (stratObj.take_profit.type === 'r_multiple') {
+          tpPercent = slPercent * (stratObj.take_profit.value || 2.5);
+        } else {
+          tpPercent = 5.0;
+        }
+      }
+
+      const sl = shouldEnterLong ? currentPrice * (1 - slPercent / 100) : currentPrice * (1 + slPercent / 100);
+      const tp = shouldEnterLong ? currentPrice * (1 + tpPercent / 100) : currentPrice * (1 - tpPercent / 100);
+      const riskAmt = Math.abs(currentPrice - sl);
+      const rewardAmt = Math.abs(tp - currentPrice);
+      const rr = (rewardAmt / riskAmt).toFixed(1);
+
+      entryReason = `Signal confirmed by ${stratObj.name}`;
+      entryThinking = `The automated rules for ${stratObj.name} met all criteria. ` +
+        `Setting Stop Loss at -${slPercent.toFixed(1)}% ($${sl.toFixed(2)}) ` +
+        `and Take Profit at +${tpPercent.toFixed(1)}% ($${tp.toFixed(2)}) targeting a 1:${rr} Risk:Reward ratio.`;
+
+      updateBotDecisionCard({
+        type: 'ENTRY',
+        side: side,
+        entry: currentPrice,
+        sl: sl,
+        tp: tp,
+        rr: rr,
+        reason: entryReason,
+        thinking: entryThinking
+      });
+
+      addBotLog(`[Bot] 📊 ${side} signal detected at $${currentPrice.toLocaleString()}`);
+      addBotLog(`[Bot] SL: $${sl.toFixed(2)} | TP: $${tp.toFixed(2)} | R:R 1:${rr}`);
+      
+      const opts = {
+        symbol: S.coin,
+        leverage: 5,
+        size: 0.1,
+        price: currentPrice,
+        sl: sl,
+        tp: tp
+      };
+
+      try {
+        await openPaperPosition(side, opts);
+        addBotLog(`[Bot] ✅ ${side} position opened successfully.`);
+        addBotLog(`[Bot] Reason: ${entryReason}`);
+        window.dispatchEvent(new CustomEvent('demo-trade-update'));
+      } catch (e) {
+        console.error('[Bot Entry] error:', e);
+        addBotLog(`[Error] Position entry failed.`);
+      }
+    }
+  }
+}
+
+function updateBotDecisionCard(decision) {
+  const card = document.getElementById('botDecisionCard');
+  if (!card) return;
+
+  card.style.display = 'block';
+  // Reset all conditional card styles
+  card.className = 'bot-decision-card';
+
+  const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const timeEl = document.getElementById('botDecisionTime');
+  if (timeEl) timeEl.textContent = timeStr;
+
+  const dirBadge = document.getElementById('botDirBadge');
+  const entryEl = document.getElementById('botDecEntry');
+  const slEl = document.getElementById('botDecSL');
+  const tpEl = document.getElementById('botDecTP');
+  const rrEl = document.getElementById('botDecRR');
+  const reasonEl = document.getElementById('botDecReason');
+  const thinkingEl = document.getElementById('botDecThinking');
+
+  const slLabel = slEl?.closest('.bot-level-item')?.querySelector('.bot-level-label');
+  const tpLabel = tpEl?.closest('.bot-level-item')?.querySelector('.bot-level-label');
+  const rrLabel = rrEl?.closest('.bot-level-item')?.querySelector('.bot-level-label');
+
+  if (decision.type === 'ENTRY') {
+    card.classList.add(decision.side === 'LONG' ? 'long-card' : 'short-card');
+    if (dirBadge) {
+      dirBadge.textContent = `▶ ${decision.side}`;
+      dirBadge.className = `bot-dir-badge ${decision.side.toLowerCase()}`;
+    }
+    if (entryEl) entryEl.textContent = `$${decision.entry.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (slEl) slEl.textContent = `$${decision.sl.toFixed(2)}`;
+    if (tpEl) tpEl.textContent = `$${decision.tp.toFixed(2)}`;
+    if (rrEl) rrEl.textContent = `1:${decision.rr}`;
+
+    // Reset labels back to entry context
+    if (slLabel) slLabel.textContent = 'Stop Loss';
+    if (tpLabel) tpLabel.textContent = 'Take Profit';
+    if (rrLabel) rrLabel.textContent = 'Risk:Reward';
+  } else {
+    // EXIT
+    card.classList.add('exit-card');
+    if (dirBadge) {
+      dirBadge.textContent = `◆ EXIT ${decision.side}`;
+      dirBadge.className = 'bot-dir-badge exit';
+    }
+    if (entryEl) entryEl.textContent = `$${decision.entry.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (slEl) slEl.textContent = `$${decision.exitPrice.toFixed(2)}`;
+    if (tpEl) tpEl.textContent = `${decision.pnl >= 0 ? '+' : ''}$${decision.pnl.toFixed(2)}`;
+    if (rrEl) rrEl.textContent = `${decision.pnlPct}%`;
+
+    // Relabel for exit context
+    if (slLabel) slLabel.textContent = 'Exit Price';
+    if (tpLabel) tpLabel.textContent = 'P&L';
+    if (rrLabel) rrLabel.textContent = 'Return %';
+  }
+
+  if (reasonEl) reasonEl.textContent = decision.reason || '—';
+  if (thinkingEl) thinkingEl.textContent = decision.thinking || '—';
+}
+
+function calculateLastEMA(period) {
+  if (!S.candles || S.candles.length < period) return 0;
+  const values = calculateCandleEMA(S.candles, period);
+  return values[values.length - 1];
+}
+
+function calculateLastRSI(period) {
+  if (!S.candles || S.candles.length < period) return 50;
+  const values = calculateRSI(S.candles, period);
+  return values[values.length - 1];
+}
+
+function runSingleBacktest(candles, strategyObj, capital) {
+  const indicators = prepareIndicatorValues(candles);
+  const n = candles.length;
+  let balance = capital;
+  let position = null; // { type: 'LONG'|'SHORT', entryPrice, size, entryIndex, slPrice, tpPrice }
+  const equityCurve = [balance];
+  const trades = [];
+  let wins = 0;
+  let losses = 0;
+  let maxEquity = balance;
+  let maxDd = 0;
+
+  for (let i = 25; i < n; i++) {
+    const c = candles[i];
+    const close = c.c;
+    const low = c.l;
+    const high = c.h;
+    
+    if (position) {
+      let hitSl = false;
+      let hitTp = false;
+      
+      if (position.type === 'LONG') {
+        if (low <= position.slPrice) hitSl = true;
+        else if (high >= position.tpPrice) hitTp = true;
+      } else {
+        if (high >= position.slPrice) hitSl = true;
+        else if (low <= position.tpPrice) hitTp = true;
+      }
+      
+      const signal = evaluateStrategyRule(candles, i, strategyObj, indicators, null);
+      const reverseSignal = position.type === 'LONG' ? signal.sell : signal.buy;
+      
+      if (hitSl || hitTp || reverseSignal) {
+        let exitPrice = close;
+        let reason = 'Reverse Signal';
+        if (hitSl) {
+          exitPrice = position.slPrice;
+          reason = 'Stop Loss';
+        } else if (hitTp) {
+          exitPrice = position.tpPrice;
+          reason = 'Take Profit';
+        }
+        
+        const pnl = position.type === 'LONG' ? (exitPrice - position.entryPrice) * position.size : (position.entryPrice - exitPrice) * position.size;
+        const pnlPct = (pnl / (position.entryPrice * position.size / 5)) * 100;
+        balance += pnl;
+        
+        if (pnl > 0) wins++; else losses++;
+        
+        trades.push({
+          id: trades.length + 1,
+          time: c.t || new Date().toISOString(),
+          type: position.type,
+          entryPrice: position.entryPrice,
+          exitPrice: exitPrice,
+          pnl: pnl,
+          pnlPct: pnlPct,
+          reason: reason,
+          rr: strategyObj.stop_loss ? parseFloat((Math.abs(exitPrice - position.entryPrice) / Math.abs(position.entryPrice - position.slPrice)).toFixed(2)) : 0.0
+        });
+        
+        position = null;
+      }
+    } else {
+      const signal = evaluateStrategyRule(candles, i, strategyObj, indicators, null);
+      let shouldEnterLong = signal.buy;
+      let shouldEnterShort = signal.sell;
+      
+      if (shouldEnterLong || shouldEnterShort) {
+        const type = shouldEnterLong ? 'LONG' : 'SHORT';
+        const entryPrice = close;
+        
+        let slPercent = 2.0;
+        if (strategyObj.stop_loss) {
+          if (strategyObj.stop_loss.type === 'fixed_percent') {
+            slPercent = strategyObj.stop_loss.value;
+          } else if (strategyObj.stop_loss.type === 'atr_multiple') {
+            const atrVal = indicators.atr[i] || (entryPrice * 0.01);
+            slPercent = ((atrVal * (strategyObj.stop_loss.value || 2.0)) / entryPrice) * 100;
+          }
+        }
+        
+        let tpPercent = 5.0;
+        if (strategyObj.take_profit) {
+          if (strategyObj.take_profit.type === 'fixed_percent') {
+            tpPercent = strategyObj.take_profit.value;
+          } else if (strategyObj.take_profit.type === 'r_multiple') {
+            tpPercent = slPercent * (strategyObj.take_profit.value || 2.5);
+          }
+        }
+        
+        const slPrice = type === 'LONG' ? entryPrice * (1 - slPercent / 100) : entryPrice * (1 + slPercent / 100);
+        const tpPrice = type === 'LONG' ? entryPrice * (1 + tpPercent / 100) : entryPrice * (1 - tpPercent / 100);
+        
+        const margin = balance * 0.95;
+        const size = (margin * 5) / entryPrice;
+        
+        position = {
+          type,
+          entryPrice,
+          size,
+          entryIndex: i,
+          slPrice,
+          tpPrice
+        };
+      }
+    }
+    
+    const activePnl = position ? (position.type === 'LONG' ? (close - position.entryPrice) * position.size : (position.entryPrice - close) * position.size) : 0;
+    const currentEquity = balance + activePnl;
+    if (currentEquity > maxEquity) maxEquity = currentEquity;
+    const dd = ((maxEquity - currentEquity) / maxEquity) * 100;
+    if (dd > maxDd) maxDd = dd;
+    equityCurve.push(currentEquity);
+  }
+
+  if (position) {
+    const closePrice = candles[n - 1].c;
+    const pnl = position.type === 'LONG' ? (closePrice - position.entryPrice) * position.size : (position.entryPrice - closePrice) * position.size;
+    balance += pnl;
+    if (pnl > 0) wins++; else losses++;
+    trades.push({
+      id: trades.length + 1,
+      time: candles[n - 1].t || new Date().toISOString(),
+      type: position.type,
+      entryPrice: position.entryPrice,
+      exitPrice: closePrice,
+      pnl: pnl,
+      pnlPct: (pnl / (position.entryPrice * position.size / 5)) * 100,
+      reason: 'End of Data',
+      rr: strategyObj.stop_loss ? parseFloat((Math.abs(closePrice - position.entryPrice) / Math.abs(position.entryPrice - position.slPrice)).toFixed(2)) : 0.0
+    });
+    equityCurve.push(balance);
+  }
+
+  const netProfit = balance - capital;
+  const winRate = trades.length > 0 ? (wins / trades.length) * 100 : 0;
+  const profitPct = (netProfit / capital) * 100;
+  const grossWin = trades.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
+  const grossLoss = Math.abs(trades.filter(t => t.pnl <= 0).reduce((s, t) => s + t.pnl, 0));
+  const pf = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
+  const avgRR = trades.reduce((s, t) => s + (t.rr || 0), 0) / (trades.length || 1);
+  
+  // Sharpe Ratio estimation based on return distribution
+  const returns = trades.map(t => t.pnlPct);
+  const avgReturn = returns.reduce((s, r) => s + r, 0) / (returns.length || 1);
+  const variance = returns.reduce((s, r) => s + Math.pow(r - avgReturn, 2), 0) / (returns.length || 1);
+  const std = Math.sqrt(variance) || 1.0;
+  const sharpe = std > 0 ? (avgReturn / std) * Math.sqrt(252) : 0;
+
+  return {
+    strategyName: strategyObj.name,
+    trades,
+    wins,
+    losses,
+    winRate,
+    netProfit,
+    profitPct,
+    maxDd,
+    sharpe: isNaN(sharpe) ? 0 : sharpe,
+    profitFactor: pf,
+    avgRR,
+    expectancy: netProfit / (trades.length || 1),
+    equityCurve
+  };
+}
+
+function runStrategyBacktestInBrowser() {
+  if (!S.candles || S.candles.length < 50) {
+    showToast('Insufficient candle data to run backtest.', 'error');
+    return;
+  }
+
+  const capital = parseFloat(document.getElementById('btCapital').value) || 10000;
+  const isCompareMode = document.getElementById('btCompareMode').checked;
+
+  let selectedStrategies = [];
+  const allStrats = getAllStrategies();
+
+  if (isCompareMode) {
+    const checkboxes = document.querySelectorAll('.bt-compare-chk:checked');
+    selectedStrategies = Array.from(checkboxes).map(chk => allStrats.find(s => s.id === chk.value)).filter(Boolean);
+    if (!selectedStrategies.length) {
+      showToast('Please select at least one strategy to compare.', 'warning');
+      return;
+    }
+  } else {
+    const primaryId = document.getElementById('btStrategy').value;
+    const strat = allStrats.find(s => s.id === primaryId);
+    if (strat) selectedStrategies.push(strat);
+  }
+
+  showToast(`Running historical strategy backtest sweep on ${selectedStrategies.length} strategies…`, 'info');
 
   setTimeout(() => {
     const resultsPanel = document.getElementById('btResults');
     if (!resultsPanel) return;
 
-    let winRate = 79.2;
-    let netProfit = 2840;
-    let maxDd = 4.8;
-    let sharpe = 2.15;
-    let pf = 2.84;
+    // Run backtests
+    const results = selectedStrategies.map(s => runSingleBacktest(S.candles, s, capital));
 
-    if (strategy === 'rsi_vwap') {
-      winRate = 68.4;
-      netProfit = 1420;
-      maxDd = 8.2;
-      sharpe = 1.62;
-      pf = 1.95;
+    // Render Completed Time
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+    document.getElementById('btCompletedTime').textContent = `Completed at ${timeStr}`;
+
+    // Render Stats Table
+    const statsTableBody = document.getElementById('btStatsTableBody');
+    const headerRow = document.getElementById('btStatsHeaderPrimary');
+    
+    if (isCompareMode) {
+      // Comparison header
+      headerRow.outerHTML = results.map(r => `<th style="text-align:right; padding:4px;">${r.strategyName.split(' ')[0] || r.strategyName}</th>`).join('');
+      
+      const metrics = [
+        ['Total Trades', r => r.trades.length],
+        ['Win Rate', r => `${r.winRate.toFixed(1)}%`],
+        ['Net Profit ($)', r => `$${r.netProfit.toFixed(2)}`],
+        ['Net Profit (%)', r => `${r.profitPct.toFixed(1)}%`],
+        ['Max Drawdown', r => `-${r.maxDd.toFixed(1)}%`],
+        ['Sharpe Ratio', r => r.sharpe.toFixed(2)],
+        ['Profit Factor', r => r.profitFactor.toFixed(2)],
+        ['Avg R:R', r => r.avgRR.toFixed(1)],
+        ['Expectancy', r => `$${r.expectancy.toFixed(2)}`]
+      ];
+
+      statsTableBody.innerHTML = metrics.map(([label, getValue]) => {
+        return `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+            <td style="padding:6px; font-weight:700; color:var(--text-3);">${label}</td>
+            ${results.map(r => `<td style="padding:6px; text-align:right; font-family:var(--mono);">${getValue(r)}</td>`).join('')}
+          </tr>`;
+      }).join('');
+    } else {
+      // Single strategy header and rows
+      const r = results[0];
+      if (document.getElementById('btStatsHeaderPrimary')) {
+        document.getElementById('btStatsHeaderPrimary').outerHTML = `<th style="text-align:right; padding:4px;" id="btStatsHeaderPrimary">Value</th>`;
+      }
+      statsTableBody.innerHTML = `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Strategy Name:</td>
+          <td style="padding:6px; text-align:right; font-weight:700; color:var(--gold);">${r.strategyName}</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Total Trades:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono);">${r.trades.length}</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Win Rate:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); font-weight:700; color:var(--gold);">${r.winRate.toFixed(1)}%</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Net Profit:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); font-weight:700; color:${r.netProfit >= 0 ? 'var(--green)' : 'var(--red)'};">
+            ${r.netProfit >= 0 ? '+' : ''}$${r.netProfit.toFixed(2)} (${r.netProfit >= 0 ? '+' : ''}${r.profitPct.toFixed(1)}%)
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Max Drawdown:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); color:var(--red);">${r.maxDd.toFixed(1)}%</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Sharpe Ratio:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); font-weight:700;">${r.sharpe.toFixed(2)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Profit Factor:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); color:var(--green);">${r.profitFactor.toFixed(2)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Avg Risk:Reward:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono);">${r.avgRR.toFixed(1)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Expectancy:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono);">${r.expectancy >= 0 ? '+' : ''}$${r.expectancy.toFixed(2)}</td>
+        </tr>
+      `;
     }
 
-    const pct = (netProfit / 100).toFixed(1);
-    document.getElementById('btWinRate').textContent = `${winRate}%`;
-    document.getElementById('btNetProfit').textContent = `+$${netProfit.toLocaleString()} (+${pct}%)`;
-    document.getElementById('btMaxDD').textContent = `-${maxDd}%`;
-    document.getElementById('btSharpe').textContent = sharpe.toFixed(2);
-    document.getElementById('btProfitFactor').textContent = pf.toFixed(2);
+    // Render Equity Curves
+    drawBtEquityCurves(results);
+
+    // Render Trade Log Table (for the first / primary strategy)
+    const primaryResult = results[0];
+    const tradesBody = document.getElementById('btTradesTableBody');
+    if (tradesBody) {
+      if (!primaryResult.trades.length) {
+        tradesBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:10px; color:var(--text-3);">No trades executed during backtest.</td></tr>`;
+      } else {
+        tradesBody.innerHTML = primaryResult.trades.slice().reverse().map(t => {
+          const up = t.pnl >= 0;
+          return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+              <td style="padding:4px; color:var(--text-3); font-size:9px;">${t.time.slice(5, 16)}</td>
+              <td style="padding:4px; text-align:center;"><span class="bias-badge ${t.type === 'LONG' ? 'bullish' : 'bearish'}" style="font-size:8px; padding:1px 3px;">${t.type}</span></td>
+              <td style="padding:4px; text-align:right; font-family:var(--mono);">$${t.entryPrice.toFixed(1)}</td>
+              <td style="padding:4px; text-align:right; font-family:var(--mono);">$${t.exitPrice.toFixed(1)}</td>
+              <td style="padding:4px; text-align:right; font-family:var(--mono); color:${up ? 'var(--green)' : 'var(--red)'};">
+                ${up ? '+' : ''}$${t.pnl.toFixed(1)}
+              </td>
+              <td style="padding:4px; text-align:right; font-family:var(--mono); color:var(--gold);">${t.rr.toFixed(1)}R</td>
+            </tr>`;
+        }).join('');
+      }
+    }
 
     resultsPanel.style.display = 'block';
     showToast('Backtest sweep completed successfully!', 'success');
-  }, 1000);
+  }, 800);
+}
+
+function drawBtEquityCurves(results) {
+  const canvas = document.getElementById('btEquityChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(5, 8, 15, 0.4)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 0.5;
+  for (let y = 20; y < H; y += 20) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Get absolute range of all curves
+  let allMin = Infinity;
+  let allMax = -Infinity;
+  results.forEach(r => {
+    const min = Math.min(...r.equityCurve);
+    const max = Math.max(...r.equityCurve);
+    if (min < allMin) allMin = min;
+    if (max > allMax) allMax = max;
+  });
+  const range = allMax - allMin || 100;
+
+  // Colors for compared strategies
+  const colors = ['#00ff88', '#00d4ff', '#ff3366', '#ffaa00', '#8b5cf6'];
+  const legendEl = document.getElementById('btChartLegend');
+  if (legendEl) legendEl.innerHTML = '';
+
+  results.forEach((r, index) => {
+    const curve = r.equityCurve;
+    const color = colors[index % colors.length];
+
+    // Draw Line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = index === 0 ? 2.0 : 1.2;
+    ctx.beginPath();
+
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / (curve.length - 1)) * W;
+      const y = H - ((curve[i] - allMin) / range) * (H - 24) - 12;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Render legend item
+    if (legendEl) {
+      const item = document.createElement('span');
+      item.style.color = color;
+      item.innerHTML = `<span style="display:inline-block; width:6px; height:6px; background:${color}; margin-right:4px; border-radius:50%;"></span>${r.strategyName.split(' ')[0] || r.strategyName}`;
+      legendEl.appendChild(item);
+    }
+  });
+}
+
+let makerRules = [];
+
+function initCustomStrategyMaker() {
+  const btnAddIndicator = document.getElementById('btnAddIndicatorRule');
+  const btnAddPattern = document.getElementById('btnAddPatternRule');
+  const btnAddSmc = document.getElementById('btnAddSmcRule');
+  const btnSave = document.getElementById('btnSaveStrategy');
+  const btnNew = document.getElementById('btnNewStrategy');
+
+  if (!btnAddIndicator) return; // not on page or not loaded
+
+  // Add event listeners
+  btnAddIndicator.addEventListener('click', () => addMakerRule('indicator'));
+  btnAddPattern.addEventListener('click', () => addMakerRule('candle_pattern'));
+  btnAddSmc.addEventListener('click', () => addMakerRule('smc_structure'));
+
+  btnSave.addEventListener('click', saveMakerStrategy);
+  btnNew.addEventListener('click', resetMakerBuilder);
+
+  // Bind key inputs updates
+  document.getElementById('makerStrategyName')?.addEventListener('input', triggerLivePreview);
+  document.getElementById('makerDirection')?.addEventListener('change', triggerLivePreview);
+  document.getElementById('makerSLType')?.addEventListener('change', triggerLivePreview);
+  document.getElementById('makerSLValue')?.addEventListener('input', triggerLivePreview);
+  document.getElementById('makerTPType')?.addEventListener('change', triggerLivePreview);
+  document.getElementById('makerTPValue')?.addEventListener('input', triggerLivePreview);
+  document.getElementById('makerGroupOperator')?.addEventListener('change', triggerLivePreview);
+
+  // Load initial lists
+  renderSavedStrategiesList();
+  resetMakerBuilder();
+}
+
+function resetMakerBuilder() {
+  document.getElementById('makerStrategyName').value = '';
+  document.getElementById('makerDirection').value = 'both';
+  document.getElementById('makerSLType').value = 'fixed_percent';
+  document.getElementById('makerSLValue').value = '2.0';
+  document.getElementById('makerTPType').value = 'r_multiple';
+  document.getElementById('makerTPValue').value = '2.5';
+  document.getElementById('makerGroupOperator').value = 'AND';
+  
+  makerRules = [];
+  // Load default indicator rule block to start with
+  addMakerRule('indicator');
+}
+
+function addMakerRule(type) {
+  const id = Date.now() + Math.random().toString(36).substr(2, 5);
+  let ruleObj = { id, type };
+
+  if (type === 'indicator') {
+    ruleObj.indicator1 = 'rsi';
+    ruleObj.indicator1_param = '14';
+    ruleObj.operator = 'crosses_below';
+    ruleObj.indicator2 = 'constant';
+    ruleObj.indicator2_param = '30';
+  } else if (type === 'candle_pattern') {
+    ruleObj.pattern = 'engulfing';
+  } else if (type === 'smc_structure') {
+    ruleObj.structure = 'fvg_fill';
+  }
+
+  makerRules.push(ruleObj);
+  renderMakerRules();
+  triggerLivePreview();
+}
+
+function deleteMakerRule(id) {
+  makerRules = makerRules.filter(r => r.id !== id);
+  renderMakerRules();
+  triggerLivePreview();
+}
+
+function renderMakerRules() {
+  const listEl = document.getElementById('makerRulesList');
+  if (!listEl) return;
+
+  if (makerRules.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-3); font-size:10px;">No rules configured. Click one of the buttons below to add entry filters.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = makerRules.map((rule, idx) => {
+    let blockHtml = '';
+
+    if (rule.type === 'indicator') {
+      blockHtml = `
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <select class="maker-rule-input" data-field="indicator1" data-id="${rule.id}" style="font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+            <option value="rsi" ${rule.indicator1 === 'rsi' ? 'selected' : ''}>RSI</option>
+            <option value="ema" ${rule.indicator1 === 'ema' ? 'selected' : ''}>EMA</option>
+            <option value="sma" ${rule.indicator1 === 'sma' ? 'selected' : ''}>SMA</option>
+            <option value="macd" ${rule.indicator1 === 'macd' ? 'selected' : ''}>MACD</option>
+            <option value="atr" ${rule.indicator1 === 'atr' ? 'selected' : ''}>ATR</option>
+            <option value="volume" ${rule.indicator1 === 'volume' ? 'selected' : ''}>Volume</option>
+          </select>
+          <input type="text" class="maker-rule-input" data-field="indicator1_param" data-id="${rule.id}" value="${rule.indicator1_param}" style="width:30px; text-align:center; font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+          
+          <select class="maker-rule-input" data-field="operator" data-id="${rule.id}" style="font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+            <option value="crosses_below" ${rule.operator === 'crosses_below' ? 'selected' : ''}>crosses below</option>
+            <option value="crosses_above" ${rule.operator === 'crosses_above' ? 'selected' : ''}>crosses above</option>
+            <option value="gt" ${rule.operator === 'gt' ? 'selected' : ''}>&gt;</option>
+            <option value="lt" ${rule.operator === 'lt' ? 'selected' : ''}>&lt;</option>
+            <option value="eq" ${rule.operator === 'eq' ? 'selected' : ''}>=</option>
+          </select>
+
+          <select class="maker-rule-input" data-field="indicator2" data-id="${rule.id}" style="font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+            <option value="constant" ${rule.indicator2 === 'constant' ? 'selected' : ''}>Constant</option>
+            <option value="rsi" ${rule.indicator2 === 'rsi' ? 'selected' : ''}>RSI</option>
+            <option value="ema" ${rule.indicator2 === 'ema' ? 'selected' : ''}>EMA</option>
+            <option value="sma" ${rule.indicator2 === 'sma' ? 'selected' : ''}>SMA</option>
+          </select>
+          <input type="text" class="maker-rule-input" data-field="indicator2_param" data-id="${rule.id}" value="${rule.indicator2_param}" style="width:30px; text-align:center; font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+        </div>
+      `;
+    } else if (rule.type === 'candle_pattern') {
+      blockHtml = `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:10px; color:var(--text-3);">Pattern:</span>
+          <select class="maker-rule-input" data-field="pattern" data-id="${rule.id}" style="font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+            <option value="engulfing" ${rule.pattern === 'engulfing' ? 'selected' : ''}>Engulfing Candle</option>
+            <option value="doji" ${rule.pattern === 'doji' ? 'selected' : ''}>Doji Reversal</option>
+            <option value="hammer" ${rule.pattern === 'hammer' ? 'selected' : ''}>Hammer Pinbar</option>
+            <option value="shooting_star" ${rule.pattern === 'shooting_star' ? 'selected' : ''}>Shooting Star</option>
+            <option value="inside_bar" ${rule.pattern === 'inside_bar' ? 'selected' : ''}>Inside Bar Breakout</option>
+          </select>
+        </div>
+      `;
+    } else if (rule.type === 'smc_structure') {
+      blockHtml = `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:10px; color:var(--text-3);">Structure:</span>
+          <select class="maker-rule-input" data-field="structure" data-id="${rule.id}" style="font-size:10px; background:#010306; border:1px solid rgba(255,255,255,0.06); color:#fff; border-radius:4px; padding:3px;">
+            <option value="fvg_fill" ${rule.structure === 'fvg_fill' ? 'selected' : ''}>Fair Value Gap Mitigation</option>
+            <option value="order_block" ${rule.structure === 'order_block' ? 'selected' : ''}>Order Block Retest</option>
+            <option value="liquidity_sweep" ${rule.structure === 'liquidity_sweep' ? 'selected' : ''}>Liquidity Sweep (High/Low)</option>
+            <option value="fib_retest" ${rule.structure === 'fib_retest' ? 'selected' : ''}>Fibonacci OTE (0.618)</option>
+          </select>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="maker-rule-block" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="background:var(--bg-3); border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--text-2); font-weight:700;">${idx + 1}</span>
+          ${blockHtml}
+        </div>
+        <button class="maker-delete-btn" data-id="${rule.id}" style="background:none; border:none; color:var(--red); font-size:12px; cursor:pointer; padding:2px;">🗑</button>
+      </div>`;
+  }).join('');
+
+  // Bind change listeners to input elements inside blocks
+  listEl.querySelectorAll('.maker-rule-input').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const id = el.dataset.id;
+      const field = el.dataset.field;
+      const rule = makerRules.find(r => r.id === id);
+      if (rule) {
+        rule[field] = el.value;
+        triggerLivePreview();
+      }
+    });
+  });
+
+  listEl.querySelectorAll('.maker-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteMakerRule(btn.dataset.id));
+  });
+}
+
+let previewTimeout = null;
+function triggerLivePreview() {
+  if (previewTimeout) clearTimeout(previewTimeout);
+  
+  previewTimeout = setTimeout(() => {
+    if (!S.candles || S.candles.length < 50) return;
+
+    const stratObj = compileMakerStrategy();
+    const result = runSingleBacktest(S.candles, stratObj, 10000);
+
+    const winRateEl = document.getElementById('makerLiveWinRate');
+    const signalsEl = document.getElementById('makerLiveSignalsCount');
+
+    if (winRateEl && signalsEl) {
+      winRateEl.textContent = `${result.winRate.toFixed(1)}%`;
+      signalsEl.textContent = `${result.trades.length} entry signals generated`;
+      
+      if (result.winRate >= 55) {
+        winRateEl.style.color = 'var(--green)';
+      } else if (result.winRate >= 45) {
+        winRateEl.style.color = 'var(--gold)';
+      } else {
+        winRateEl.style.color = 'var(--red)';
+      }
+    }
+  }, 300); // 300ms debounce
+}
+
+function compileMakerStrategy() {
+  const name = document.getElementById('makerStrategyName').value || 'My Custom Strategy';
+  const direction = document.getElementById('makerDirection').value;
+  const groupOp = document.getElementById('makerGroupOperator').value;
+  const slType = document.getElementById('makerSLType').value;
+  const slVal = parseFloat(document.getElementById('makerSLValue').value) || 2.0;
+  const tpType = document.getElementById('makerTPType').value;
+  const tpVal = parseFloat(document.getElementById('makerTPValue').value) || 2.5;
+
+  // Compile visual blocks to Registry JSON schema
+  const conditions = makerRules.map(r => {
+    if (r.type === 'indicator') {
+      const cond = {
+        indicator: r.indicator1,
+        params: [parseInt(r.indicator1_param, 10) || 14],
+        operator: r.operator
+      };
+      if (r.indicator2 === 'constant') {
+        cond.target = 'constant';
+        cond.target_value = parseFloat(r.indicator2_param) || 0;
+      } else {
+        cond.target = 'indicator';
+        cond.target_name = r.indicator2;
+        cond.target_params = [parseInt(r.indicator2_param, 10) || 14];
+      }
+      return cond;
+    } else if (r.type === 'candle_pattern') {
+      return {
+        indicator: 'candle_pattern',
+        pattern: r.pattern
+      };
+    } else if (r.type === 'smc_structure') {
+      return {
+        indicator: 'smc_structure',
+        structure: r.structure
+      };
+    }
+  });
+
+  // Entry Rule: Combine direction logic
+  let buyCondition = null;
+  let sellCondition = null;
+
+  if (conditions.length === 1) {
+    if (direction === 'both' || direction === 'long') buyCondition = conditions[0];
+    if (direction === 'both' || direction === 'short') sellCondition = conditions[0];
+  } else if (conditions.length > 1) {
+    if (direction === 'both' || direction === 'long') {
+      buyCondition = {
+        operator: groupOp,
+        conditions: conditions
+      };
+    }
+    if (direction === 'both' || direction === 'short') {
+      sellCondition = {
+        operator: groupOp,
+        conditions: conditions
+      };
+    }
+  }
+
+  return {
+    id: 'custom_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+    name: name,
+    description: `Custom visual strategy built on ${makerRules.length} conditions.`,
+    rules: {
+      buy: buyCondition,
+      sell: sellCondition
+    },
+    stop_loss: {
+      type: slType,
+      value: slVal
+    },
+    take_profit: {
+      type: tpType,
+      value: tpVal
+    }
+  };
+}
+
+function saveMakerStrategy() {
+  const name = document.getElementById('makerStrategyName').value.trim();
+  if (!name) {
+    showToast('Please enter a strategy name to save.', 'warning');
+    return;
+  }
+
+  if (makerRules.length === 0) {
+    showToast('Cannot save a strategy without rules.', 'warning');
+    return;
+  }
+
+  const strat = compileMakerStrategy();
+  
+  // Save to LocalStorage using strategies registry helper
+  import('./paper/strategies.js').then(({ saveCustomStrategy }) => {
+    saveCustomStrategy(strat);
+    showToast(`Strategy "${strat.name}" saved successfully!`, 'success');
+    
+    // Repopulate selectors
+    import('./paper/ui.js').then(({ populateStrategyDropdowns }) => {
+      populateStrategyDropdowns();
+      renderSavedStrategiesList();
+    });
+  });
+}
+
+function renderSavedStrategiesList() {
+  const container = document.getElementById('makerSavedStrategiesList');
+  if (!container) return;
+
+  import('./paper/strategies.js').then(({ getCustomStrategies, deleteCustomStrategy }) => {
+    const strats = getCustomStrategies();
+
+    if (strats.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:15px; color:var(--text-3); font-size:10px;">No custom strategies saved. Build and save one above!</div>`;
+      return;
+    }
+
+    container.innerHTML = strats.map(s => {
+      return `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:11px; font-weight:700; color:var(--gold);">${s.name}</span>
+            <span style="font-size:8.5px; color:var(--text-3);">${s.description}</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="maker-saved-edit" data-id="${s.id}" style="background:none; border:none; color:var(--text-2); font-size:10px; cursor:pointer;">✏️</button>
+            <button class="maker-saved-duplicate" data-id="${s.id}" style="background:none; border:none; color:var(--text-2); font-size:10px; cursor:pointer;">👥</button>
+            <button class="maker-saved-delete" data-id="${s.id}" style="background:none; border:none; color:var(--red); font-size:10px; cursor:pointer;">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Bind saved actions
+    container.querySelectorAll('.maker-saved-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const strat = strats.find(s => s.id === btn.dataset.id);
+        if (strat) loadStratIntoBuilder(strat);
+      });
+    });
+
+    container.querySelectorAll('.maker-saved-duplicate').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const strat = strats.find(s => s.id === btn.dataset.id);
+        if (strat) {
+          const clone = JSON.parse(JSON.stringify(strat));
+          clone.id = clone.id + '_copy';
+          clone.name = clone.name + ' Copy';
+          import('./paper/strategies.js').then(({ saveCustomStrategy }) => {
+            saveCustomStrategy(clone);
+            renderSavedStrategiesList();
+            import('./paper/ui.js').then(({ populateStrategyDropdowns }) => populateStrategyDropdowns());
+          });
+        }
+      });
+    });
+
+    container.querySelectorAll('.maker-saved-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteCustomStrategy(btn.dataset.id);
+        renderSavedStrategiesList();
+        import('./paper/ui.js').then(({ populateStrategyDropdowns }) => populateStrategyDropdowns());
+        showToast('Strategy deleted.', 'info');
+      });
+    });
+  });
+}
+
+function loadStratIntoBuilder(strat) {
+  document.getElementById('makerStrategyName').value = strat.name;
+  document.getElementById('makerSLType').value = strat.stop_loss?.type || 'fixed_percent';
+  document.getElementById('makerSLValue').value = strat.stop_loss?.value || 2.0;
+  document.getElementById('makerTPType').value = strat.take_profit?.type || 'r_multiple';
+  document.getElementById('makerTPValue').value = strat.take_profit?.value || 2.5;
+
+  // Re-build conditions list
+  makerRules = [];
+  const rules = strat.rules;
+  let conditions = [];
+  
+  if (rules.buy) {
+    if (rules.buy.conditions) {
+      conditions = rules.buy.conditions;
+      document.getElementById('makerGroupOperator').value = rules.buy.operator || 'AND';
+    } else {
+      conditions = [rules.buy];
+    }
+    document.getElementById('makerDirection').value = rules.sell ? 'both' : 'long';
+  } else if (rules.sell) {
+    if (rules.sell.conditions) {
+      conditions = rules.sell.conditions;
+      document.getElementById('makerGroupOperator').value = rules.sell.operator || 'AND';
+    } else {
+      conditions = [rules.sell];
+    }
+    document.getElementById('makerDirection').value = 'short';
+  }
+
+  conditions.forEach(cond => {
+    const id = Date.now() + Math.random().toString(36).substr(2, 5);
+    
+    if (cond.indicator === 'candle_pattern') {
+      makerRules.push({
+        id,
+        type: 'candle_pattern',
+        pattern: cond.pattern
+      });
+    } else if (cond.indicator === 'smc_structure') {
+      makerRules.push({
+        id,
+        type: 'smc_structure',
+        structure: cond.structure
+      });
+    } else {
+      // indicator
+      makerRules.push({
+        id,
+        type: 'indicator',
+        indicator1: cond.indicator,
+        indicator1_param: cond.params ? cond.params[0].toString() : '14',
+        operator: cond.operator,
+        indicator2: cond.target === 'constant' ? 'constant' : (cond.target_name || 'ema'),
+        indicator2_param: cond.target === 'constant' ? cond.target_value.toString() : (cond.target_params ? cond.target_params[0].toString() : '14')
+      });
+    }
+  });
+
+  renderMakerRules();
+  triggerLivePreview();
+  showToast(`Loaded "${strat.name}" into builder.`, 'info');
 }
 
 // Boot standard script execution after all global variables are declared

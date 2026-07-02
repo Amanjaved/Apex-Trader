@@ -104,6 +104,10 @@ export const S = {
     '10r-trade': false,
     'no-rule-breaks': true
   },
+  botActive: false,
+  botActiveState: false,
+  botStrategy: 'ai_consensus',
+  botLogs: ['[System] Bot ready. Select a strategy and click Start.'],
 
   // Candle colors (user-configurable)
   bullColor: '#26a69a',
@@ -141,7 +145,11 @@ export function saveState() {
       demoAccount: S.demoAccount,
       demoPositions: S.demoPositions,
       demoHistory: S.demoHistory,
-      achievements: S.achievements
+      achievements: S.achievements,
+      botActive: S.botActive,
+      botActiveState: S.botActiveState,
+      botStrategy: S.botStrategy,
+      botLogs: S.botLogs
     };
 
     // Safely save settings only if input elements exist on the active page
@@ -194,6 +202,10 @@ export function loadState() {
     if (p.demoPositions) S.demoPositions = p.demoPositions;
     if (p.demoHistory) S.demoHistory = p.demoHistory;
     if (p.achievements) S.achievements = p.achievements;
+    if (p.botActive !== undefined) S.botActive = p.botActive;
+    if (p.botActiveState !== undefined) S.botActiveState = p.botActiveState;
+    if (p.botStrategy) S.botStrategy = p.botStrategy;
+    if (p.botLogs) S.botLogs = p.botLogs;
     
     // Safely load settings into inputs only if they exist on the active page
     if (p.settings && D.inpEmaFast) {
