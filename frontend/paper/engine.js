@@ -61,11 +61,19 @@ export function ensurePaperState() {
 // ──────────────────────────────────────────────
 //  Backend API Synchronization
 // ──────────────────────────────────────────────
+function apiFetch(path, options) {
+  let url = path;
+  if (window.location.port === '3000') {
+    url = `http://${window.location.hostname}:8000${path}`;
+  }
+  return fetch(url, options);
+}
+
 export async function syncDemoData() {
   ensurePaperState();
   try {
     // 1. Portfolio Summary
-    const r1 = await fetch('/demo/portfolio');
+    const r1 = await apiFetch('/demo/portfolio');
     if (r1.ok) {
       const d1 = await r1.json();
       S.demoAccount.balance = d1.balance;
@@ -77,7 +85,7 @@ export async function syncDemoData() {
     }
 
     // 2. Open Positions
-    const r2 = await fetch('/demo/positions');
+    const r2 = await apiFetch('/demo/positions');
     if (r2.ok) {
       const d2 = await r2.json();
       S.demoPositions = d2.map(p => ({
@@ -98,7 +106,7 @@ export async function syncDemoData() {
     }
 
     // 3. Closed Trades Journal
-    const r3 = await fetch('/demo/trades?limit=50');
+    const r3 = await apiFetch('/demo/trades?limit=50');
     if (r3.ok) {
       const d3 = await r3.json();
       S.demoHistory = d3.map(h => ({
@@ -210,7 +218,7 @@ export async function syncDemoData() {
 // ──────────────────────────────────────────────
 export async function resetPaperAccount() {
   try {
-    const r = await fetch('/demo/reset?balance=10000', { method: 'POST' });
+    const r = await apiFetch('/demo/reset?balance=10000', { method: 'POST' });
     if (r.ok) {
       await syncDemoData();
       notify();
@@ -260,20 +268,25 @@ export async function openPaperPosition(type, opts = {}) {
   }
 
   try {
-    const r = await fetch('/demo/open', {
+    const r = await apiFetch('/demo/open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     if (!r.ok) {
-      const err = await r.json();
-      _toast(`Error: ${err.detail || r.statusText}`, 'error');
+      let msg = r.statusText;
+      try {
+        const err = await r.json();
+        msg = err.detail || msg;
+      } catch (_) {}
+      _toast(`Error: ${msg}`, 'error');
       return null;
     }
     await syncDemoData();
     notify();
     _toast(`${followedAi ? 'AI-guided' : 'Manual'} ${type} opened.`, 'success');
   } catch (e) {
+    console.error('[engine.js] openPaperPosition exception:', e);
     _toast('Failed to open position.', 'error');
   }
 }
@@ -284,7 +297,7 @@ export async function closePaperPosition(idx, exitReason = 'Manual Close', exitP
   if (!p) return null;
 
   try {
-    const r = await fetch('/demo/close', {
+    const r = await apiFetch('/demo/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -316,7 +329,7 @@ export async function closeHalfPosition() {
   const p = S.demoPositions[0];
   const halfSize = p.size / 2;
   try {
-    const r = await fetch('/demo/close', {
+    const r = await apiFetch('/demo/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -341,7 +354,7 @@ export async function moveSlToBreakeven() {
   if (!S.demoPositions.length) return _toast('No open positions.', 'info');
   const p = S.demoPositions[0];
   try {
-    const r = await fetch('/demo/modify', {
+    const r = await apiFetch('/demo/modify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -366,7 +379,7 @@ export async function trailStop(currentPrice) {
   const px = currentPrice || p.entryPrice;
   const newSl = p.type === 'LONG' ? px * 0.995 : px * 1.005;
   try {
-    const r = await fetch('/demo/modify', {
+    const r = await apiFetch('/demo/modify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

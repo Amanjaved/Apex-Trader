@@ -1,7 +1,7 @@
 /**
  * Shared paper-trading dashboard UI (charts sidebar + analysis tab).
  */
-import { S } from '../settings/state.js';
+import { S, saveState } from '../settings/state.js';
 import {
   fmtUSD, ensurePaperState, getPerformanceStats, getChallengeReturns,
   getCoachAdvice, getDailyPnlMap, closePaperPosition,

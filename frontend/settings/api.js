@@ -241,8 +241,11 @@ export function connectBackendWS() {
   if (backendWs) { try { backendWs.close(); } catch(e) {} backendWs = null; }
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  // Use host of frontend connection (e.g. localhost:8000)
-  const host = window.location.host || 'localhost:8000';
+  // Use host of frontend connection, fallback to port 8000 if on port 3000
+  let host = window.location.host || 'localhost:8000';
+  if (window.location.port === '3000') {
+    host = `${window.location.hostname}:8000`;
+  }
   const url = `${protocol}//${host}/api/ws/ticks`;
 
   backendWs = new WebSocket(url);

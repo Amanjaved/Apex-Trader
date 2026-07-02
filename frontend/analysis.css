@@ -2488,6 +2488,12 @@ body {
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: var(--text) !important;
 }
+.btn-demo-ctrl.active {
+  background: var(--gold) !important;
+  color: #010306 !important;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.25);
+}
 .risk-info-item {
   display: flex;
   justify-content: space-between;
