@@ -626,8 +626,8 @@ function initPaperTradingSidebar() {
 }
 
 async function initReplayMode(replayId) {
-    const host = window.location.port === '3000' ? `http://${window.location.hostname}:8000` : '';
-    const res = await fetch(`${host}/demo/trades/${replayId}`);
+  try {
+    const res = await fetch(`/api/demo/trades/${replayId}`);
     if (!res.ok) {
       toast(`Failed to load replay for trade #${replayId}`, 'error');
       return;

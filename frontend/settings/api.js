@@ -11,6 +11,22 @@ let wsKlineStream = null;
 let wsDepthStream = null;
 let wsReconnectTimer = null;
 let wsReconnectDelay = 1000;
+let wsFailCount = 0;
+let restFallbackTimer = null;
+
+// REST polling fallback for environments where the Binance WebSocket is blocked
+function startRestFallback() {
+  if (restFallbackTimer) return;
+  setStatus('Live — REST polling', 'live');
+  restFallbackTimer = setInterval(() => {
+    fetchCandles();
+    if (S.showDepth) fetchOrderBook();
+  }, 8000);
+}
+
+function stopRestFallback() {
+  if (restFallbackTimer) { clearInterval(restFallbackTimer); restFallbackTimer = null; }
+}
 let backendWs = null;
 
 const TICKER_STREAMS = Object.keys(COINS).map(s => `${s.toLowerCase()}@ticker`);
@@ -286,6 +302,8 @@ export function connectWS() {
   ws.onopen = () => {
     setStatus('Live — WebSocket', 'live');
     wsReconnectDelay = 1000;
+    wsFailCount = 0;
+    stopRestFallback();
 
     const params = [...TICKER_STREAMS];
     wsKlineStream = `${S.coin.toLowerCase()}@kline_${TF_MAP[S.tf]}`;
@@ -315,7 +333,12 @@ export function connectWS() {
   ws.onerror = () => {};
   ws.onclose = () => {
     ws = null; wsKlineStream = null; wsDepthStream = null;
-    setStatus('Reconnecting…', 'err');
+    wsFailCount++;
+    if (wsFailCount >= 2) {
+      startRestFallback();   // keep data flowing while WS keeps retrying in background
+    } else {
+      setStatus('Reconnecting…', 'err');
+    }
     wsReconnectTimer = setTimeout(() => {
       wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000);
       connectWS();

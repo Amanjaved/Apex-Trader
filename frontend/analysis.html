@@ -606,6 +606,106 @@
 
   <!-- TAB 3: PERFORMANCE & BACKTEST -->
   <div class="tab-panel" id="tab-performance">
+    <div class="grid-row" style="margin-bottom:20px;">
+        <!-- In-Browser Simple Backtester -->
+        <div class="glass-card backtest-card" style="grid-column: span 2;">
+          <div class="card-glow"></div>
+          <div class="card-header">
+            <span class="card-title-icon">🧪</span>
+            <h3>Advanced Strategy Backtester & Leaderboard</h3>
+          </div>
+          <div class="backtest-body">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; align-items: end;">
+                <div>
+                  <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy</label>
+                  <select class="inp inp-full" id="btStrategy" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Capital ($)</label>
+                  <input type="number" class="inp inp-full" id="btCapital" value="10000" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
+                </div>
+                <div style="display:flex; align-items:center; height:32px;">
+                  <label class="retro-checkbox" style="font-size:10px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="btCompareMode"> Compare Mode
+                  </label>
+                </div>
+              </div>
+  
+              <!-- Compare Selection List -->
+              <div id="btCompareListContainer" style="display:none; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:10px; max-height:110px; overflow-y:auto;">
+                <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block; margin-bottom:6px;">Select Strategies to Compare</span>
+                <div id="btCompareCheckboxes" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px; color:var(--text-2);">
+                  <!-- Dynamically populated checkboxes -->
+                </div>
+              </div>
+  
+              <button class="btn btn-primary" id="btnRunBt" style="width:100%; font-weight:700;">Run Strategy Backtest</button>
+  
+              <!-- Results Section with Tab Layout -->
+              <div id="btResults" style="display:none; background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; border:1px solid rgba(0, 240, 255, 0.1); margin-top:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
+                  <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text);">Backtest Results Detail</span>
+                  <div class="bot-decision-time" id="btCompletedTime" style="font-family:var(--mono); font-size:9px; color:var(--text-3);">—</div>
+                </div>
+                
+                <div style="display:flex; gap:6px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:6px;">
+                  <button class="btn-demo-ctrl btn-sm active" id="btnTabBtStats" style="padding:4px 10px;">Metrics</button>
+                  <button class="btn-demo-ctrl btn-sm" id="btnTabBtEquity" style="padding:4px 10px;">Equity Curves</button>
+                  <button class="btn-demo-ctrl btn-sm" id="btnTabBtTrades" style="padding:4px 10px;">Trade Logs</button>
+                </div>
+  
+                <!-- Tab 1: Stats Table -->
+                <div id="panelBtStats" style="display:block;">
+                  <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:10px;" id="btStatsTable">
+                    <thead>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <th style="text-align:left; padding:4px;">Metric</th>
+                        <th style="text-align:right; padding:4px;" id="btStatsHeaderPrimary">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody id="btStatsTableBody">
+                      <!-- Loaded dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+  
+                <!-- Tab 2: Equity Curve Chart -->
+                <div id="panelBtEquity" style="display:none;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:9.5px; color:var(--text-2); text-transform:uppercase; font-weight:700;">Account Equity Over Time</span>
+                    <div id="btChartLegend" style="display:flex; gap:10px; font-size:9px;"></div>
+                  </div>
+                  <canvas id="btEquityChart" width="500" height="150" style="width:100%; height:140px; background:rgba(0,0,0,0.3); border-radius:4px; border:1px solid rgba(255,255,255,0.05);"></canvas>
+                </div>
+  
+                <!-- Tab 3: Simulated Trade List -->
+                <div id="panelBtTrades" style="display:none;">
+                  <div class="terminal-table-container" style="max-height:180px; overflow-y:auto;">
+                    <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:9.5px;">
+                      <thead>
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                          <th style="text-align:left; padding:4px;">Time</th>
+                          <th style="text-align:center; padding:4px;">Type</th>
+                          <th style="text-align:right; padding:4px;">Entry</th>
+                          <th style="text-align:right; padding:4px;">Exit</th>
+                          <th style="text-align:right; padding:4px;">P&L ($)</th>
+                          <th style="text-align:right; padding:4px;">R:R</th>
+                        </tr>
+                      </thead>
+                      <tbody id="btTradesTableBody">
+                        <!-- Filled dynamically -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
     <div class="grid-row">
       <!-- Strategy Backtester -->
       <div class="glass-card backtest-card">
@@ -1325,104 +1425,6 @@
         </div>
       </div>
 
-      <!-- In-Browser Simple Backtester -->
-      <div class="glass-card backtest-card" style="grid-column: span 2;">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧪</span>
-          <h3>Advanced Strategy Backtester & Leaderboard</h3>
-        </div>
-        <div class="backtest-body">
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; align-items: end;">
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy</label>
-                <select class="inp inp-full" id="btStrategy" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Capital ($)</label>
-                <input type="number" class="inp inp-full" id="btCapital" value="10000" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
-              </div>
-              <div style="display:flex; align-items:center; height:32px;">
-                <label class="retro-checkbox" style="font-size:10px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; gap:6px;">
-                  <input type="checkbox" id="btCompareMode"> Compare Mode
-                </label>
-              </div>
-            </div>
-
-            <!-- Compare Selection List -->
-            <div id="btCompareListContainer" style="display:none; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:10px; max-height:110px; overflow-y:auto;">
-              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block; margin-bottom:6px;">Select Strategies to Compare</span>
-              <div id="btCompareCheckboxes" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px; color:var(--text-2);">
-                <!-- Dynamically populated checkboxes -->
-              </div>
-            </div>
-
-            <button class="btn btn-primary" id="btnRunBt" style="width:100%; font-weight:700;">Run Strategy Backtest</button>
-
-            <!-- Results Section with Tab Layout -->
-            <div id="btResults" style="display:none; background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; border:1px solid rgba(0, 240, 255, 0.1); margin-top:8px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
-                <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text);">Backtest Results Detail</span>
-                <div class="bot-decision-time" id="btCompletedTime" style="font-family:var(--mono); font-size:9px; color:var(--text-3);">—</div>
-              </div>
-              
-              <div style="display:flex; gap:6px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:6px;">
-                <button class="btn-demo-ctrl btn-sm active" id="btnTabBtStats" style="padding:4px 10px;">Metrics</button>
-                <button class="btn-demo-ctrl btn-sm" id="btnTabBtEquity" style="padding:4px 10px;">Equity Curves</button>
-                <button class="btn-demo-ctrl btn-sm" id="btnTabBtTrades" style="padding:4px 10px;">Trade Logs</button>
-              </div>
-
-              <!-- Tab 1: Stats Table -->
-              <div id="panelBtStats" style="display:block;">
-                <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:10px;" id="btStatsTable">
-                  <thead>
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                      <th style="text-align:left; padding:4px;">Metric</th>
-                      <th style="text-align:right; padding:4px;" id="btStatsHeaderPrimary">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody id="btStatsTableBody">
-                    <!-- Loaded dynamically -->
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Tab 2: Equity Curve Chart -->
-              <div id="panelBtEquity" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:9.5px; color:var(--text-2); text-transform:uppercase; font-weight:700;">Account Equity Over Time</span>
-                  <div id="btChartLegend" style="display:flex; gap:10px; font-size:9px;"></div>
-                </div>
-                <canvas id="btEquityChart" width="500" height="150" style="width:100%; height:140px; background:rgba(0,0,0,0.3); border-radius:4px; border:1px solid rgba(255,255,255,0.05);"></canvas>
-              </div>
-
-              <!-- Tab 3: Simulated Trade List -->
-              <div id="panelBtTrades" style="display:none;">
-                <div class="terminal-table-container" style="max-height:180px; overflow-y:auto;">
-                  <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:9.5px;">
-                    <thead>
-                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <th style="text-align:left; padding:4px;">Time</th>
-                        <th style="text-align:center; padding:4px;">Type</th>
-                        <th style="text-align:right; padding:4px;">Entry</th>
-                        <th style="text-align:right; padding:4px;">Exit</th>
-                        <th style="text-align:right; padding:4px;">P&L ($)</th>
-                        <th style="text-align:right; padding:4px;">R:R</th>
-                      </tr>
-                    </thead>
-                    <tbody id="btTradesTableBody">
-                      <!-- Filled dynamically -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Performance stats -->
