@@ -425,6 +425,14 @@
         <div class="report-content" id="reportContent">
           <!-- Managed by JS -->
         </div>
+        <div style="margin-top:16px; border-top:1px solid rgba(255,255,255,0.07); padding-top:14px;">
+          <button id="btnDeepAnalysis" data-testid="deep-analysis-btn"
+            style="background:linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.05)); border:1px solid rgba(212,175,55,0.4); color:var(--gold, #d4af37); padding:9px 18px; border-radius:8px; font-weight:700; font-size:12px; letter-spacing:0.5px; cursor:pointer; transition:background-color .2s, transform .15s;">
+            🧠 SENIOR ANALYST DEEP DIVE (LLM)
+          </button>
+          <span id="deepAnalysisStatus" data-testid="deep-analysis-status" style="margin-left:10px; font-size:11px; color:var(--text-3, #888);"></span>
+          <div class="report-content" id="deepAnalysisContent" data-testid="deep-analysis-content" style="display:none; margin-top:14px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1010,7 +1018,7 @@
             </div>
           </div>
           <form class="chat-input-row" id="chatForm">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Type a quantitative question (e.g. what is the RSI?)..." autocomplete="off">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask the senior analyst anything (e.g. should I long here? where's my invalidation?)..." autocomplete="off">
             <button type="submit" class="chat-submit-btn">Send</button>
           </form>
         </div>

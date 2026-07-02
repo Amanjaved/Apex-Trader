@@ -62,11 +62,7 @@ export function ensurePaperState() {
 //  Backend API Synchronization
 // ──────────────────────────────────────────────
 function apiFetch(path, options) {
-  let url = path;
-  if (window.location.port === '3000') {
-    url = `http://${window.location.hostname}:8000${path}`;
-  }
-  return fetch(url, options);
+  return fetch(`/api${path}`, options);
 }
 
 export async function syncDemoData() {

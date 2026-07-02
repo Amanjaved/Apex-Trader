@@ -2470,79 +2470,81 @@ function calculateLastRSI(period) {
   return values[values.length - 1];
 }
 
+// Trader-grade backtest engine v2: taker fees, slippage, fixed-fractional risk sizing,
+// equity-based annualized Sharpe. No more hardcoded 5x all-in sizing.
+const BT_CONFIG = {
+  feeRate: 0.0005,      // 0.05% taker per side (Binance futures)
+  slippage: 0.0002,     // 0.02% market order slippage
+  riskPct: 0.015,       // risk 1.5% of equity per trade
+  maxLeverage: 10,      // notional cap
+};
+
 function runSingleBacktest(candles, strategyObj, capital) {
   const indicators = prepareIndicatorValues(candles);
   const n = candles.length;
+  const { feeRate, slippage, riskPct, maxLeverage } = BT_CONFIG;
   let balance = capital;
-  let position = null; // { type: 'LONG'|'SHORT', entryPrice, size, entryIndex, slPrice, tpPrice }
+  let position = null;
   const equityCurve = [balance];
   const trades = [];
   let wins = 0;
   let losses = 0;
   let maxEquity = balance;
   let maxDd = 0;
+  let totalFees = 0;
+
+  const closeTrade = (exitRaw, reason, time, applySlip) => {
+    const exitPrice = applySlip
+      ? (position.type === 'LONG' ? exitRaw * (1 - slippage) : exitRaw * (1 + slippage))
+      : exitRaw;
+    const grossPnl = position.type === 'LONG'
+      ? (exitPrice - position.entryPrice) * position.size
+      : (position.entryPrice - exitPrice) * position.size;
+    const exitFee = exitPrice * position.size * feeRate;
+    const pnl = grossPnl - exitFee;
+    totalFees += exitFee;
+    balance += pnl;
+    if (pnl > 0) wins++; else losses++;
+    trades.push({
+      id: trades.length + 1,
+      time: time || new Date().toISOString(),
+      type: position.type,
+      entryPrice: position.entryPrice,
+      exitPrice,
+      pnl,
+      pnlPct: position.riskAmount > 0 ? (pnl / balance) * 100 : 0,
+      reason,
+      rr: position.riskAmount > 0 ? parseFloat((pnl / position.riskAmount).toFixed(2)) : 0,
+    });
+    position = null;
+  };
 
   for (let i = 25; i < n; i++) {
     const c = candles[i];
     const close = c.c;
-    const low = c.l;
-    const high = c.h;
-    
+
     if (position) {
-      let hitSl = false;
-      let hitTp = false;
-      
+      let hitSl = false, hitTp = false;
       if (position.type === 'LONG') {
-        if (low <= position.slPrice) hitSl = true;
-        else if (high >= position.tpPrice) hitTp = true;
+        if (c.l <= position.slPrice) hitSl = true;       // SL checked first (conservative intrabar)
+        else if (c.h >= position.tpPrice) hitTp = true;
       } else {
-        if (high >= position.slPrice) hitSl = true;
-        else if (low <= position.tpPrice) hitTp = true;
+        if (c.h >= position.slPrice) hitSl = true;
+        else if (c.l <= position.tpPrice) hitTp = true;
       }
-      
+
       const signal = evaluateStrategyRule(candles, i, strategyObj, indicators, null);
       const reverseSignal = position.type === 'LONG' ? signal.sell : signal.buy;
-      
-      if (hitSl || hitTp || reverseSignal) {
-        let exitPrice = close;
-        let reason = 'Reverse Signal';
-        if (hitSl) {
-          exitPrice = position.slPrice;
-          reason = 'Stop Loss';
-        } else if (hitTp) {
-          exitPrice = position.tpPrice;
-          reason = 'Take Profit';
-        }
-        
-        const pnl = position.type === 'LONG' ? (exitPrice - position.entryPrice) * position.size : (position.entryPrice - exitPrice) * position.size;
-        const pnlPct = (pnl / (position.entryPrice * position.size / 5)) * 100;
-        balance += pnl;
-        
-        if (pnl > 0) wins++; else losses++;
-        
-        trades.push({
-          id: trades.length + 1,
-          time: c.t || new Date().toISOString(),
-          type: position.type,
-          entryPrice: position.entryPrice,
-          exitPrice: exitPrice,
-          pnl: pnl,
-          pnlPct: pnlPct,
-          reason: reason,
-          rr: strategyObj.stop_loss ? parseFloat((Math.abs(exitPrice - position.entryPrice) / Math.abs(position.entryPrice - position.slPrice)).toFixed(2)) : 0.0
-        });
-        
-        position = null;
-      }
+
+      if (hitSl) closeTrade(position.slPrice, 'Stop Loss', c.t, true);
+      else if (hitTp) closeTrade(position.tpPrice, 'Take Profit', c.t, false); // limit fill, no slippage
+      else if (reverseSignal) closeTrade(close, 'Reverse Signal', c.t, true);
     } else {
       const signal = evaluateStrategyRule(candles, i, strategyObj, indicators, null);
-      let shouldEnterLong = signal.buy;
-      let shouldEnterShort = signal.sell;
-      
-      if (shouldEnterLong || shouldEnterShort) {
-        const type = shouldEnterLong ? 'LONG' : 'SHORT';
-        const entryPrice = close;
-        
+      if (signal.buy || signal.sell) {
+        const type = signal.buy ? 'LONG' : 'SHORT';
+        const entryPrice = type === 'LONG' ? close * (1 + slippage) : close * (1 - slippage);
+
         let slPercent = 2.0;
         if (strategyObj.stop_loss) {
           if (strategyObj.stop_loss.type === 'fixed_percent') {
@@ -2552,7 +2554,6 @@ function runSingleBacktest(candles, strategyObj, capital) {
             slPercent = ((atrVal * (strategyObj.stop_loss.value || 2.0)) / entryPrice) * 100;
           }
         }
-        
         let tpPercent = 5.0;
         if (strategyObj.take_profit) {
           if (strategyObj.take_profit.type === 'fixed_percent') {
@@ -2561,25 +2562,28 @@ function runSingleBacktest(candles, strategyObj, capital) {
             tpPercent = slPercent * (strategyObj.take_profit.value || 2.5);
           }
         }
-        
+
         const slPrice = type === 'LONG' ? entryPrice * (1 - slPercent / 100) : entryPrice * (1 + slPercent / 100);
         const tpPrice = type === 'LONG' ? entryPrice * (1 + tpPercent / 100) : entryPrice * (1 - tpPercent / 100);
-        
-        const margin = balance * 0.95;
-        const size = (margin * 5) / entryPrice;
-        
-        position = {
-          type,
-          entryPrice,
-          size,
-          entryIndex: i,
-          slPrice,
-          tpPrice
-        };
+
+        // Fixed-fractional sizing: risk a fixed % of equity based on stop distance
+        const stopDist = Math.abs(entryPrice - slPrice);
+        if (stopDist > 0 && balance > 0) {
+          const riskAmount = balance * riskPct;
+          let size = riskAmount / stopDist;
+          const maxNotional = balance * maxLeverage;
+          if (size * entryPrice > maxNotional) size = maxNotional / entryPrice;
+          const entryFee = entryPrice * size * feeRate;
+          totalFees += entryFee;
+          balance -= entryFee;
+          position = { type, entryPrice, size, entryIndex: i, slPrice, tpPrice, riskAmount };
+        }
       }
     }
-    
-    const activePnl = position ? (position.type === 'LONG' ? (close - position.entryPrice) * position.size : (position.entryPrice - close) * position.size) : 0;
+
+    const activePnl = position
+      ? (position.type === 'LONG' ? (close - position.entryPrice) * position.size : (position.entryPrice - close) * position.size)
+      : 0;
     const currentEquity = balance + activePnl;
     if (currentEquity > maxEquity) maxEquity = currentEquity;
     const dd = ((maxEquity - currentEquity) / maxEquity) * 100;
@@ -2587,39 +2591,33 @@ function runSingleBacktest(candles, strategyObj, capital) {
     equityCurve.push(currentEquity);
   }
 
-  if (position) {
-    const closePrice = candles[n - 1].c;
-    const pnl = position.type === 'LONG' ? (closePrice - position.entryPrice) * position.size : (position.entryPrice - closePrice) * position.size;
-    balance += pnl;
-    if (pnl > 0) wins++; else losses++;
-    trades.push({
-      id: trades.length + 1,
-      time: candles[n - 1].t || new Date().toISOString(),
-      type: position.type,
-      entryPrice: position.entryPrice,
-      exitPrice: closePrice,
-      pnl: pnl,
-      pnlPct: (pnl / (position.entryPrice * position.size / 5)) * 100,
-      reason: 'End of Data',
-      rr: strategyObj.stop_loss ? parseFloat((Math.abs(closePrice - position.entryPrice) / Math.abs(position.entryPrice - position.slPrice)).toFixed(2)) : 0.0
-    });
-    equityCurve.push(balance);
-  }
+  if (position) closeTrade(candles[n - 1].c, 'End of Data', candles[n - 1].t, true);
 
   const netProfit = balance - capital;
   const winRate = trades.length > 0 ? (wins / trades.length) * 100 : 0;
   const profitPct = (netProfit / capital) * 100;
-  const grossWin = trades.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
-  const grossLoss = Math.abs(trades.filter(t => t.pnl <= 0).reduce((s, t) => s + t.pnl, 0));
+  const winTrades = trades.filter(t => t.pnl > 0);
+  const lossTrades = trades.filter(t => t.pnl <= 0);
+  const grossWin = winTrades.reduce((s, t) => s + t.pnl, 0);
+  const grossLoss = Math.abs(lossTrades.reduce((s, t) => s + t.pnl, 0));
   const pf = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 99 : 0;
+  const avgWin = winTrades.length ? grossWin / winTrades.length : 0;
+  const avgLoss = lossTrades.length ? grossLoss / lossTrades.length : 0;
   const avgRR = trades.reduce((s, t) => s + (t.rr || 0), 0) / (trades.length || 1);
-  
-  // Sharpe Ratio estimation based on return distribution
-  const returns = trades.map(t => t.pnlPct);
-  const avgReturn = returns.reduce((s, r) => s + r, 0) / (returns.length || 1);
-  const variance = returns.reduce((s, r) => s + Math.pow(r - avgReturn, 2), 0) / (returns.length || 1);
-  const std = Math.sqrt(variance) || 1.0;
-  const sharpe = std > 0 ? (avgReturn / std) * Math.sqrt(252) : 0;
+  const expectancyR = trades.length ? trades.reduce((s, t) => s + (t.rr || 0), 0) / trades.length : 0;
+
+  // Annualized Sharpe from per-bar equity returns using actual candle interval
+  let barsPerYear = 8760;
+  const t0 = Date.parse(candles[0].t), t1 = Date.parse(candles[1] ? candles[1].t : candles[0].t);
+  if (!isNaN(t0) && !isNaN(t1) && t1 > t0) barsPerYear = (365 * 24 * 3600 * 1000) / (t1 - t0);
+  const barReturns = [];
+  for (let i = 1; i < equityCurve.length; i++) {
+    if (equityCurve[i - 1] > 0) barReturns.push(equityCurve[i] / equityCurve[i - 1] - 1);
+  }
+  const meanR = barReturns.reduce((s, r) => s + r, 0) / (barReturns.length || 1);
+  const varR = barReturns.reduce((s, r) => s + Math.pow(r - meanR, 2), 0) / (barReturns.length || 1);
+  const stdR = Math.sqrt(varR);
+  const sharpe = stdR > 0 ? (meanR / stdR) * Math.sqrt(barsPerYear) : 0;
 
   return {
     strategyName: strategyObj.name,
@@ -2630,10 +2628,14 @@ function runSingleBacktest(candles, strategyObj, capital) {
     netProfit,
     profitPct,
     maxDd,
-    sharpe: isNaN(sharpe) ? 0 : sharpe,
+    sharpe: isNaN(sharpe) ? 0 : Math.max(-9.99, Math.min(9.99, sharpe)),
     profitFactor: pf,
     avgRR,
+    avgWin,
+    avgLoss,
     expectancy: netProfit / (trades.length || 1),
+    expectancyR,
+    feesPaid: totalFees,
     equityCurve
   };
 }
@@ -2693,7 +2695,10 @@ function runStrategyBacktestInBrowser() {
         ['Sharpe Ratio', r => r.sharpe.toFixed(2)],
         ['Profit Factor', r => r.profitFactor.toFixed(2)],
         ['Avg R:R', r => r.avgRR.toFixed(1)],
-        ['Expectancy', r => `$${r.expectancy.toFixed(2)}`]
+        ['Expectancy', r => `$${r.expectancy.toFixed(2)}`],
+        ['Expectancy (R)', r => `${r.expectancyR >= 0 ? '+' : ''}${r.expectancyR.toFixed(2)}R`],
+        ['Avg Win / Loss', r => `$${r.avgWin.toFixed(0)} / -$${r.avgLoss.toFixed(0)}`],
+        ['Fees Paid', r => `$${r.feesPaid.toFixed(2)}`]
       ];
 
       statsTableBody.innerHTML = metrics.map(([label, getValue]) => {
@@ -2746,7 +2751,15 @@ function runStrategyBacktestInBrowser() {
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
           <td style="padding:6px; color:var(--text-3);">Expectancy:</td>
-          <td style="padding:6px; text-align:right; font-family:var(--mono);">${r.expectancy >= 0 ? '+' : ''}$${r.expectancy.toFixed(2)}</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono);">${r.expectancy >= 0 ? '+' : ''}$${r.expectancy.toFixed(2)} (${r.expectancyR >= 0 ? '+' : ''}${r.expectancyR.toFixed(2)}R)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Avg Win / Avg Loss:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono);"><span style="color:var(--green);">$${r.avgWin.toFixed(2)}</span> / <span style="color:var(--red);">-$${r.avgLoss.toFixed(2)}</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.02);">
+          <td style="padding:6px; color:var(--text-3);">Fees + Slippage Model:</td>
+          <td style="padding:6px; text-align:right; font-family:var(--mono); color:var(--text-3);">$${r.feesPaid.toFixed(2)} fees (0.05%/side, 1.5% risk sizing)</td>
         </tr>
       `;
     }
@@ -3282,4 +3295,42 @@ function loadStratIntoBuilder(strat) {
 
 // Boot standard script execution after all global variables are declared
 init();
+
+// ─────────────────────────────────────────────
+//  SENIOR ANALYST DEEP DIVE (LLM)
+// ─────────────────────────────────────────────
+(function initDeepAnalysis() {
+  const btn = document.getElementById('btnDeepAnalysis');
+  const status = document.getElementById('deepAnalysisStatus');
+  const content = document.getElementById('deepAnalysisContent');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    status.textContent = 'Consulting senior analyst — grounding LLM in live quant data…';
+    try {
+      const res = await fetch('/api/ai/deep-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: S.coin, interval: TF_MAP[selectedInterval] || '1h' })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      content.style.display = 'block';
+      content.innerHTML = (data.report || '')
+        .replace(/### (.*)/g, '<h4>$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.*)$/gm, '<div style="padding-left:14px; margin:3px 0;">• $1</div>')
+        .replace(/\n/g, '<br>');
+      status.textContent = `Desk note generated · quant bias ${data.bias || ''}`;
+    } catch (err) {
+      console.error('[Deep Analysis Error]', err);
+      status.textContent = 'Analyst unavailable — try again in a moment.';
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+})();
 

@@ -1,0 +1,48 @@
+{
+  "summary": "First full test iteration of ApexTrader Pro after the FastAPI refactor. Backend suite (pytest) covering health, market data, AI analysis (quant+LLM), demo paper trading, and frontend HTML pages — all 19 tests passing (100%). Frontend /analysis works well (bias hero, AI Trade Decision, Fear&Greed, deep-analysis LLM button, chatbot LLM reply all functional). Two significant frontend issues found: (1) /charts page hangs on 'INITIALIZING APEXTRADER PRO…' because the client-side Binance WebSocket is geo-blocked (HTTP 451) from the preview infrastructure, and there is no REST fallback for chart bootstrap; (2) the Strategy Backtester panel triggered by #btnRunBt is rendered inside a container with offsetHeight=0 on the 'Performance & Backtest' tab, so its detailed metrics (Sharpe, Expectancy R, Fees, Avg Win/Loss) never appear — only the auto-run EMA-Cross summary card (Win Rate / Profit Factor / Trades / Max Drawdown) is visible.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/news", "issue": "Response uses PascalCase 'Data' key (from cryptocompare-style feed) instead of snake_case; not a bug but inconsistent with rest of API (JS consumers must handle both). Test was updated to accept 'Data'."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "/charts page", "issue": "Page is stuck on 'INITIALIZING APEXTRADER PRO...' loading overlay. mainCanvas remains blank (nonBlackPixels=0, natural size still 300x150). Header shows 'Connecting…'. Root cause: wss://stream.binance.com:9443/ws returns HTTP 451 from Kubernetes egress; the frontend chart engine appears to gate initial render on the WebSocket handshake with no REST bootstrap fallback, even though /api/candles works fine.", "selector": "#loadingOverlay / #mainCanvas", "priority": "HIGH"},
+      {"component": "Analysis > Performance & Backtest tab", "issue": "Detailed strategy backtest UI (button id=btnRunBt) is present in DOM (display:block, visibility:visible) but offsetHeight=0 — its ancestor tab panel is not being made visible when the tab is activated. Clicking btnRunBt via JS does not populate #btResults. Users only see the auto-generated EMA-Cross summary card (Win Rate 42.9% / PF 1.42 / Trades 14 / Max DD -11.7%), never Sharpe / Expectancy(R) / Avg Win-Loss / Fees which the code (analysis.js lines 2607-2757) is designed to render.", "selector": "#btnRunBt / #btResults", "priority": "HIGH"},
+      {"component": "/analysis loading overlay", "issue": "Loading overlay element is never fully hidden (getComputedStyle display=flex, visibility=visible, opacity=1) even after data is rendered underneath. On /analysis the underlying page is fully usable so this is cosmetic; on /charts the same behavior blocks the entire chart.", "selector": "#loadingOverlay", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Charts real-time price / candles", "issue": "Client depends on direct browser->Binance WebSocket. In the preview environment browsers can hit Binance (429 or 451 responses seen), which means live prices and candles never populate. Recommend: (a) proxy Binance WebSocket through backend at /api/ws/binance, or (b) bootstrap from /api/candles REST + poll /api/ticker on interval when WS fails.", "affected_selectors": ["#mainCanvas", "#loadingOverlay"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix /charts page hang: add REST fallback (use /api/candles + /api/ticker polling) so chart renders even when browser->Binance WebSocket is blocked. Also hide #loadingOverlay after first successful data batch instead of gating on WS 'open' event.",
+    "Fix Performance & Backtest tab: ensure the tab-pane containing #btnRunBt / #btResults gets display:block (not just visibility) when the tab is activated. Currently the button has offsetHeight=0, so users never reach the detailed Sharpe/Expectancy-R/Fees metrics implemented in runSingleBacktest().",
+    "Auto-hide the #loadingOverlay on /analysis once bias hero card populates (currently stays visible but does not block interaction).",
+    "Optional: normalize /api/news response shape — either wrap upstream 'Data' into 'items' server-side, or document the shape in the API contract."
+  ],
+  "critical_code_review_comments": [
+    "backend/server.py: chart data fetched via requests in threads is fine, but consider adding a simple in-memory TTL cache for /api/candles (30s) and /api/ticker (5s) to protect against Binance rate limits — right now every call to /api/ai/analysis (which fetches 6 timeframes) hits Binance freshly on cold cache and can be 30-40s.",
+    "backend/server.py uses deprecated FastAPI @app.on_event('startup'); should migrate to lifespan context. Non-blocking but throws DeprecationWarning.",
+    "backend/services/demo_trading.py uses SQLite (file persisted in repo at repositories/paper_trading.db). Fine for demo, but that DB file being committed can cause noisy diffs. Consider .gitignoring it.",
+    "frontend/analysis.js is 2700+ lines — should be split (backtest engine, chat, deep-analysis, charts) into ES modules per your existing convention. Violates the >700-line rule from the code review guidelines.",
+    "Frontend chart bootstrap should not hard-block on Binance WS; add graceful degradation.",
+    "No data-testid on chatInput, chatSend, run-backtest button, results panel. Only deep-analysis-btn/content have testids. Add data-testid to at least: chat input/send, backtest run/results, bias-hero, ai-trade-decision, fear-greed-gauge for future regression coverage."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "~70% (analysis mostly OK, charts fully broken, backtest details unreachable)"},
+  "test_credentials": "None required — app runs in guest mode (no auth). /app/memory/test_credentials.md not present.",
+  "seed_data_creation": "None. Demo paper-trading tests reset via /api/demo/reset?balance=10000 before each lifecycle test and clean up by closing opened position.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend suite lives at /app/backend/tests/backend_test.py — 19 tests, run with: pytest /app/backend/tests/backend_test.py -v --junitxml=/app/test_reports/pytest/pytest_results.xml. AI-analysis test can take ~30-40s cold, deep-analysis ~15-30s (LLM). For frontend, use REACT_APP_BACKEND_URL from /app/frontend/.env. Known infra caveat: browser and server-side calls to wss://stream.binance.com from this preview cluster return HTTP 451 — treat as environmental, but the frontend must still degrade gracefully (see action items). Selectors that DO exist and work: data-testid='deep-analysis-btn' / 'deep-analysis-content', #chatInput, Send button by text, #btnRunBt (in DOM but hidden by ancestor). Tab navigation on /analysis uses text-matched buttons (no testid): 'AI Command Center', 'Liquidity & Order Flow', 'Performance & Backtest', 'Risk & Chatbot', 'Demo Simulator'.",
+  "rca_of_the_issue": "1) /charts init hang RCA: charts/chart_engine.js gates the loading overlay dismissal on a successful Binance WebSocket open event. In this Kubernetes preview cluster wss://stream.binance.com:9443/ws returns HTTP 451 (regulatory geo-block on the container egress IP). Since there is no timeout+REST fallback, initialization never completes and #loadingOverlay stays display:flex forever. Reproduction: open /charts in browser → observe 'INITIALIZING APEXTRADER PRO…' persisting > 15s → DevTools shows 'WebSocket connection failed: Error during handshake: Unexpected response code: 451'. Mitigation: (a) if WS fails to open within N seconds, fall back to REST polling via /api/candles + /api/ticker; (b) always hide overlay once first candle batch is drawn regardless of WS state. 2) btnRunBt invisible RCA: the strategy-backtester block (analysis.html around #btnRunBt / #btResults) is nested inside a tab panel that only toggles the CSS class showing its siblings, but this specific inner block has additional container styles that leave offsetHeight=0. Reproduction: open /analysis → click 'Performance & Backtest' → scroll — the 'Run Strategy Backtest' button and its results panel are not rendered though other backtest widgets (EMA-Cross summary) are. Mitigation: audit the CSS visibility/height cascade for #btnRunBt's ancestor divs, and ensure the Performance tab-pane sets an explicit display:block/flex on all children."
+}

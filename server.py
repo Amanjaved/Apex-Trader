@@ -1,10 +1,10 @@
+# Legacy launcher — the app now runs under supervisor:
+#   backend : uvicorn server:app --port 8001  (cwd /app/backend)
+#   frontend: node server.js --port 3000      (cwd /app/frontend)
+import subprocess
 import sys
-import os
-
-# Ensure backend package can be imported from root directory context
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from backend.server import start_server
 
 if __name__ == "__main__":
-    start_server()
+    print("ApexTrader Pro now runs as two services (FastAPI :8001 + static :3000).")
+    print("Use: sudo supervisorctl restart backend frontend")
+    sys.exit(0)
