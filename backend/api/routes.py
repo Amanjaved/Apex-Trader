@@ -118,35 +118,44 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def _base_headers(self, status: int, content_type: str, length: int,
                       extra: list[Tuple[str, str]] | None = None) -> None:
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(length))
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "DENY")
-        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
-        self.send_header("Content-Security-Policy", CSP)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Cache-Control", "no-store")
-        if extra:
-            for k, v in extra:
-                self.send_header(k, v)
-        self.end_headers()
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(length))
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+            self.send_header("Content-Security-Policy", CSP)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-store")
+            if extra:
+                for k, v in extra:
+                    self.send_header(k, v)
+            self.end_headers()
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected, nothing to do
 
     def _send_json(self, data: bytes, status: int = 200) -> None:
-        ae = self.headers.get("Accept-Encoding", "")
-        payload, gz = maybe_gzip(data, ae)
-        extra = [("Content-Encoding", "gzip")] if gz else []
-        self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
-        self.wfile.write(payload)
+        try:
+            ae = self.headers.get("Accept-Encoding", "")
+            payload, gz = maybe_gzip(data, ae)
+            extra = [("Content-Encoding", "gzip")] if gz else []
+            self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
+            self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected, nothing to do
 
     def _send_json_with_cookie(self, data: bytes, cookie_header: str, status: int = 200) -> None:
-        ae = self.headers.get("Accept-Encoding", "")
-        payload, gz = maybe_gzip(data, ae)
-        extra = [("Set-Cookie", cookie_header)]
-        if gz:
-            extra.append(("Content-Encoding", "gzip"))
-        self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
-        self.wfile.write(payload)
+        try:
+            ae = self.headers.get("Accept-Encoding", "")
+            payload, gz = maybe_gzip(data, ae)
+            extra = [("Set-Cookie", cookie_header)]
+            if gz:
+                extra.append(("Content-Encoding", "gzip"))
+            self._base_headers(status, "application/json; charset=utf-8", len(payload), extra)
+            self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected
 
     def _read_json_body(self) -> Dict[str, Any] | None:
         try:
@@ -173,9 +182,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._send_json(body, 503)
 
     def _not_found(self) -> None:
-        body = b"404 Not Found"
-        self._base_headers(404, "text/plain", len(body))
-        self.wfile.write(body)
+        try:
+            body = b"404 Not Found"
+            self._base_headers(404, "text/plain", len(body))
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected
 
     # ── Serve Static Assets ──
     def _serve_static(self, rel_path: str) -> None:
@@ -219,12 +231,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try:
             with open(target_file, "rb") as f:
                 data = f.read()
-            
+
             ae = self.headers.get("Accept-Encoding", "")
             payload, gz = maybe_gzip(data, ae)
             extra = [("Content-Encoding", "gzip")] if gz else []
             self._base_headers(200, content_type, len(payload), extra)
             self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected
         except Exception:
             self._not_found()
 
@@ -232,9 +246,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         ip = self.client_address[0]
         if is_rate_limited(ip):
-            body = json.dumps({"error": "Rate limit exceeded"}).encode()
-            self._base_headers(429, "application/json", len(body), [("Retry-After", "60")])
-            self.wfile.write(body)
+            try:
+                body = json.dumps({"error": "Rate limit exceeded"}).encode()
+                self._base_headers(429, "application/json", len(body), [("Retry-After", "60")])
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
 
         path, params = parse_qs(self.path)
@@ -287,9 +304,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         ip = self.client_address[0]
         if is_rate_limited(ip):
-            body = json.dumps({"error": "Rate limit exceeded"}).encode()
-            self._base_headers(429, "application/json", len(body), [("Retry-After", "60")])
-            self.wfile.write(body)
+            try:
+                body = json.dumps({"error": "Rate limit exceeded"}).encode()
+                self._base_headers(429, "application/json", len(body), [("Retry-After", "60")])
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
 
         path, params = parse_qs(self.path)
@@ -318,6 +338,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         limit    = validated_limit(params, 500, 1, 1000)
         try:
             self._send_json(services.fetch_candles(symbol, interval, limit))
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Client disconnected
         except Exception as e:
             print(f"  [candles] {e}")
             self._offline()
@@ -326,6 +348,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         symbol = validated_symbol(params)
         try:
             self._send_json(services.fetch_ticker(symbol))
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [ticker] {e}")
             self._offline()
@@ -335,6 +359,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         limit  = validated_limit(params, 20, 5, 100)
         try:
             self._send_json(services.fetch_orderbook(symbol, limit))
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [orderbook] {e}")
             self._offline()
@@ -342,6 +368,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _coins(self) -> None:
         try:
             self._send_json(services.fetch_coins())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [coins] {e}")
             self._offline()
@@ -349,6 +377,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _feargreed(self) -> None:
         try:
             self._send_json(services.fetch_feargreed())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [feargreed] {e}")
             self._offline()
@@ -356,14 +386,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _news(self) -> None:
         try:
             self._send_json(services.fetch_news())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [news] {e}")
             self._offline()
 
     def _health(self) -> None:
-        stats = telemetry.get_health_stats()
-        body = json.dumps(stats).encode()
-        self._send_json(body, 200)
+        try:
+            stats = telemetry.get_health_stats()
+            body = json.dumps(stats).encode()
+            self._send_json(body, 200)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def _ai_analysis(self, params: Dict[str, str]) -> None:
         symbol   = validated_symbol(params)
@@ -373,6 +408,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             copilot = AICopilot()
             analysis_dict = copilot.analyze_market_structure(symbol, interval)
             self._send_json(json.dumps(analysis_dict).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [ai_analysis] {e}")
             self._error(str(e))
@@ -382,38 +419,46 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if body is None:
             self._error("Invalid JSON body", 400)
             return
-        
+
         symbol   = body.get("symbol", "BTCUSDT").upper().strip()
         interval = body.get("interval", "1h").lower().strip()
         message  = body.get("message", "").strip()
-        
+
         if symbol not in SUPPORTED_SYMBOLS:
             symbol = "BTCUSDT"
         if interval not in ALLOWED_INTERVALS:
             interval = "1h"
-            
+
         try:
             from backend.ai.copilot import AICopilot
             copilot = AICopilot()
             reply = copilot.chat_query(symbol, interval, message)
             self._send_json(json.dumps({"response": reply}).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
             print(f"  [ai_chat] {e}")
             self._error(str(e))
 
     # ── Authentication Endpoints ──
     def _auth_session(self) -> None:
-        user = {"id": "guest", "email": "guest@apextrader.pro"}
-        body = json.dumps({"status": "success", "user": user}).encode()
-        self._send_json(body, 200)
+        try:
+            user = {"id": "guest", "email": "guest@apextrader.pro"}
+            body = json.dumps({"status": "success", "user": user}).encode()
+            self._send_json(body, 200)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def _auth_config(self) -> None:
-        body = json.dumps({
-            "supabaseEnabled": False,
-            "supabaseUrl": "",
-            "supabaseKey": ""
-        }).encode()
-        self._send_json(body, 200)
+        try:
+            body = json.dumps({
+                "supabaseEnabled": False,
+                "supabaseUrl": "",
+                "supabaseKey": ""
+            }).encode()
+            self._send_json(body, 200)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def _update_tick(self, params: Dict[str, str]) -> None:
         """REST endpoint for frontend to push live prices for demo trading P&L calculation"""
@@ -425,6 +470,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         if price > 0:
             update_live_price(symbol, price)
+        try:
+            self._send_json(json.dumps({"status": "ok"}).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         self._send_json(json.dumps({"status": "ok"}).encode())
 
     # ── Demo Trading Endpoints ──
