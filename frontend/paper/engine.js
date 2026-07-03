@@ -404,10 +404,33 @@ export async function reversePosition(currentPrice, openOpts) {
 }
 
 export async function closeAllPositions(currentPrice) {
-  if (!S.demoPositions.length) return _toast('No open positions.', 'info');
-  for (let i = S.demoPositions.length - 1; i >= 0; i--) {
-    await closePaperPosition(i, 'Manual Close All', currentPrice);
+  if (!S.demoPositions.length) {
+    _toast('No open positions.', 'info');
+    return;
   }
+  // Close positions one by one, re-fetching after each close since indices change
+  const posIds = S.demoPositions.map(p => p.id);
+  for (const posId of posIds) {
+    try {
+      const r = await apiFetch('/demo/close', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          position_id: posId,
+          price: currentPrice || null
+        })
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        console.error(`[closeAllPositions] Error closing ${posId}:`, err.detail || r.statusText);
+      }
+    } catch (e) {
+      console.error(`[closeAllPositions] Exception closing ${posId}:`, e);
+    }
+  }
+  await syncDemoData();
+  notify();
+  _toast('All positions closed.', 'info');
 }
 
 // ──────────────────────────────────────────────

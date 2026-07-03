@@ -750,6 +750,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         position_id = body.get("position_id")
         exit_price = body.get("price")
+        partial_size = body.get("size")  # For partial closes
 
         if position_id is None:
             self._error("position_id required", 400)
@@ -767,11 +768,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 symbol = pos["symbol"]
                 side = pos["side"]
                 entry_price = pos["entry_price"]
-                size = pos["size"]
+                full_size = pos["size"]
                 leverage = pos["leverage"]
                 entry_time = pos["created_at"]
                 sl = pos["sl"]
                 tp = pos["tp"]
+
+            # Determine size to close (full or partial)
+            close_size = partial_size if partial_size and partial_size > 0 else full_size
+            if close_size > full_size:
+                close_size = full_size
 
             # Resolve exit price
             if not exit_price or exit_price <= 0:
@@ -784,15 +790,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._error("Cannot resolve exit price", 400)
                 return
 
-            # Calculate P&L
+            # Calculate P&L for the portion being closed
             if side == "BUY":
-                pnl = (exit_price - entry_price) * size
+                pnl = (exit_price - entry_price) * close_size
             else:
-                pnl = (entry_price - exit_price) * size
+                pnl = (entry_price - exit_price) * close_size
 
-            exit_fee = exit_price * size * 0.0004
+            exit_fee = exit_price * close_size * 0.0004
 
             with get_db() as conn:
+                cursor = conn.cursor()
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM demo_accounts ORDER BY id DESC LIMIT 1")
                 acc = cursor.fetchone()
@@ -828,19 +835,28 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "tags": tags
                 }
 
+                # Record the closed portion in trades journal
                 cursor.execute("""
                     INSERT INTO trades (symbol, side, entry_price, exit_price, size, leverage, entry_time, pnl, fees, sl, tp, ai_reasoning_snapshot, user_notes)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (symbol, side, entry_price, exit_price, size, leverage, entry_time, pnl, exit_fee, sl, tp, json.dumps(ai_snapshot), summary))
+                """, (symbol, side, entry_price, exit_price, close_size, leverage, entry_time, pnl, exit_fee, sl, tp, json.dumps(ai_snapshot), summary))
 
-                cursor.execute("DELETE FROM positions WHERE id = ?", (position_id,))
+                # Handle full vs partial close
+                if close_size >= full_size:
+                    # Full close - remove position
+                    cursor.execute("DELETE FROM positions WHERE id = ?", (position_id,))
+                else:
+                    # Partial close - update remaining size
+                    remaining_size = full_size - close_size
+                    cursor.execute("UPDATE positions SET size = ? WHERE id = ?", (remaining_size, position_id))
 
             data = {
                 "status": "closed",
                 "symbol": symbol,
                 "pnl": round(pnl, 2),
                 "fees": round(exit_fee, 2),
-                "exit_price": exit_price
+                "exit_price": exit_price,
+                "closed_size": close_size
             }
             self._send_json(json.dumps(data).encode())
         except Exception as e:

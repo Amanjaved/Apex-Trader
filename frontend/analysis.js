@@ -221,6 +221,20 @@ async function refreshAnalysis() {
     runBacktestAnalysis();
     startOrderbookPolling();
 
+    // Fetch candle data for backtester and bot mode
+    const candlesRes = await fetch(`/api/candles?symbol=${sym}&interval=${tfName}&limit=500`);
+    if (candlesRes.ok) {
+      const rawCandles = await candlesRes.json();
+      S.candles = rawCandles.map(k => ({
+        t: parseInt(k[0]),
+        o: parseFloat(k[1]),
+        h: parseFloat(k[2]),
+        l: parseFloat(k[3]),
+        c: parseFloat(k[4]),
+        v: parseFloat(k[5]),
+      }));
+    }
+
     const res = await fetch(`/api/ai/analysis?symbol=${sym}&interval=${tfName}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -600,24 +614,27 @@ function connectWebSocket() {
     if (d.e === "24hrTicker" && d.s === S.coin) {
       const price = parseFloat(d.c);
       const chgPct = parseFloat(d.P);
-      
+
       // Flash animation on price change
       if (lastPrice !== null && price !== lastPrice) {
         const cls = price > lastPrice ? 'flash-up' : 'flash-dn';
         D.priceVal.className = `price-val ${cls}`;
       }
-      
+
       lastPrice = price;
       D.priceVal.textContent = fmtUSD(price);
       D.priceChg.textContent = `${chgPct > 0 ? '+' : ''}${chgPct.toFixed(2)}%`;
       D.priceChg.className = `price-chg ${chgPct >= 0 ? 'up' : 'dn'}`;
-      
+
+      // Send live price to backend for demo trading P&L calculation
+      fetch(`/api/ticks?symbol=${S.coin}&price=${price}`).catch(() => {});
+
       // Keep levels row live price synced
       const levelsCurrent = document.getElementById('levelsCurrentPrice');
       if (levelsCurrent) {
         levelsCurrent.textContent = fmtUSD(price);
       }
-      
+
       // Update simulated live position tracking
       updatePositionManagerUI();
       window.__paperLastPrice = price;
