@@ -240,38 +240,44 @@ export function connectBackendWS() {
   if (backendWs && (backendWs.readyState === WebSocket.OPEN || backendWs.readyState === WebSocket.CONNECTING)) return;
   if (backendWs) { try { backendWs.close(); } catch(e) {} backendWs = null; }
 
+  // Backend WebSocket for demo trading tick sync - uses same origin
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  // Use host of frontend connection, fallback to port 8000 if on port 3000
-  let host = window.location.host || '127.0.0.1:8000';
-  if (window.location.port === '3000') {
-    const hn = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-    host = `${hn}:8000`;
-  }
+  const host = window.location.host;
   const url = `${protocol}//${host}/api/ws/ticks`;
 
-  backendWs = new WebSocket(url);
+  try {
+    backendWs = new WebSocket(url);
 
-  backendWs.onopen = () => {
-    console.log('[Backend WS] Connected to paper trading tick sync');
-  };
+    backendWs.onopen = () => {
+      console.log('[Backend WS] Connected to paper trading tick sync');
+    };
 
-  backendWs.onmessage = (e) => {
-    try {
-      const msg = JSON.parse(e.data);
-      if (msg.type === "trade_closed") {
-        toast(`Position closed: ${msg.side} ${msg.symbol} at $${msg.exit_price}. PnL: $${msg.pnl.toFixed(2)}`, 'info');
-        window.dispatchEvent(new CustomEvent('demo-trade-update'));
-      } else if (msg.type === "trade_opened") {
-        toast(`Position opened: ${msg.side} ${msg.symbol} at $${msg.entry_price}`, 'info');
-        window.dispatchEvent(new CustomEvent('demo-trade-update'));
-      }
-    } catch (ex) { /* ignore */ }
-  };
+    backendWs.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "trade_closed") {
+          toast(`Position closed: ${msg.side} ${msg.symbol} at $${msg.exit_price}. PnL: $${msg.pnl.toFixed(2)}`, 'info');
+          window.dispatchEvent(new CustomEvent('demo-trade-update'));
+        } else if (msg.type === "trade_opened") {
+          toast(`Position opened: ${msg.side} ${msg.symbol} at $${msg.entry_price}`, 'info');
+          window.dispatchEvent(new CustomEvent('demo-trade-update'));
+        }
+      } catch (ex) { /* ignore */ }
+    };
 
-  backendWs.onclose = () => {
+    backendWs.onerror = () => {
+      // Backend WS not available - demo trading will use REST API instead
+    };
+
+    backendWs.onclose = () => {
+      backendWs = null;
+      // Retry connection after delay
+      setTimeout(connectBackendWS, 5000);
+    };
+  } catch (e) {
+    // WebSocket not supported or connection failed - demo trading falls back to REST API
     backendWs = null;
-    setTimeout(connectBackendWS, 3000);
-  };
+  }
 }
 
 export function connectWS() {
@@ -338,12 +344,17 @@ function onTickerMsg(data) {
     renderCoinList(D.coinSearch.value);
   }
 
+  // Send price update to backend for demo trading calculations
+  const livePrice = parseFloat(data.c);
   if (backendWs && backendWs.readyState === WebSocket.OPEN) {
     backendWs.send(JSON.stringify({
       type: 'ticker',
       symbol: sym,
-      price: parseFloat(data.c)
+      price: livePrice
     }));
+  } else {
+    // Fallback: use REST endpoint for price sync
+    fetch(`/api/ticks?symbol=${sym}&price=${livePrice}`).catch(() => {});
   }
 
   if (sym === S.coin) {

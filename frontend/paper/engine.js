@@ -62,12 +62,8 @@ export function ensurePaperState() {
 //  Backend API Synchronization
 // ──────────────────────────────────────────────
 function apiFetch(path, options) {
-  let url = path;
-  if (window.location.port === '3000') {
-    const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-    url = `http://${host}:8000${path}`;
-  }
-  return fetch(url, options);
+  // Use same-origin fetch - backend serves demo routes on same port
+  return fetch(path, options);
 }
 
 export async function syncDemoData() {

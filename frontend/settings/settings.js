@@ -78,10 +78,22 @@ export function initRiskCalculator() {
   });
 
   D.btnJournalExport.addEventListener('click', () => {
-    const tradeJournal = S.events.filter(e => e.type === 'journal') || []; // fallback or custom state
-    if (!tradeJournal.length) { toast('No journal entries', 'warn'); return; }
-    const csv = ['Date,Symbol,Side,Entry,Exit,Size,P/L,Notes']
-      .concat(tradeJournal.map(t => Object.values(t).join(','))).join('\n');
+    const tradeJournal = S.demoHistory || [];
+    if (!tradeJournal.length) { toast('No trade history to export', 'warn'); return; }
+    const csv = ['Date,Symbol,Side,Entry,Exit,Size,Leverage,P/L,RR,Grade,Notes']
+      .concat(tradeJournal.map(t => [
+        t.closeDate || '',
+        t.symbol || '',
+        t.type || '',
+        t.entryPrice || 0,
+        t.exitPrice || 0,
+        t.size || 0,
+        t.leverage || 1,
+        t.pnl || 0,
+        t.rr || 0,
+        t.grade || '',
+        (t.userNotes || t.exitReason || '').replace(/,/g, ';')
+      ].join(','))).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
     a.download = 'ApexTrader_Journal.csv';

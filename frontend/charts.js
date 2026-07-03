@@ -406,6 +406,30 @@ function initListeners() {
   D.inpBullColor.addEventListener('change', () => { S.bullColor = D.inpBullColor.value; queueRender(); });
   D.inpBearColor.addEventListener('change', () => { S.bearColor = D.inpBearColor.value; queueRender(); });
 
+  // CSV Export for candle data
+  if (D.btnExportCSV) {
+    D.btnExportCSV.addEventListener('click', () => {
+      if (!S.candles || !S.candles.length) {
+        toast('No candle data to export', 'warn');
+        return;
+      }
+      const csv = ['Timestamp,Open,High,Low,Close,Volume']
+        .concat(S.candles.map(c => [
+          new Date(c.t).toISOString(),
+          c.o,
+          c.h,
+          c.l,
+          c.c,
+          c.v
+        ].join(','))).join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = `ApexTrader_${S.coin}_${TF_MAP[S.tf]}_${Date.now()}.csv`;
+      a.click();
+      toast('Candle data exported', 'success');
+    });
+  }
+
   // Keyboards
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
@@ -626,15 +650,14 @@ function initPaperTradingSidebar() {
 }
 
 async function initReplayMode(replayId) {
-    const hn = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-    const host = window.location.port === '3000' ? `http://${hn}:8000` : '';
-    const res = await fetch(`${host}/demo/trades/${replayId}`);
+  try {
+    const res = await fetch(`/demo/trades/${replayId}`);
     if (!res.ok) {
       toast(`Failed to load replay for trade #${replayId}`, 'error');
       return;
     }
     const trade = await res.json();
-    
+
     const h = {
       id: trade.id,
       symbol: trade.symbol,
@@ -665,13 +688,13 @@ async function initReplayMode(replayId) {
     }
 
     S.replayTrade = h;
-    
+
     const overlay = document.getElementById('replayOverlayCard');
     const content = document.getElementById('replayContent');
     if (overlay && content) {
       const isWin = h.pnl >= 0;
       const tagsHtml = h.tags.map(t => `<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:2px 5px;font-size:8.5px;color:var(--text-2);">${t}</span>`).join(' ');
-      
+
       content.innerHTML = `
         <div style="font-weight:700;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
           <span>Trade #${h.id} (${h.symbol})</span>
@@ -707,7 +730,7 @@ async function initReplayMode(replayId) {
         </div>
       `;
       overlay.style.display = 'flex';
-      
+
       document.getElementById('btnExitReplay').onclick = () => {
         S.replayTrade = null;
         overlay.style.display = 'none';
