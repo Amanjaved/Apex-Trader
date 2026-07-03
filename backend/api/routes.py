@@ -8,8 +8,11 @@ import gzip
 import threading
 from typing import Any, Dict, List, Tuple
 
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv is optional, env vars can be set directly
 
 
 
