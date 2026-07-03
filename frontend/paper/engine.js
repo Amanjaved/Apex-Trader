@@ -64,7 +64,8 @@ export function ensurePaperState() {
 function apiFetch(path, options) {
   let url = path;
   if (window.location.port === '3000') {
-    url = `http://${window.location.hostname}:8000${path}`;
+    const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+    url = `http://${host}:8000${path}`;
   }
   return fetch(url, options);
 }
