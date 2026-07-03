@@ -4,6 +4,7 @@
  */
 import { S, saveState } from '../settings/state.js';
 import { getEMA, getBB, getRSI, getStoch, getCloses } from '../indicators/indicators.js';
+import { buildMarketTradePlan } from './market_risk.js';
 
 export const FEE_RATE = 0.0004; // Matches backend fee structure (0.04%)
 export const DEFAULT_BALANCE = 10000;
@@ -237,6 +238,11 @@ export async function openPaperPosition(type, opts = {}) {
   const sizing = resolveOrderSizing(type, currentPrice, opts);
   sizing.entry = currentPrice;
 
+  if (sizing.invalidReason) {
+    _toast(`Trade skipped: ${sizing.invalidReason}`, 'error');
+    return null;
+  }
+
   const warnings = preTradeCheck(type, sizing);
   warnings.forEach(w => _toast(`⚠️ ${w}`, 'error'));
 
@@ -443,10 +449,31 @@ function parseStepVal(steps, labelPart) {
   return parseFloat(String(step.val).replace(/[^0-9.-]/g, '')) || 0;
 }
 
-export function getAiTradeLevels(type, currentPrice) {
+export function getAiTradeLevels(type, currentPrice, strategyId) {
   const snap = S.aiSnapshot;
+  const levels = snap?.levels || S.srLevels || { support: [], resistance: [] };
+  const plan = buildMarketTradePlan({
+    side: type,
+    entry: currentPrice,
+    candles: S.candles,
+    levels,
+    strategyId,
+    strategy: snap?.strategy,
+  });
+
+  if (plan.valid) {
+    return {
+      entry: plan.entry,
+      sl: plan.sl,
+      tp: plan.tp1,
+      tp2: plan.tp2,
+      tp3: plan.tp3,
+      rr: plan.rr,
+      plan,
+    };
+  }
+
   const steps = snap?.executionSteps;
-  const levels = snap?.levels || { support: [], resistance: [] };
 
   let sl = 0;
   let tp = 0;
@@ -474,7 +501,9 @@ export function getAiTradeLevels(type, currentPrice) {
   if (!tp2) tp2 = type === 'LONG' ? entry * 1.05 : entry * 0.95;
   if (!tp3) tp3 = type === 'LONG' ? entry * 1.08 : entry * 0.92;
 
-  return { entry, sl, tp, tp2, tp3 };
+  const risk = Math.abs(entry - sl);
+  const reward = Math.abs(tp - entry);
+  return { entry, sl, tp, tp2, tp3, rr: risk > 0 ? reward / risk : 0, invalidReason: plan.reason };
 }
 
 export function biasMatchesType(bias, type) {
@@ -494,13 +523,34 @@ export function resolveOrderSizing(type, currentPrice, opts = {}) {
   let tp = opts.tp || 0;
   let tp2 = 0;
   let tp3 = 0;
+  let rr = 0;
+  let invalidReason = '';
 
   if (useAi && S.aiSnapshot) {
-    const ai = getAiTradeLevels(type, currentPrice);
+    const ai = getAiTradeLevels(type, currentPrice, opts.strategyId || S.botStrategy);
     if (!opts.sl) sl = ai.sl;
     if (!opts.tp) tp = ai.tp;
     tp2 = ai.tp2;
     tp3 = ai.tp3;
+    rr = ai.rr || 0;
+    invalidReason = ai.invalidReason || '';
+  } else if (!opts.sl || !opts.tp) {
+    const plan = buildMarketTradePlan({
+      side: type,
+      entry: currentPrice,
+      candles: S.candles,
+      levels: S.srLevels || { support: [], resistance: [] },
+      strategyId: opts.strategyId || S.botStrategy,
+    });
+    if (plan.valid) {
+      if (!opts.sl) sl = plan.sl;
+      if (!opts.tp) tp = plan.tp1;
+      tp2 = plan.tp2;
+      tp3 = plan.tp3;
+      rr = plan.rr;
+    } else if (opts.strategyId || S.botActive) {
+      invalidReason = plan.reason;
+    }
   }
 
   if (!sl || sl <= 0) {
@@ -511,13 +561,23 @@ export function resolveOrderSizing(type, currentPrice, opts = {}) {
   }
 
   const stopDistPct = (Math.abs(currentPrice - sl) / currentPrice) * 100;
+  const riskDistance = Math.abs(currentPrice - sl);
+  const rewardDistance = Math.abs(tp - currentPrice);
+  rr = rr || (riskDistance > 0 ? rewardDistance / riskDistance : 0);
+  if ((type === 'LONG' && (sl >= currentPrice || tp <= currentPrice)) || (type === 'SHORT' && (sl <= currentPrice || tp >= currentPrice))) {
+    invalidReason = 'SL/TP are on the wrong side of entry after market validation.';
+  }
+  if ((opts.strategyId || S.botActive) && rr > 0 && rr < 1.2) {
+    invalidReason = `Risk/reward ${rr.toFixed(2)}R is too weak for automated trading.`;
+  }
   const riskUSD = capital * (riskPct / 100);
   const positionSizeUSD = stopDistPct > 0 ? riskUSD / (stopDistPct / 100) : riskUSD;
   const sizeUnits = positionSizeUSD / currentPrice;
   const marginRequired = positionSizeUSD / leverage;
 
   return {
-    sl, tp, tp2, tp3,
+    sl, tp, tp2, tp3, rr,
+    invalidReason,
     stopDistPct,
     riskUSD,
     positionSizeUSD,

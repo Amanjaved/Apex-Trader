@@ -10,6 +10,7 @@ import {
 import {
   getAllStrategies, prepareIndicatorValues, evaluateStrategyRule
 } from './paper/strategies.js';
+import { buildMarketTradePlan, executionStepsFromPlan, sideFromBias } from './paper/market_risk.js';
 
 // ─────────────────────────────────────────────
 //  DOM ELEMENTS
@@ -135,6 +136,33 @@ let selectedInterval = '60'; // default 1h
 let activeTradeSetup = null; // caches entry/exit setup for calculator
 let orderbookInterval = null;
 
+function enrichAnalysisWithMarketPlan(data, strategyId = 'ai_consensus') {
+  const side = sideFromBias(data?.bias);
+  const entry = lastPrice || (S.candles.length ? S.candles[S.candles.length - 1].c : 0);
+  if (!side || !entry) return data;
+
+  const plan = buildMarketTradePlan({
+    side,
+    entry,
+    candles: S.candles,
+    levels: data?.levels || S.srLevels,
+    strategyId,
+  });
+  if (!plan.valid) return { ...data, marketPlan: plan };
+
+  return {
+    ...data,
+    entryPrice: plan.entry,
+    sl: plan.sl,
+    tp: plan.tp1,
+    tp2: plan.tp2,
+    tp3: plan.tp3,
+    rr: plan.rr,
+    marketPlan: plan,
+    executionSteps: executionStepsFromPlan(plan),
+  };
+}
+
 // ─────────────────────────────────────────────
 //  BOOTSTRAP
 // ─────────────────────────────────────────────
@@ -237,7 +265,7 @@ async function refreshAnalysis() {
 
     const res = await fetch(`/api/ai/analysis?symbol=${sym}&interval=${tfName}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    let data = await res.json();
 
     // Prevent race conditions
     if (S.coin !== sym) {
@@ -245,6 +273,7 @@ async function refreshAnalysis() {
       return;
     }
 
+    data = enrichAnalysisWithMarketPlan(data);
     setAiSnapshot(data);
 
     renderBiasScore(data.score, data.bias);
@@ -1533,12 +1562,14 @@ function renderInstitutionalDashboard(data) {
   let entryStr = '—';
   let slStr = '—';
   let tpStr = '—';
-  let rrStr = '1 : 2.5';
+  let rrStr = data.rr ? `1 : ${Number(data.rr).toFixed(2)}` : '1 : 2.5';
   
   if (steps.length > 4) {
     entryStr = steps[1].val;
     slStr = steps[3].val;
     tpStr = steps[4].val;
+    const rrStep = steps.find(s => (s.label || '').toLowerCase().includes('risk reward'));
+    if (rrStep?.val) rrStr = `1 : ${String(rrStep.val).replace(/[^0-9.]/g, '') || '2.5'}`;
   }
   
   if (D.decEntry) D.decEntry.textContent = entryStr;
@@ -2065,6 +2096,7 @@ function getAnalysisPaperOpts() {
     sl: parseFloat(D.calcSL?.value) || 0,
     tp: 0,
     useAi: true,
+    strategyId: S.botStrategy || 'ai_consensus',
   };
 }
 
@@ -2343,40 +2375,27 @@ async function runBotExecutionTick() {
     if (shouldEnterLong || shouldEnterShort) {
       const side = shouldEnterLong ? 'LONG' : 'SHORT';
       
-      // Calculate Stop Loss & Take Profit levels based on strategy configuration
-      let slPercent = 2.0;
-      if (stratObj.stop_loss) {
-        if (stratObj.stop_loss.type === 'fixed_percent') {
-          slPercent = stratObj.stop_loss.value;
-        } else if (stratObj.stop_loss.type === 'atr_multiple') {
-          const atrVal = indicators.atr[idx] || (currentPrice * 0.01);
-          slPercent = ((atrVal * (stratObj.stop_loss.value || 2.0)) / currentPrice) * 100;
-        } else {
-          slPercent = 2.0;
-        }
-      }
-      
-      let tpPercent = 5.0;
-      if (stratObj.take_profit) {
-        if (stratObj.take_profit.type === 'fixed_percent') {
-          tpPercent = stratObj.take_profit.value;
-        } else if (stratObj.take_profit.type === 'r_multiple') {
-          tpPercent = slPercent * (stratObj.take_profit.value || 2.5);
-        } else {
-          tpPercent = 5.0;
-        }
+      const plan = buildMarketTradePlan({
+        side,
+        entry: currentPrice,
+        candles: S.candles,
+        levels: S.aiSnapshot?.levels || S.srLevels,
+        strategyId: S.botStrategy,
+        strategy: stratObj,
+      });
+
+      if (!plan.valid) {
+        addBotLog(`[Bot] Signal skipped: ${plan.reason}`);
+        return;
       }
 
-      const sl = shouldEnterLong ? currentPrice * (1 - slPercent / 100) : currentPrice * (1 + slPercent / 100);
-      const tp = shouldEnterLong ? currentPrice * (1 + tpPercent / 100) : currentPrice * (1 - tpPercent / 100);
-      const riskAmt = Math.abs(currentPrice - sl);
-      const rewardAmt = Math.abs(tp - currentPrice);
-      const rr = (rewardAmt / riskAmt).toFixed(1);
+      const sl = plan.sl;
+      const tp = plan.tp1;
+      const rr = plan.rr.toFixed(2);
 
       entryReason = `Signal confirmed by ${stratObj.name}`;
       entryThinking = `The automated rules for ${stratObj.name} met all criteria. ` +
-        `Setting Stop Loss at -${slPercent.toFixed(1)}% ($${sl.toFixed(2)}) ` +
-        `and Take Profit at +${tpPercent.toFixed(1)}% ($${tp.toFixed(2)}) targeting a 1:${rr} Risk:Reward ratio.`;
+        `${plan.reason} ${plan.thinking}`;
 
       updateBotDecisionCard({
         type: 'ENTRY',
@@ -2398,7 +2417,8 @@ async function runBotExecutionTick() {
         size: 0.1,
         price: currentPrice,
         sl: sl,
-        tp: tp
+        tp: tp,
+        strategyId: S.botStrategy
       };
 
       try {

@@ -67,6 +67,7 @@ function getPaperOrderOpts() {
     sl: parseFloat(document.getElementById('riskStop')?.value) || 0,
     tp: parseFloat(document.getElementById('riskTP')?.value) || 0,
     useAi: true,
+    strategyId: S.botStrategy || 'ai_consensus',
   };
 }
 

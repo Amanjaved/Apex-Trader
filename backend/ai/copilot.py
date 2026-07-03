@@ -1005,23 +1005,54 @@ class AICopilot:
                     "event": ev_label
                 })
 
-            # 5. Trade Execution Steps
+            # 5. Trade Execution Steps: derive SL/TP from live structure + ATR,
+            # then enforce sane directional validation and minimum reward/risk.
             entry_min = min(nearest_support_val, nearest_resistance_val)
             entry_max = max(nearest_support_val, nearest_resistance_val)
+            rr_min = 1.5
+            rr_target = 2.2 if abs(score) >= 3.0 else 1.7
+            atr_base = max(daily_atr, price * 0.0035)
+            stop_buffer = max(atr_base * 0.20, price * 0.001)
+            min_stop = max(atr_base * 0.75, price * 0.0035)
+            max_stop = max(min_stop * 1.2, min(atr_base * 3.2, price * 0.055))
+
+            recent_lows = [c["l"] for c in candles[-40:] if c["l"] < price]
+            recent_highs = [c["h"] for c in candles[-40:] if c["h"] > price]
+
             if is_bull:
-                entry_target = nearest_support_val
-                tp1 = nearest_resistance_val
-                tp2 = major_resistance_val
-                tp3 = major_resistance_val * 1.02
-                sl = major_support_val
                 action_dir = "BUY / LONG"
+                entry_target = price
+                support_candidates = [z for z in final_support if z["price"] < price]
+                stop_level = min(support_candidates[0].get("low", support_candidates[0]["price"]), support_candidates[0]["price"]) - stop_buffer if support_candidates else 0.0
+                swing_stop = min(recent_lows) - stop_buffer if recent_lows else 0.0
+                stop_dist_candidates = [price - v for v in [stop_level, swing_stop] if v and v < price]
+                stop_dist_candidates.append(atr_base * 1.8)
+                stop_dist = min(stop_dist_candidates, key=lambda d: abs(max(min_stop, min(max_stop, d)) - atr_base * 1.8))
+                stop_dist = max(min_stop, min(max_stop, stop_dist))
+                sl = price - stop_dist
+
+                target_candidates = [r["price"] for r in final_resistance if r["price"] > price and (r["price"] - price) / stop_dist >= rr_min]
+                tp1 = target_candidates[0] if target_candidates else price + stop_dist * max(rr_min, 1.6)
+                tp2 = max(tp1, price + stop_dist * rr_target)
+                tp3 = price + stop_dist * (rr_target + 0.8)
             else:
-                entry_target = nearest_resistance_val
-                tp1 = nearest_support_val
-                tp2 = major_support_val
-                tp3 = major_support_val * 0.98
-                sl = major_resistance_val
                 action_dir = "SELL / SHORT"
+                entry_target = price
+                resistance_candidates = [z for z in final_resistance if z["price"] > price]
+                stop_level = max(resistance_candidates[0].get("high", resistance_candidates[0]["price"]), resistance_candidates[0]["price"]) + stop_buffer if resistance_candidates else 0.0
+                swing_stop = max(recent_highs) + stop_buffer if recent_highs else 0.0
+                stop_dist_candidates = [v - price for v in [stop_level, swing_stop] if v and v > price]
+                stop_dist_candidates.append(atr_base * 1.8)
+                stop_dist = min(stop_dist_candidates, key=lambda d: abs(max(min_stop, min(max_stop, d)) - atr_base * 1.8))
+                stop_dist = max(min_stop, min(max_stop, stop_dist))
+                sl = price + stop_dist
+
+                target_candidates = [s["price"] for s in final_support if s["price"] < price and (price - s["price"]) / stop_dist >= rr_min]
+                tp1 = target_candidates[0] if target_candidates else price - stop_dist * max(rr_min, 1.6)
+                tp2 = min(tp1, price - stop_dist * rr_target)
+                tp3 = price - stop_dist * (rr_target + 0.8)
+
+            rr_validated = abs(tp2 - price) / max(abs(price - sl), 1e-9)
 
             execution_steps = [
                 {"label": "Current Market Price", "val": f"{price:.2f}"},
@@ -1030,7 +1061,8 @@ class AICopilot:
                 {"label": "Set Stop Loss Protection", "val": f"{sl:.2f}"},
                 {"label": "Expected Take Profit 1", "val": f"{tp1:.2f}"},
                 {"label": "Expected Take Profit 2", "val": f"{tp2:.2f}"},
-                {"label": "Expected Take Profit 3", "val": f"{tp3:.2f}"}
+                {"label": "Expected Take Profit 3", "val": f"{tp3:.2f}"},
+                {"label": "Validated Risk Reward", "val": f"{rr_validated:.2f}R"}
             ]
 
             # 6. ELI10 text lines

@@ -2,6 +2,7 @@ import { S, COINS, TF_MAP } from '../settings/state.js';
 import { D } from '../settings/dom.js';
 import { getEMA, getRSI, getMACD, getBB, getATR, getCloses } from '../indicators/indicators.js';
 import { setAiSnapshot } from '../paper/engine.js';
+import { buildMarketTradePlan, executionStepsFromPlan, sideFromBias } from '../paper/market_risk.js';
 
 function getInpVal(el, def) {
   const v = parseFloat(el.value);
@@ -16,6 +17,33 @@ function fmtUSD(p) {
   return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
+function enrichAiSnapshotWithMarketPlan(data) {
+  const side = sideFromBias(data?.bias);
+  const entry = S.candles.length ? S.candles[S.candles.length - 1].c : 0;
+  if (!side || !entry) return data;
+
+  const plan = buildMarketTradePlan({
+    side,
+    entry,
+    candles: S.candles,
+    levels: data?.levels || S.srLevels,
+    strategyId: 'ai_consensus',
+  });
+  if (!plan.valid) return { ...data, marketPlan: plan };
+
+  return {
+    ...data,
+    entryPrice: plan.entry,
+    sl: plan.sl,
+    tp: plan.tp1,
+    tp2: plan.tp2,
+    tp3: plan.tp3,
+    rr: plan.rr,
+    marketPlan: plan,
+    executionSteps: executionStepsFromPlan(plan),
+  };
+}
+
 export async function updateAI() {
   const sym = S.coin;
   const tf = TF_MAP[S.tf] || '1h';
@@ -23,11 +51,12 @@ export async function updateAI() {
   try {
     const r = await fetch(`/api/ai/analysis?symbol=${sym}&interval=${tf}`);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const data = await r.json();
+    let data = await r.json();
 
     // Prevent race conditions
     if (S.coin !== sym) return;
 
+    data = enrichAiSnapshotWithMarketPlan(data);
     setAiSnapshot(data);
 
     if (data.executionSteps?.length) {
@@ -204,4 +233,21 @@ function runFallbackAI() {
     ? `<b style="color:var(--red)">SHORT BIAS:</b> Multiple bearish confluences present. Consider short positions on retests with stop above recent swing high.`
     : `<b style="color:var(--text-2)">NEUTRAL:</b> Mixed signals — wait for clearer direction, volatility compression, or a structural break before committing.`;
   D.aiTradeIdea.innerHTML = idea;
+
+  const fallbackData = {
+    bias: trend,
+    score: Math.round(longPct >= shrtPct ? longPct : shrtPct),
+    longProb: longPct,
+    shortProb: shrtPct,
+    confluences: reasons.map(r => ({ type: r.ok === true ? 'bullish' : r.ok === false ? 'bearish' : 'neutral', txt: r.txt })),
+    levels: S.srLevels || { support: [], resistance: [] },
+    analysis: idea,
+  };
+  const enriched = enrichAiSnapshotWithMarketPlan(fallbackData);
+  setAiSnapshot(enriched);
+  const plan = enriched.marketPlan;
+  if (plan?.valid) {
+    if (D.riskStop) D.riskStop.value = plan.sl.toFixed(2);
+    if (D.riskTP) D.riskTP.value = plan.tp1.toFixed(2);
+  }
 }
