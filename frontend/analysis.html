@@ -6,13 +6,28 @@
 <title>ApexTrader Pro — AI Quant Analyst Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="charts.css">
-<link rel="stylesheet" href="analysis.css">
+<link rel="stylesheet" href="charts.css?v=3">
+<link rel="stylesheet" href="analysis.css?v=3">
 </head>
-<body>
+<body class="loading-active">
 
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="quantum-loader">
+    <div class="ring outer-ring"></div>
+    <div class="ring middle-ring"></div>
+    <div class="ring inner-ring"></div>
+    <div class="loader-core">🧠</div>
+  </div>
+  <div class="loader-title">NEURAL NETWORK ENGINE</div>
+  <div class="loader-text" id="loaderProgressText">Booting Neural Engine...</div>
+  <div class="loader-bar-container">
+    <div class="loader-bar-fill" id="loaderBarFill"></div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════
      TOP BAR
@@ -67,640 +82,397 @@
      MAIN DASHBOARD LAYOUT
      ═══════════════════════════════════════ -->
 <div class="dashboard-container">
-  
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="quantum-loader">
-      <div class="ring outer-ring"></div>
-      <div class="ring middle-ring"></div>
-      <div class="ring inner-ring"></div>
-      <div class="loader-core">🧠</div>
-    </div>
-    <div class="loader-title">NEURAL NETWORK ENGINE</div>
-    <div class="loader-text" id="loaderProgressText">Booting Neural Engine...</div>
-    <div class="loader-bar-container">
-      <div class="loader-bar-fill" id="loaderBarFill"></div>
-    </div>
-  </div>
 
   <!-- ═══════════════════════════════════════
        AI TRADE SCORE DASHBOARD (Bloomberg Style)
        ═══════════════════════════════════════ -->
-  <div class="glass-card terminal-header-board">
-    <div class="terminal-grid-top">
-      <div class="terminal-item main-signal-item">
-        <div class="term-lbl" id="topSymbolLabel">BTCUSDT</div>
-        <div class="term-val signal-val" id="topSignalVal">STRONG SHORT</div>
-        <div class="term-val pct-val" id="topPctVal">89%</div>
+  <div class="glass-card terminal-header-board" style="padding: 12px 16px !important; margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <span style="font-family: var(--font-title); font-size: 16px; font-weight: 700; color: var(--color-metric);" id="topSymbolLabel">BTCUSDT</span>
+        <span style="font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text-primary);" id="topSignalVal">—</span>
+        <span style="font-family: var(--mono); font-size: 11px;" id="topPctVal">—</span>
       </div>
-      <div class="terminal-item confidence-bar-item">
-        <div class="term-lbl">Confidence <span class="indicator-help tooltipped" data-tooltip="Overall model conviction score calculated using all confluent indicators.">?</span></div>
-        <div class="bar-progress-container">
-          <span class="bar-chars" id="topBarChars">█████████░</span>
-          <span class="bar-val-num" id="topBarPct">89%</span>
-        </div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl">Trade Grade <span class="indicator-help tooltipped" data-tooltip="Institutional rating grade based on model conviction.">?</span></div>
-        <div class="term-val-highlight gold" id="topGradeVal">A+</div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl">Trend <span class="indicator-help tooltipped" data-tooltip="Market direction based on EMA-20 and EMA-50 stack relationship.">?</span></div>
-        <div class="term-val-highlight" id="topTrendVal">Strong</div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl">Volatility <span class="indicator-help tooltipped" data-tooltip="Average True Range (ATR) level scaled relative to current price.">?</span></div>
-        <div class="term-val-highlight" id="topVolVal">High</div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl">Risk <span class="indicator-help tooltipped" data-tooltip="Evaluated threat score based on distance to nearest stop loss.">?</span></div>
-        <div class="term-val-highlight green" id="topRiskVal">Low</div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl">Execution <span class="indicator-help tooltipped" data-tooltip="Tactical entry suggestion based on volatility and blocker checklist.">?</span></div>
-        <div class="term-val-highlight wait" id="topExecVal">WAIT</div>
-      </div>
-      <div class="terminal-item mini-item">
-        <div class="term-lbl" id="topMacroEventLabel">FOMC</div>
-        <div class="term-val-highlight" id="topMacroEventVal">2h</div>
-      </div>
+      <!-- ONLY PLACE FOMC SHOWS UP ON SCREEN (Clicking scrolls to macro panel) -->
+      <button id="headerMacroBtn" style="background: rgba(255, 179, 71, 0.1); border: 1px solid rgba(255, 179, 71, 0.3); color: var(--signal-neutral); padding: 4px 10px; border-radius: 4px; font-family: var(--font-title); font-size: 10px; font-weight: 600; cursor: pointer;" onclick="scrollToMacroPanel()">
+        Next Major Event: <span id="topMacroEventLabel" style="font-weight: 700;">FOMC</span> (<span id="topMacroEventVal" style="font-weight: 700;">2 Hours</span>)
+      </button>
     </div>
     
     <!-- AI Summary (One Sentence) -->
-    <div class="terminal-summary-row">
-      <span class="term-summary-label">AI Summary:</span>
-      <span class="term-summary-text" id="topSummaryText">BTC remains in a bearish higher-timeframe trend. Wait for a pullback into the FVG before entering a high-probability short. Avoid new positions until the FOMC event passes.</span>
-    </div>
-
-    <!-- Confidence History Ticker -->
-    <div class="confidence-history-ticker">
-      <span class="ticker-label">Conviction History:</span>
-      <div class="ticker-flow" id="topHistoryFlow">
-        <span>—</span>
-      </div>
+    <div class="terminal-summary-row" style="margin-top: 8px; font-size: 11px; line-height: 1.4; border-top: 1px solid var(--border-hairline); padding-top: 8px;">
+      <span class="term-summary-label" style="color:var(--color-metric); font-weight:700;">AI Summary:</span>
+      <span class="term-summary-text" id="topSummaryText" style="color:var(--text-2);">—</span>
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
-  <div class="analysis-tab-bar">
-    <button class="analysis-tab active" data-tab="tab-command">🎯 AI Command Center</button>
-    <button class="analysis-tab" data-tab="tab-liquidity">📊 Liquidity & Order Flow</button>
-    <button class="analysis-tab" data-tab="tab-performance">🧪 Performance & Backtest</button>
-    <button class="analysis-tab" data-tab="tab-risk">⚡ Risk & Chatbot</button>
-    <button class="analysis-tab" data-tab="tab-demo">📈 Demo Simulator</button>
-  </div>
-
-  <!-- TAB 1: AI COMMAND CENTER -->
-  <div class="tab-panel active" id="tab-command">
-    <div class="grid-row row-1">
-      <!-- Market Health Dashboard (Feature 2 & 14) -->
-      <div class="glass-card health-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🩺</span>
-          <h3>Market Health Dashboard</h3>
+  <!-- Redesigned Grid Layout -->
+  <div class="terminal-layout-grid">
+    <!-- COLUMN 1: Decision & Execution -->
+    <div class="terminal-col-left">
+      <!-- SECTION 1: Executive Decision -->
+      <div class="glass-card">
+        <div class="card-header" style="margin-bottom: 8px;">
+          <h3>Executive Decision</h3>
+          <div class="card-desc">Consolidated directional stance and validated execution triggers.</div>
         </div>
-        <div class="health-body">
-          <table class="health-table">
-            <tbody>
-              <tr>
-                <td>Trend <span class="indicator-help tooltipped" data-tooltip="Aggregated direction of daily and hourly moving averages.">?</span></td>
-                <td><span class="health-indicator" id="healthTrendVal">🟢 92%</span></td>
-              </tr>
-              <tr>
-                <td>Momentum <span class="indicator-help tooltipped" data-tooltip="RSI and MACD velocity alignment score.">?</span></td>
-                <td><span class="health-indicator" id="healthMomentumVal">🔴 84%</span></td>
-              </tr>
-              <tr>
-                <td>Liquidity <span class="indicator-help tooltipped" data-tooltip="Order book depth volume sitting near the mid market price.">?</span></td>
-                <td><span class="health-indicator" id="healthLiquidityVal">🟡 62%</span></td>
-              </tr>
-              <tr>
-                <td>Volume <span class="indicator-help tooltipped" data-tooltip="Comparison of current candle volume to the 20-period moving average.">?</span></td>
-                <td><span class="health-indicator" id="healthVolumeVal">🟢 78%</span></td>
-              </tr>
-              <tr>
-                <td>Volatility <span class="indicator-help tooltipped" data-tooltip="ATR percentage of asset price showing range expansion strength.">?</span></td>
-                <td><span class="health-indicator" id="healthVolatilityVal">🔴 81%</span></td>
-              </tr>
-              <tr>
-                <td>Order Flow <span class="indicator-help tooltipped" data-tooltip="Real-time bid/ask limit imbalance delta.">?</span></td>
-                <td><span class="health-text-val" id="healthOrderFlowVal">🔴 Sellers Dominating</span></td>
-              </tr>
-              <tr>
-                <td>Funding <span class="indicator-help tooltipped" data-tooltip="Estimated perpetual contract funding rate premium.">?</span></td>
-                <td><span class="health-text-val" id="healthFundingVal">Neutral</span></td>
-              </tr>
-              <tr>
-                <td>Open Interest <span class="indicator-help tooltipped" data-tooltip="Change in active open leverage contract positions.">?</span></td>
-                <td><span class="health-text-val" id="healthOIVal">Increasing</span></td>
-              </tr>
-              <tr>
-                <td>Market Regime <span class="indicator-help tooltipped" data-tooltip="Determines if price action is in trending squeeze or ranging mean-reversion.">?</span></td>
-                <td><span class="health-text-val" id="healthRegimeVal">Trending</span></td>
-              </tr>
-            </tbody>
-          </table>
+        
+        <!-- Market Stance Matrix -->
+        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+          <div>
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Market Bias</span>
+            <span id="decBias" style="font-size: 15px; font-weight: 700; color: var(--signal-neutral);">—</span>
+          </div>
+          <div>
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Normalized Confidence</span>
+            <span id="decConfidence" style="font-size: 15px; font-weight: 700; color: var(--color-metric); font-family: var(--mono);">—</span>
+          </div>
+          <div>
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Action Recommendation</span>
+            <span id="decStatus" class="dec-badge" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; display: inline-block;">—</span>
+          </div>
+          <div>
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Trade Grade & Win Rate</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-primary); font-family: var(--mono);"><span id="topGradeVal" style="color:var(--signal-neutral)">A+</span> / <span id="payoffWinRateVal" style="color:var(--signal-bull)">—</span></span>
+          </div>
+        </div>
+
+        <!-- Trade Setup Block -->
+        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px; line-height: 1.6;">
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Entry Target</span>
+            <span id="decEntry" style="font-family: var(--mono); font-weight: 700; color: var(--text-primary); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Stop Loss Protection</span>
+            <span id="decSL" style="font-family: var(--mono); font-weight: 700; color: var(--signal-bear); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Take Profit Target</span>
+            <span id="decTP" style="font-family: var(--mono); font-weight: 700; color: var(--signal-bull); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Risk Reward Ratio</span>
+            <span id="decRR" style="font-family: var(--mono); font-weight: 700; color: var(--color-metric); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Invalidation Bound</span>
+            <span id="payoffInvalidationVal" style="font-family: var(--mono); font-weight: 700; color: var(--signal-bear); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 6px;">
+            <span style="color: var(--text-muted); font-size: 11px;">Time Horizon</span>
+            <span id="payoffHorizonVal" style="font-family: var(--mono); font-weight: 700; color: var(--text-primary); font-size: 12px;">—</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted); font-size: 11px;">Trigger Strategy</span>
+            <span id="payoffTriggerVal" style="font-weight: 700; color: var(--color-metric); font-size: 11px;">—</span>
+          </div>
         </div>
       </div>
 
-      <!-- AI Trade Decision Card -->
-      <div class="glass-card decision-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">💎</span>
-          <h3>AI Trade Decision</h3>
+      <!-- SECTION 3: Execution Panel -->
+      <div class="glass-card">
+        <div class="card-header" style="margin-bottom: 8px;">
+          <h3>Execution & Risk Calculator</h3>
+          <div class="card-desc">Simulate sizing limits and examine book depth.</div>
         </div>
-        <div class="decision-body">
-          <div class="decision-main-row">
-            <div class="decision-metric">
-              <span class="dec-label">Market Bias</span>
-              <span class="dec-val" id="decBias">—</span>
+        
+        <!-- Calculator Inputs & Outputs -->
+        <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+          <!-- Inputs -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+            <div>
+              <label style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Capital ($)</label>
+              <input type="number" id="calcCapital" value="10000" style="width: 100%; padding: 4px 8px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-hairline); border-radius: 4px; color: var(--text-primary); font-family: var(--mono);">
             </div>
-            <div class="decision-metric">
-              <span class="dec-label">Confidence</span>
-              <span class="dec-val" id="decConfidence">—</span>
+            <div>
+              <label style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Risk Tolerance (%)</label>
+              <input type="number" id="calcRisk" value="2" step="0.5" style="width: 100%; padding: 4px 8px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-hairline); border-radius: 4px; color: var(--text-primary); font-family: var(--mono);">
             </div>
-            <div class="decision-metric">
-              <span class="dec-label">Status</span>
-              <span class="dec-badge" id="decStatus">—</span>
+            <div>
+              <label style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Leverage (x)</label>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <input type="range" id="calcLeverage" min="1" max="100" value="10" style="flex: 1;">
+                <span id="calcLevVal" style="font-size: 11px; font-family: var(--mono); color: var(--color-metric); font-weight: 700; min-width: 25px;">10x</span>
+              </div>
             </div>
-          </div>
-          <div class="decision-levels-grid">
-            <div class="dec-level">
-              <span class="lvl-lbl">Entry Range</span>
-              <span class="lvl-val" id="decEntry">—</span>
+            <div>
+              <label style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Entry Target ($)</label>
+              <input type="number" id="calcEntry" value="64000" style="width: 100%; padding: 4px 8px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-hairline); border-radius: 4px; color: var(--text-primary); font-family: var(--mono);">
             </div>
-            <div class="dec-level">
-              <span class="lvl-lbl">Stop Loss (SL)</span>
-              <span class="lvl-val" style="color:var(--red);" id="decSL">—</span>
-            </div>
-            <div class="dec-level">
-              <span class="lvl-lbl">Take Profit (TP)</span>
-              <span class="lvl-val" style="color:var(--green);" id="decTP">—</span>
-            </div>
-            <div class="dec-level">
-              <span class="lvl-lbl">Risk Reward</span>
-              <span class="lvl-val" id="decRR">—</span>
-            </div>
-            <div class="dec-level">
-              <span class="lvl-lbl">Trade Quality</span>
-              <span class="lvl-val" style="color:var(--gold);" id="decQuality">—</span>
+            <div>
+              <label style="font-size: 9px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 2px;">Stop Loss ($)</label>
+              <input type="number" id="calcSL" value="63000" style="width: 100%; padding: 4px 8px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-hairline); border-radius: 4px; color: var(--text-primary); font-family: var(--mono);">
             </div>
           </div>
-          <div class="decision-reasons-list">
-            <div class="smc-sec-title">Decision Reason Checklists</div>
-            <ul class="reasons-ul" id="decReasons">
-              <!-- Managed by JS -->
+          
+          <!-- Outputs -->
+          <div style="flex: 1.2; display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 8px;">
+            <div class="calc-output-row">
+              <span style="color:var(--text-muted)">Direction:</span>
+              <span id="calcDirection" style="font-weight:700; color:var(--signal-neutral);">—</span>
+            </div>
+            <div class="calc-output-row">
+              <span style="color:var(--text-muted)">Position Size:</span>
+              <span id="calcPosSize" style="font-family:var(--mono); font-weight:700; color:var(--text-primary);">—</span>
+            </div>
+            <div class="calc-output-row">
+              <span style="color:var(--text-muted)">Required Margin:</span>
+              <span id="calcMargin" style="font-family:var(--mono); font-weight:700; color:var(--text-primary);">—</span>
+            </div>
+            <div class="calc-output-row">
+              <span style="color:var(--text-muted)">Est. Liquidation Price:</span>
+              <span id="calcLiqPrice" style="font-family:var(--mono); font-weight:700; color:var(--signal-bear);">—</span>
+            </div>
+            <div class="calc-output-row">
+              <span style="color:var(--text-muted)">Trade Quality Score:</span>
+              <span id="calcTradeQualityVal" class="tooltipped" style="font-family:var(--font-title); font-weight:700; color:var(--color-metric); cursor: help; border-bottom: 1px dotted var(--color-metric);">—</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Mock Execution Button -->
+        <button class="calc-trade-btn" id="btnExecuteMockTrade" style="width: 100%; padding: 10px; background: rgba(0, 255, 102, 0.05); border: 1px solid var(--signal-bull); color: var(--signal-bull); font-family: var(--font-title); font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+          EXECUTE TACTICAL POSITION LIMIT
+        </button>
+        <div id="calcWarning" style="color: var(--signal-bear); font-size: 9px; font-weight: 700; margin-top: 6px; text-align: center; display: none;"></div>
+
+        <!-- Liquidity Magnets -->
+        <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px;">
+          <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Order Book Liquidity Squeezes (ATR-Linked ETAs)</span>
+          <div style="display: flex; gap: 12px;">
+            <div style="flex: 1;">
+              <span style="font-size: 9px; color: var(--signal-bull); font-weight: 700; display: block; margin-bottom: 4px;">Bid Pools (Buyers Floor)</span>
+              <table class="magnet-table" style="width: 100%; font-size: 10px;" id="magnetBidsTable">
+                <!-- Bids depth -->
+              </table>
+            </div>
+            <div style="flex: 1;">
+              <span style="font-size: 9px; color: var(--signal-bear); font-weight: 700; display: block; margin-bottom: 4px;">Ask Pools (Sellers Wall)</span>
+              <table class="magnet-table" style="width: 100%; font-size: 10px;" id="magnetAsksTable">
+                <!-- Asks depth -->
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMN 2: Why & Context -->
+    <div class="terminal-col-right">
+      <!-- SECTION 2: Why? -->
+      <div class="glass-card">
+        <div class="card-header" style="margin-bottom: 8px;">
+          <h3>Why? (Logical Confluences & Signals)</h3>
+          <div class="card-desc">Examine contributing score factors and structural conflicts.</div>
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+          <!-- Confidence Breakdown (Positive/Negative Contributors) -->
+          <div style="flex: 1.1; background: rgba(255,255,255,0.01); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+              <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Confidence Attribution</span>
+              <span id="breakdownConfidenceVal" style="font-family: var(--font-title); font-size: 10px; font-weight: 700; color: var(--color-metric);">—</span>
+            </div>
+            <div id="confidenceBreakdownList" style="display: flex; flex-direction: column; gap: 6px;">
+              <!-- Sorted list filled by JS -->
+            </div>
+          </div>
+          
+          <!-- Explanation Panel & Traps -->
+          <div style="flex: 1.3; display: flex; flex-direction: column; gap: 8px;">
+            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px; height: 100%;">
+              <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">AI Rationale Drivers</span>
+              <div id="aiExplanationPanel" style="font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
+                <!-- Rationale list -->
+              </div>
+            </div>
+            
+            <!-- Conflict & Liquidity Squeezes -->
+            <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 10px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 9px; color: var(--text-muted);">Conflict Detector:</span>
+                <span id="conflictDetectorVal" style="font-size: 10px; font-weight: 700; color: var(--text-primary); text-align: right;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 9px; color: var(--text-muted);">Liquidity Trap:</span>
+                <span id="liquidityTrapVal" style="font-size: 10px; font-weight: 700; color: var(--signal-neutral); text-align: right;">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Context -->
+      <div class="glass-card">
+        <div class="card-header" style="margin-bottom: 8px;">
+          <h3>Context (Regime & Target Forecasts)</h3>
+          <div class="card-desc">Correlate macro calendars, RSS news flow, and target projections.</div>
+        </div>
+        
+        <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+          <!-- Scenario Engine -->
+          <div style="flex: 1.1; background: rgba(255,255,255,0.015); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Monte Carlo Target Forecasts</span>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px;">
+                  <span style="color:var(--signal-bull); font-weight:700;">Scenario A: Bull Breakout</span>
+                  <span id="mcBullVal" style="font-family:var(--mono);">—</span>
+                </div>
+                <div class="prob-progress-bar" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"><div class="prob-bar-fill bullish" id="mcBullBar" style="width:0%; height:100%; background:var(--signal-bull); transition: width 0.3s ease;"></div></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px;">
+                  <span style="color:var(--signal-neutral); font-weight:700;">Scenario B: Ranging</span>
+                  <span id="mcRangeVal" style="font-family:var(--mono);">—</span>
+                </div>
+                <div class="prob-progress-bar" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"><div class="prob-bar-fill neutral" id="mcRangeBar" style="width:0%; height:100%; background:var(--signal-neutral); transition: width 0.3s ease;"></div></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px;">
+                  <span style="color:var(--signal-bear); font-weight:700;">Scenario C: Bear Breakdown</span>
+                  <span id="mcBearVal" style="font-family:var(--mono);">—</span>
+                </div>
+                <div class="prob-progress-bar" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"><div class="prob-bar-fill bearish" id="mcBearBar" style="width:0%; height:100%; background:var(--signal-bear); transition: width 0.3s ease;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Market Regime Detection -->
+          <div style="flex: 0.9; background: rgba(255,255,255,0.015); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px; font-size: 11px; line-height: 1.7;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Market Regime Detection</span>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color:var(--text-muted)">Current Market:</span>
+              <span id="regType" style="font-weight:700; color:var(--text-primary);">—</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color:var(--text-muted)">Trend Strength:</span>
+              <span id="regStrength" style="font-weight:700; color:var(--color-metric);">—</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color:var(--text-muted)">Regime Conviction:</span>
+              <span id="regConfidence" style="font-family:var(--mono); color:var(--color-metric); font-weight:700;">—</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color:var(--text-muted)">Recommended Play:</span>
+              <span id="regStrategy" style="color:var(--signal-neutral); font-weight:700;">—</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color:var(--text-muted)">Avoid Strategy:</span>
+              <span id="regAvoid" style="color:var(--signal-bear); font-weight:700;">—</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Macro Events & Live RSS Feeds -->
+        <div id="macroSectionCard" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px;">
+          <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">Live Macro Feeds & Catalysts</span>
+          <div id="newsImpactBox" style="font-size: 11px; margin-bottom: 8px;">
+            <!-- news impact summary -->
+          </div>
+          <div class="news-list-container" style="max-height: 100px; overflow-y: auto;">
+            <ul class="news-list" id="newsList" style="font-size: 10px; margin: 0; padding-left: 12px;">
+              <!-- Live feeds -->
             </ul>
           </div>
         </div>
       </div>
-
-      <!-- Trade Execution Timeline (Feature 8) -->
-      <div class="glass-card timeline-card-h">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⛓️</span>
-          <h3>Trade Execution Timeline</h3>
-        </div>
-        <div class="execution-timeline-container">
-          <div class="timeline-h-track" id="executionTimeline">
-            <!-- Dynamically populated horizontal steps -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-row row-1">
-      <!-- Fear & Greed Card -->
-      <div class="glass-card fng-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🌡️</span>
-          <h3>Crypto Fear & Greed Index</h3>
-        </div>
-        <div class="fng-content">
-          <div class="speedometer-container">
-            <svg class="speedometer-svg" viewBox="0 0 100 50">
-              <!-- Background Arc -->
-              <path class="speedometer-track" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"></path>
-              <!-- Needle -->
-              <line class="speedometer-needle" id="fngNeedle" x1="50" y1="50" x2="50" y2="15" stroke-width="3" stroke-linecap="round" transform="rotate(0, 50, 50)"></line>
-              <circle class="speedometer-center" cx="50" cy="50" r="4"></circle>
-            </svg>
-            <div class="fng-score" id="fngScore">—</div>
-          </div>
-          <div class="fng-info">
-            <div class="fng-badge" id="fngBadge">NEUTRAL</div>
-            <div class="fng-desc">Aggregated market sentiment rating.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Explain Like I'm 10 Card -->
-      <div class="glass-card eli10-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧸</span>
-          <h3>Explain Like I'm 10</h3>
-        </div>
-        <div class="eli10-body" id="eli10Body">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- AI Coach (Feature 4) -->
-      <div class="glass-card coach-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧠</span>
-          <h3>AI Coach Feedback</h3>
-        </div>
-        <div class="coach-body" id="coachBody">
-          <!-- Managed by JS -->
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-row row-two">
-      <!-- Entry Checklist -->
-      <div class="glass-card checklist-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📋</span>
-          <h3>Technical Entry Checklist</h3>
-        </div>
-        <div class="checklist-body" id="entryChecklist">
-          <!-- Checkbox items -->
-        </div>
-      </div>
-
-      <!-- Trade Blockers & News Card -->
-      <div class="glass-card blockers-news-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⚠️</span>
-          <h3>Trade Blockers & News Impact</h3>
-        </div>
-        <div class="blockers-body">
-          <div class="blocker-header">
-            <span class="blocker-lbl">Blocker Recommendation</span>
-            <span class="blocker-badge" id="blockerRec">—</span>
-          </div>
-          <div class="blocker-list-container" id="blockersList">
-            <!-- Active Trade Blockers -->
-          </div>
-          <div class="news-impact-box" id="newsImpactBox" style="margin-top:16px;">
-            <!-- Scheduled News Impact -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Watchlist & Macro Impact Row -->
-    <div class="grid-row row-two" style="margin-top:20px;">
-      <!-- Watchlist AI Ranking (Feature 16) -->
-      <div class="glass-card watchlist-ranking-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⭐</span>
-          <h3>Today's Best Trades</h3>
-        </div>
-        <div class="watchlist-ranking-body">
-          <table class="ranking-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Asset</th>
-                <th>Confidence</th>
-                <th>Opportunity Rating</th>
-              </tr>
-            </thead>
-            <tbody id="watchlistRankingBody">
-              <tr><td>1</td><td>BTCUSDT</td><td style="color:var(--green);font-weight:700;">94%</td><td style="color:var(--gold);">⭐⭐⭐⭐⭐</td></tr>
-              <tr><td>2</td><td>ETHUSDT</td><td style="color:var(--green);font-weight:700;">91%</td><td style="color:var(--gold);">⭐⭐⭐⭐</td></tr>
-              <tr><td>3</td><td>SOLUSDT</td><td style="color:var(--green);font-weight:700;">88%</td><td style="color:var(--gold);">⭐⭐⭐⭐</td></tr>
-              <tr><td>4</td><td>BNBUSDT</td><td style="color:var(--green);font-weight:700;">82%</td><td style="color:var(--gold);">⭐⭐⭐</td></tr>
-              <tr><td>5</td><td>XRPUSDT</td><td style="color:var(--green);font-weight:700;">75%</td><td style="color:var(--gold);">⭐⭐</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Macro Impact Scores (Feature 19) -->
-      <div class="glass-card news-impact-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📅</span>
-          <h3>Macro Event Impact Scores</h3>
-        </div>
-        <div class="news-impact-table-body">
-          <table class="macro-impact-table">
-            <thead>
-              <tr>
-                <th>Macro Event</th>
-                <th>Impact Weight</th>
-                <th>Est. Volatility</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>FOMC Meeting Statement</td><td style="color:var(--gold);">★★★★★</td><td style="color:var(--red);font-weight:700;">Extreme</td></tr>
-              <tr><td>ECB Rate Decision</td><td style="color:var(--gold);">★★★</td><td style="color:var(--gold);">Moderate</td></tr>
-              <tr><td>PPI Inflation Report</td><td style="color:var(--gold);">★★★★</td><td style="color:var(--red);">High</td></tr>
-              <tr><td>Spot ETF Flow Reports</td><td style="color:var(--gold);">★★★</td><td style="color:var(--gold);">Moderate</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detailed Analytical Report text card -->
-    <div class="grid-row" style="margin-top:20px;">
-      <div class="glass-card report-card" style="flex:1;">
-        <div class="card-header">
-          <span class="card-title-icon">📋</span>
-          <h3>Comprehensive Analytical Report</h3>
-        </div>
-        <div class="report-content" id="reportContent">
-          <!-- Managed by JS -->
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- TAB 2: LIQUIDITY & ORDER FLOW -->
-  <div class="tab-panel" id="tab-liquidity">
-    <div class="grid-row">
-      <!-- Live Trade Probability Meter -->
-      <div class="glass-card live-prob-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⚖️</span>
-          <h3>Live Trade Probability Meter</h3>
-        </div>
-        <div class="prob-content">
-          <div class="prob-metrics">
-            <div class="metric long">
-              <span class="metric-label">LONG</span>
-              <span class="metric-val" id="longProbText">50%</span>
-            </div>
-            <div class="metric short">
-              <span class="metric-label">SHORT</span>
-              <span class="metric-val" id="shortProbText">50%</span>
-            </div>
-          </div>
-          <div class="prob-slider-container">
-            <div class="prob-slider-track">
-              <div class="prob-fill-l" id="longBar" style="width:50%"></div>
-              <div class="prob-fill-s" id="shortBar" style="width:50%"></div>
-            </div>
-            <div class="prob-slider-glow" id="probGlow" style="left:50%"></div>
-          </div>
-          <div class="prob-footer-text">
-            Imbalance scales recalibrate every candle using real-time socket flows.
-          </div>
-        </div>
-      </div>
-
-      <!-- Institutional Score Card -->
-      <div class="glass-card inst-score-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🏦</span>
-          <h3>Institutional Activity Score</h3>
-        </div>
-        <div class="inst-score-body">
-          <div class="inst-score-bar-row">
-            <span class="inst-lbl">Buying Interest</span>
-            <div class="inst-progress"><div class="inst-progress-fill buy" id="instBuyBar" style="width:0%"></div></div>
-            <span class="inst-val" id="instBuyText">0%</span>
-          </div>
-          <div class="inst-score-bar-row" style="margin-top:12px;">
-            <span class="inst-lbl">Selling Interest</span>
-            <div class="inst-progress"><div class="inst-progress-fill sell" id="instSellBar" style="width:0%"></div></div>
-            <span class="inst-val" id="instSellText">0%</span>
-          </div>
-          <div class="inst-score-footer">
-            Derived from VWAP divergence, CVD profiles, volume deltas, and order absorption.
-          </div>
-        </div>
-      </div>
-
-      <!-- Technical indicator breakdown subgrid -->
-      <div class="glass-card" style="flex:1;">
-        <div class="card-header">
-          <span class="card-title-icon">📈</span>
-          <h3>Technical Indicators Confluences</h3>
-        </div>
-        <div class="indicators-subgrid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
-          <!-- Card 1: Trend Stack -->
-          <div class="glass-card ind-card" style="padding:10px;">
-            <div class="card-header" style="margin-bottom:8px; padding-bottom:6px;">Trend Structure</div>
-            <div class="ind-body" id="trendBody" style="font-size:10px; color:var(--text-2);"></div>
-          </div>
-          <!-- Card 2: Momentum -->
-          <div class="glass-card ind-card" style="padding:10px;">
-            <div class="card-header" style="margin-bottom:8px; padding-bottom:6px;">Momentum Oscillators</div>
-            <div class="ind-body" id="momentumBody" style="font-size:10px; color:var(--text-2);"></div>
-          </div>
-          <!-- Card 3: Volatility -->
-          <div class="glass-card ind-card" style="padding:10px;">
-            <div class="card-header" style="margin-bottom:8px; padding-bottom:6px;">Volatility Channels</div>
-            <div class="ind-body" id="volatilityBody" style="font-size:10px; color:var(--text-2);"></div>
-          </div>
-          <!-- Card 4: Order Flow -->
-          <div class="glass-card ind-card" style="padding:10px;">
-            <div class="card-header" style="margin-bottom:8px; padding-bottom:6px;">Order Book Imbalance</div>
-            <div class="ind-body" id="orderFlowBody" style="font-size:10px; color:var(--text-2);"></div>
-          </div>
+  <!-- SECTION 5: Collapsible Detailed Research (Accordion) -->
+  <div class="collapsible-research-section" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Collapsible Detailed Research & Metrics</span>
+    
+    <!-- Accordion Item 1: Comprehensive Report -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" onclick="toggleSection(this)">
+        <span style="font-weight: 700; font-family: var(--font-title);">📋 1. Comprehensive AI Analyst Report</span>
+        <span class="chevron" style="font-size: 10px; color: var(--text-muted);">▼</span>
+      </button>
+      <div class="collapsible-content">
+        <div id="reportContent" style="font-size: 11px; line-height: 1.7; color: var(--text-primary); font-family: var(--font-body);">
+          <!-- Report content -->
         </div>
       </div>
     </div>
 
-    <div class="grid-row row-two">
-      <!-- Order Depth Wall Canvas -->
-      <div class="glass-card depth-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📊</span>
-          <h3>Order Book Cumulative Depth</h3>
+    <!-- Accordion Item 2: Macro Details -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" onclick="toggleSection(this)">
+        <span style="font-weight: 700; font-family: var(--font-title);">📅 2. Macro Calendars & Calendar Blockers</span>
+        <span class="chevron" style="font-size: 10px; color: var(--text-muted);">▼</span>
+      </button>
+      <div class="collapsible-content">
+        <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">Active Macro Execution Blockers</span>
+        <div class="blocker-list-container" id="blockersList" style="display: flex; flex-direction: column; gap: 6px;">
+          <!-- dynamic execution blocker warnings -->
         </div>
-        <div class="depth-content">
-          <canvas id="depthCanvas" width="550" height="230"></canvas>
-        </div>
-      </div>
-
-      <!-- SMC & Levels Card -->
-      <div class="glass-card smc-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🏛</span>
-          <h3>Smart Money Concepts & Levels</h3>
-        </div>
-        <div class="smc-body">
-          <div class="smc-section">
-            <div class="smc-sec-title">🎯 Key Support & Resistance Levels</div>
-            <div class="levels-list" id="levelsList">
-              <!-- Managed by JS -->
-            </div>
-          </div>
-          <div class="smc-section" style="margin-top:16px;">
-            <div class="smc-sec-title">⚡ Smart Money Structures</div>
-            <div class="structure-list" id="structureList">
-              <!-- Managed by JS -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Liquidity Heatmap Price Ladder -->
-      <div class="glass-card heatmap-ladder-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🔥</span>
-          <h3>Liquidity Price Ladder</h3>
-        </div>
-        <div class="heatmap-ladder-body">
-          <div class="ladder-grid" id="heatmapLadder">
-            <!-- Heatmap Rows -->
-          </div>
-        </div>
+        <div id="blockerRec" style="margin-top: 10px; font-size: 11px; font-weight: 700;"></div>
       </div>
     </div>
 
-    <div class="grid-row row-three">
-      <!-- Smart Money Timeline -->
-      <div class="glass-card sm-timeline-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⏱️</span>
-          <h3>Smart Money Timeline</h3>
-        </div>
-        <div class="sm-timeline-body" id="smTimeline">
-          <!-- Timeline points -->
-        </div>
-      </div>
-
-      <!-- Live News Feed -->
-      <div class="glass-card news-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📰</span>
-          <h3>Live News & RSS Feeds</h3>
-        </div>
-        <div class="news-list" id="newsList">
-          <!-- Managed by JS -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 3: PERFORMANCE & BACKTEST -->
-  <div class="tab-panel" id="tab-performance">
-    <div class="grid-row">
-      <!-- Strategy Backtester -->
-      <div class="glass-card backtest-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧪</span>
-          <h3>Strategy Backtester (EMA Cross)</h3>
-        </div>
-        <div class="backtest-content">
-          <div class="backtest-metrics-grid">
-            <div class="bt-metric">
-              <span class="bt-label">Win Rate</span>
-              <span class="bt-val" id="btWinRate">—</span>
+    <!-- Accordion Item 3: Historical Logs & Performance -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" onclick="toggleSection(this)">
+        <span style="font-weight: 700; font-family: var(--font-title);">📊 3. Signal Reliability & Live AI Thinking Log</span>
+        <span class="chevron" style="font-size: 10px; color: var(--text-muted);">▼</span>
+      </button>
+      <div class="collapsible-content">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <!-- Signal Reliability & Live AI Thinking (combined into one widget!) -->
+          <div style="flex: 1.2; min-width: 300px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 12px; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; margin-bottom: 8px;">
+              <span style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Live AI Thinking & Feeds</span>
+              <span id="liveThinkingTime" style="font-size: 9px; font-family: var(--mono); color: var(--text-3);">—</span>
             </div>
-            <div class="bt-metric">
-              <span class="bt-label">Profit Factor</span>
-              <span class="bt-val" id="btProfitFactor">—</span>
+            <div class="watching-feeds-strip" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;" id="liveWatchingList">
+              <!-- Neon badges generated dynamically by JS -->
             </div>
-            <div class="bt-metric">
-              <span class="bt-label">Trades</span>
-              <span class="bt-val" id="btTotalTrades">—</span>
-            </div>
-            <div class="bt-metric">
-              <span class="bt-label">Max Drawdown</span>
-              <span class="bt-val" style="color:var(--red);" id="btMaxDD">—</span>
+            <div class="live-thinking-box" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-hairline); padding: 8px; border-radius: 4px; max-height: 120px; overflow-y: auto;">
+              <pre id="liveThinkingText" style="margin: 0; font-family: var(--font-body); font-size: 10px; white-space: pre-wrap; line-height: 1.5; color: var(--text-primary);"></pre>
             </div>
           </div>
-          <div class="equity-canvas-container" style="margin-top:12px; position:relative;">
-            <canvas id="equityCanvas" width="550" height="150"></canvas>
-            <div class="equity-label" style="position:absolute; top:2px; left:4px; font-size:9px; color:var(--text-3); font-family:var(--mono);">CUMULATIVE RETURN EQUITY CURVE</div>
+          
+          <!-- AI Learning Panel -->
+          <div style="flex: 0.8; min-width: 250px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 12px; border-radius: 4px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Database-Backed AI Learning Panel</span>
+            <table class="learning-table" style="width: 100%; font-size: 10px; line-height: 1.8;">
+              <tbody>
+                <tr>
+                  <td>Last 100 Signals Accuracy</td>
+                  <td id="learnAccuracyVal" style="color:var(--signal-bull); font-weight:700; font-family:var(--mono);">—</td>
+                </tr>
+                <tr>
+                  <td>Best Setup (EMA+FVG+VWAP)</td>
+                  <td id="learnBestVal" style="color:var(--signal-neutral); font-weight:700; font-family:var(--mono);">—</td>
+                </tr>
+                <tr>
+                  <td>Worst Setup (Counter Trend)</td>
+                  <td id="learnWorstVal" style="color:var(--signal-bear); font-weight:700; font-family:var(--mono);">—</td>
+                </tr>
+                <tr>
+                  <td>Average R:R Ratio</td>
+                  <td id="learnRRVal" style="font-family:var(--mono);">—</td>
+                </tr>
+                <tr>
+                  <td>Average Hold Time</td>
+                  <td id="learnHoldTimeVal" style="color:var(--color-metric); font-family:var(--mono);">—</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-
-      <!-- Win Probability Grid -->
-      <div class="glass-card win-prob-strategy-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📊</span>
-          <h3>Win Probability by Strategy</h3>
-        </div>
-        <div class="win-prob-grid" id="winProbGrid">
-          <!-- Strategy prob cards -->
-        </div>
-      </div>
-
-      <!-- Multi-Timeframe Matrix (Feature 5) -->
-      <div class="glass-card matrix-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🌌</span>
-          <h3>Multi-Timeframe Matrix</h3>
-        </div>
-        <div class="matrix-table-container">
-          <table class="matrix-table" id="matrixTable">
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>1m</th>
-                <th>5m</th>
-                <th>15m</th>
-                <th>1H</th>
-                <th>4H</th>
-                <th>1D</th>
-              </tr>
-            </thead>
-            <tbody id="matrixTableBody">
-              <!-- Dynamically populated via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-row row-two">
-      <!-- AI Trade Journal -->
-      <div class="glass-card journal-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📖</span>
-          <h3>AI Trade Journal & Learning Logs</h3>
-        </div>
-        <div class="journal-body">
-          <div class="journal-stats-strip">
-            <div class="j-stat">
-              <span class="j-lbl">Neural Accuracy</span>
-              <span class="j-val" style="color:var(--green);">87%</span>
-            </div>
-            <div class="j-stat">
-              <span class="j-lbl">Average RR</span>
-              <span class="j-val" style="color:var(--cyan);">2.4</span>
-            </div>
-            <div class="j-stat">
-              <span class="j-lbl">Best Setup</span>
-              <span class="j-val" style="color:var(--gold);">EMA + OB + FVG</span>
-            </div>
-            <div class="j-stat">
-              <span class="j-lbl">Worst Setup</span>
-              <span class="j-val" style="color:var(--red);">Counter Trend</span>
-            </div>
+        
+        <!-- Combined Signal Log and Journal -->
+        <div style="margin-top: 12px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700;">AI Signal Log & Outcome Journal</span>
+            <span style="font-size: 9px; color: var(--text-muted);"><span id="reliabilityLoggedCount">0</span> total logged | Win Rate: <span id="reliabilityWinRateVal" style="color:var(--signal-bull); font-weight:700;">—</span> | Status: <span id="reliabilityStatus" style="font-weight:700;">—</span></span>
           </div>
-          <div class="journal-list-container">
-            <table class="journal-table">
+          <div style="max-height: 150px; overflow-y: auto;">
+            <table class="journal-table" style="width: 100%; font-size: 10px;">
               <thead>
                 <tr>
                   <th>Trade #</th>
@@ -712,871 +484,120 @@
                 </tr>
               </thead>
               <tbody id="journalListBody">
-                <!-- Log rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Regimes and Sessions -->
-      <div class="regime-session-card-container">
-        <!-- Regime Card -->
-        <div class="glass-card regime-card">
-          <div class="card-header">
-            <span class="card-title-icon">📊</span>
-            <h3>Market Regime Detection</h3>
-          </div>
-          <div class="regime-body">
-            <div class="reg-stat-row">
-              <span>Current Market</span>
-              <span class="reg-badge" id="regType">—</span>
-            </div>
-            <div class="reg-stat-row">
-              <span>Trend Strength</span>
-              <span class="reg-val" id="regStrength">—</span>
-            </div>
-            <div class="reg-stat-row">
-              <span>Recommended Play</span>
-              <span class="reg-val" id="regStrategy" style="color:var(--gold);">—</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Session Volatility & Strength (Feature 7) -->
-        <div class="glass-card session-card" style="margin-top:16px;">
-          <div class="card-header">
-            <span class="card-title-icon">🌍</span>
-            <h3>Market Session Volatility & Strength</h3>
-          </div>
-          <div class="session-body">
-            <table class="session-strength-table">
-              <tbody>
-                <tr>
-                  <td>Asian Session</td>
-                  <td><span class="session-strength-indicator" id="sessAsianVal">Weak</span></td>
-                </tr>
-                <tr>
-                  <td>London Session</td>
-                  <td><span class="session-strength-indicator bearish" id="sessLondonVal">Strong Sell</span></td>
-                </tr>
-                <tr>
-                  <td>New York Session</td>
-                  <td><span class="session-strength-indicator bearish" id="sessNewYorkVal">Very Strong Sell</span></td>
-                </tr>
-                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                  <td style="padding-top:8px;">Volatility Peak Target</td>
-                  <td style="padding-top:8px; color:var(--gold); font-weight:700; font-family:var(--mono);">13:30 UTC</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Replay Mode (Feature 12) -->
-        <div class="glass-card replay-card" style="margin-top:16px;">
-          <div class="card-header">
-            <span class="card-title-icon">⏪</span>
-            <h3>Replay Mode</h3>
-          </div>
-          <div class="replay-body">
-            <div class="replay-controls">
-              <button class="replay-ctrl-btn" id="replayPrevBtn">◀</button>
-              <span class="replay-date-label" id="replayDateText">June 12 09:00</span>
-              <button class="replay-ctrl-btn" id="replayPlayBtn">▶</button>
-            </div>
-            <div class="replay-details" id="replayDetailsBox">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- AI Learning Panel (Feature 13) -->
-        <div class="glass-card learning-panel-card" style="margin-top:16px;">
-          <div class="card-header">
-            <span class="card-title-icon">🧪</span>
-            <h3>AI Learning Panel</h3>
-          </div>
-          <div class="learning-panel-body">
-            <table class="learning-table">
-              <tbody>
-                <tr>
-                  <td>Last 100 Signals Accuracy</td>
-                  <td style="color:var(--green); font-weight:700; font-family:var(--mono);">82%</td>
-                </tr>
-                <tr>
-                  <td>Best Setup (EMA+FVG+VWAP)</td>
-                  <td style="color:var(--gold); font-weight:700; font-family:var(--mono);">91% Win Rate</td>
-                </tr>
-                <tr>
-                  <td>Worst Setup (Counter Trend)</td>
-                  <td style="color:var(--red); font-weight:700; font-family:var(--mono);">42% Win Rate</td>
-                </tr>
-                <tr>
-                  <td>Average R:R Ratio</td>
-                  <td style="font-family:var(--mono);">2.8</td>
-                </tr>
-                <tr>
-                  <td>Average Hold Time</td>
-                  <td style="color:var(--cyan); font-family:var(--mono);">4h 12m</td>
-                </tr>
+                <!-- Dynamic rows -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB 4: RISK & CHATBOT -->
-  <div class="tab-panel" id="tab-risk">
-    <div class="grid-row row-1">
-      <!-- Interactive Trade Simulator (Feature 10) -->
-      <div class="glass-card setup-card flex-calculator">
-        <div class="card-glow-setup"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⚡</span>
-          <h3>Interactive Trade Simulator</h3>
+    <!-- Accordion Item 4: Raw Metrics & Composite Scores -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" onclick="toggleSection(this)">
+        <span style="font-weight: 700; font-family: var(--font-title);">🌌 4. Raw Indicators, Composite Market Score & Backtests</span>
+        <span class="chevron" style="font-size: 10px; color: var(--text-muted);">▼</span>
+      </button>
+      <div class="collapsible-content">
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <!-- circular gauge and score details -->
+          <div style="flex: 0.8; min-width: 250px; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 10px; border-radius: 4px;">
+            <div class="score-circular-gauge" style="width: 60px; height: 60px; position: relative; flex-shrink: 0;">
+              <svg class="circular-svg" viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                <circle class="gauge-bg" cx="50" cy="50" r="40" stroke-width="8" stroke="rgba(255,255,255,0.05)" fill="none"></circle>
+                <circle class="gauge-fill" id="scoreGaugeFill" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke="var(--color-metric)"></circle>
+              </svg>
+              <div style="position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:var(--font-title);">
+                <span id="scoreBigVal" style="font-size: 14px; font-weight: 700; color: var(--color-metric);">50</span>
+                <span style="font-size: 8px; color: var(--text-3);">/100</span>
+              </div>
+            </div>
+            <div style="font-size: 11px;">
+              <div style="font-weight: 700; color: var(--text-primary);"><span id="scoreOverallText">—</span></div>
+              <div style="font-size: 10px; color: var(--text-muted);">Composite Signal: <span id="scoreSignalBadge" style="font-weight:700;">Neutral</span></div>
+              <div style="font-size: 9px; color: var(--text-3); margin-top:4px;"><span id="scoreCoverageText">0% Data Coverage</span></div>
+              <div class="coverage-bar-container" style="width: 100px; height: 3px; background: rgba(255,255,255,0.05); margin-top:2px; border-radius: 2px;"><div class="coverage-bar-fill" id="scoreCoverageBar" style="width: 0%; height: 100%; background: var(--color-metric); border-radius: 2px;"></div></div>
+            </div>
+          </div>
+
+          <div style="flex: 1.2; min-width: 300px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 10px; border-radius: 4px;">
+            <!-- 12 categories -->
+            <div class="score-categories-grid" id="scoreCategoriesGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 9px;">
+              <!-- Category slots -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Indicators & Backtester -->
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 280px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 12px; border-radius: 4px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">Technical Confluences</span>
+            <div style="font-size: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>Trend Structure:</strong> <span id="trendBody">—</span></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>Momentum:</strong> <span id="momentumBody">—</span></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>Volatility index:</strong> <span id="volatilityBody">—</span></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>Asian Session:</strong> <span id="sessAsianVal">—</span></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>London Session:</strong> <span id="sessLondonVal">—</span></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom: 4px;"><strong>NY Session:</strong> <span id="sessNewYorkVal">—</span></div>
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 280px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 12px; border-radius: 4px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">Strategy Backtester (EMA Cross)</span>
+            <div style="display: flex; gap: 12px; align-items: center; font-size: 10px;">
+              <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                <div>WR: <span id="btWinRate" style="font-weight:700; color:var(--signal-bull);">—</span></div>
+                <div>PF: <span id="btProfitFactor" style="font-weight:700; color:var(--color-metric);">—</span></div>
+                <div>Trades: <span id="btTotalTrades" style="font-family:var(--mono);">—</span></div>
+                <div>DD: <span id="btMaxDD" style="font-weight:700; color:var(--signal-bear);">—</span></div>
+              </div>
+              <div style="flex: 1.2; position: relative;">
+                <canvas id="equityCanvas" width="220" height="70"></canvas>
+              </div>
+            </div>
+            <div class="win-prob-grid" id="winProbGrid" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Multi-Timeframe Matrix -->
+        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-hairline); padding: 12px; border-radius: 4px;">
+          <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;">Multi-Timeframe Matrix</span>
+          <div style="max-height: 120px; overflow-y: auto;">
+            <table class="matrix-table" id="matrixTable" style="width: 100%; font-size: 9px;">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>1m</th>
+                  <th>5m</th>
+                  <th>15m</th>
+                  <th>1H</th>
+                  <th>4H</th>
+                  <th>1D</th>
+                </tr>
+              </thead>
+              <tbody id="matrixTableBody">
+                <!-- matrix rows -->
+              </tbody>
+            </table>
+          </div>
         </div>
         
-        <!-- Input Row -->
-        <div class="calc-inputs">
-          <div class="calc-input-group">
-            <label for="calcCapital">Capital ($)</label>
-            <input type="number" id="calcCapital" value="1000" min="10" step="100">
+        <!-- Replay Controls inside collapsible raw metrics -->
+        <div style="margin-top: 12px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-hairline); border-radius: 4px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size: 9px; color: var(--text-3); text-transform: uppercase; font-weight: 700;">Historical Replay Sandbox</span>
+            <span class="replay-date-label" id="replayDateText" style="font-family:var(--mono); font-size: 10px; color:var(--color-metric);">—</span>
           </div>
-          <div class="calc-input-group">
-            <label for="calcRisk">Risk %</label>
-            <input type="number" id="calcRisk" value="1.0" min="0.1" max="10" step="0.1">
+          <div class="replay-controls" style="display:flex; gap:6px;">
+            <button class="replay-ctrl-btn" id="replayPrevBtn" style="padding: 2px 8px; font-size: 10px; cursor: pointer;">◀ PREV</button>
+            <button class="replay-ctrl-btn" id="replayPlayBtn" style="padding: 2px 8px; font-size: 10px; cursor: pointer;">▶ PLAY</button>
           </div>
-          <div class="calc-input-group">
-            <label for="calcEntry">Entry Target</label>
-            <input type="number" id="calcEntry" value="59500" step="1">
-          </div>
-          <div class="calc-input-group">
-            <label for="calcSL">Stop Loss</label>
-            <input type="number" id="calcSL" value="58500" step="1">
-          </div>
-          <div class="calc-input-group" style="flex: 1.5;">
-            <label for="calcLeverage" style="display:flex; justify-content:space-between;">
-              <span>Leverage</span>
-              <span id="calcLevVal" style="color:var(--gold); font-weight:700;">25x</span>
-            </label>
-            <input type="range" id="calcLeverage" value="25" min="1" max="100" class="retro-slider">
-          </div>
-        </div>
-
-        <!-- Warning Banner -->
-        <div class="calc-warning-banner" id="calcWarning" style="display:none;"></div>
-
-        <div class="setup-body" id="setupBody">
-          <!-- Managed by JS -->
-        </div>
-      </div>
-
-      <!-- Live Position Manager (Feature 3) -->
-      <div class="glass-card position-manager-card" id="positionManagerCard">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">💼</span>
-          <h3>Live Position Manager</h3>
-        </div>
-        <div class="position-manager-body" id="positionManagerBody">
-          <div class="no-position-placeholder">
-            <p style="color:var(--text-3); font-size:12px; text-align:center; padding:20px 0;">No active positions simulated.</p>
-            <button class="sim-btn-disabled" disabled style="width:100%; padding:10px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); color:var(--text-3); cursor:not-allowed;">Initialize a mock trade to activate position tracking</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Risk Meter Card -->
-      <div class="glass-card risk-meter-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⚡</span>
-          <h3>AI Trade Risk Meter</h3>
-        </div>
-        <div class="risk-meter-body">
-          <div class="risk-header-row">
-            <span class="r-lbl">Trade Risk Evaluation</span>
-            <span class="r-badge" id="riskLabel">—</span>
-          </div>
-          <div class="risk-stats-rows">
-            <div class="r-row">
-              <span>Expected Trade Drawdown</span>
-              <span id="riskDrawdown" style="color:var(--red);">—</span>
-            </div>
-            <div class="r-row" style="margin-top:8px;">
-              <span>Expected Profit Target</span>
-              <span id="riskProfit" style="color:var(--green);">—</span>
-            </div>
-          </div>
-          <div class="risk-indicators-visual" id="riskDots">
-            <!-- Visual Dots -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Portfolio & Psychology Row -->
-    <div class="grid-row row-two" style="margin-top:20px;">
-      <!-- Portfolio Risk (Feature 17) -->
-      <div class="glass-card portfolio-risk-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📊</span>
-          <h3>Portfolio Risk Dashboard</h3>
-        </div>
-        <div class="portfolio-risk-body">
-          <table class="portfolio-table">
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Allocation</th>
-                <th>Correlation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>BTC</td><td style="color:var(--red); font-weight:600;">-40%</td><td>91%</td></tr>
-              <tr><td>ETH</td><td style="color:var(--red); font-weight:600;">-25%</td><td>85%</td></tr>
-              <tr><td>SOL</td><td style="color:var(--red); font-weight:600;">-20%</td><td>78%</td></tr>
-              <tr><td>Cash</td><td style="color:var(--green); font-weight:600;">15%</td><td>—</td></tr>
-            </tbody>
-          </table>
-          <div class="portfolio-summary-box">
-            <div class="port-summary-row">
-              <span>Overall Portfolio Risk:</span>
-              <span style="color:var(--red); font-weight:700;">HIGH</span>
-            </div>
-            <div class="port-summary-row">
-              <span>Average Correlation:</span>
-              <span style="color:var(--gold); font-weight:700;">91%</span>
-            </div>
-            <div class="port-summary-row" style="flex-direction:column; align-items:flex-start; gap:4px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
-              <span style="color:var(--text-3); font-size:10px;">Tactical Recommendation:</span>
-              <span style="color:var(--gold); font-weight:600; font-size:12px;">Reduce BTC Exposure</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Trade Psychology (Feature 18) -->
-      <div class="glass-card trade-psychology-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧘</span>
-          <h3>AI Trade Psychology Coach</h3>
-        </div>
-        <div class="psychology-body">
-          <div class="psych-header-grade">Current Setup Grade: <span id="psychGradeVal" style="color:var(--gold); font-weight:800;">A+</span></div>
-          <ul class="psych-tips-list">
-            <li class="psych-tip warning">🔴 Avoid entering from FOMO.</li>
-            <li class="psych-tip success">🟢 Wait for the planned entry level.</li>
-            <li class="psych-tip danger">❌ Do not move or widen your stop loss.</li>
-            <li class="psych-tip info">ℹ️ Probability decreases by 18% if you chase the market move.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-row row-two" style="margin-top:20px;">
-      <!-- Smart Alerts Feed -->
-      <div class="glass-card alerts-stream-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🔔</span>
-          <h3>Smart Alerts Live Stream</h3>
-        </div>
-        <div class="alerts-stream-body">
-          <div class="alerts-scroll-container" id="alertsStream">
-            <!-- Auto-populating alerts -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Interactive Chatbot -->
-      <div class="glass-card chatbot-card">
-        <div class="card-header">
-          <span class="card-title-icon">🤖</span>
-          <h3>AI Quant Chat Terminal</h3>
-        </div>
-        <div class="chat-container">
-          <div class="chat-messages" id="chatMessages">
-            <div class="chat-msg ai">
-              <span class="chat-avatar">AI</span>
-              <div class="chat-bubble">
-                Hi there! I am your interactive AI Quant Analyst. Ask me anything about the live metrics, RSI, EMAs, support/resistance levels, or trade setups for this asset!
-              </div>
-            </div>
-          </div>
-          <form class="chat-input-row" id="chatForm">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Type a quantitative question (e.g. what is the RSI?)..." autocomplete="off">
-            <button type="submit" class="chat-submit-btn">Send</button>
-          </form>
+          <div id="replayDetailsBox" style="font-size: 10px; color:var(--text-muted);"></div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- TAB 5: AI-ASSISTED PAPER TRADING SIMULATOR -->
-  <div class="tab-panel" id="tab-demo">
-    <!-- Header Summary row -->
-    <div class="grid-row row-1-5">
-      <!-- Demo Account Dashboard -->
-      <div class="glass-card demo-account-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">💳</span>
-          <h3>Demo Account Dashboard</h3>
-        </div>
-        <div class="demo-acc-body">
-          <table class="terminal-table compact-table">
-            <tbody>
-              <tr><td>Balance</td><td><span class="term-val" id="demoBalance">$10,000.00</span></td></tr>
-              <tr><td>Equity</td><td><span class="term-val" id="demoEquity">$10,000.00</span></td></tr>
-              <tr><td>Today's P&L</td><td><span class="term-val" id="demoTodayPnl">+$0.00</span></td></tr>
-              <tr><td>Unrealized</td><td><span class="term-val" id="demoUnrealized">+$0.00</span></td></tr>
-              <tr><td>Win Rate</td><td><span class="term-val gold" id="demoWinRate">100%</span></td></tr>
-              <tr><td>Open Trades</td><td><span class="term-val" id="demoOpenCount">0</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Trading Mode & Execution Card -->
-      <div class="glass-card one-click-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">⚙️</span>
-          <h3>Trading Mode & Execution</h3>
-        </div>
-        <div class="one-click-body" style="padding-top:8px;">
-          <!-- Mode Toggles -->
-          <div class="mode-toggle-container">
-            <button class="mode-toggle-btn active" id="btnModeManual">👤 Manual Mode</button>
-            <button class="mode-toggle-btn" id="btnModeBot">🤖 AI Bot Mode</button>
-          </div>
-
-          <!-- MANUAL MODE SECTION -->
-          <div id="sectionManualMode" class="mode-section">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-              <button class="btn-demo-action buy" id="btnDemoBuy">BUY (LONG)</button>
-              <button class="btn-demo-action sell" id="btnDemoSell">SELL (SHORT)</button>
-            </div>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px;">
-              <button class="btn-demo-ctrl" id="btnDemoCloseHalf">Close 50%</button>
-              <button class="btn-demo-ctrl" id="btnDemoCloseAll">Close All</button>
-              <button class="btn-demo-ctrl" id="btnDemoMoveSL">Move SL</button>
-              <button class="btn-demo-ctrl" id="btnDemoReverse">Reverse</button>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-              <button class="btn-demo-ctrl" id="btnDemoTrail">Trail Stop</button>
-              <button class="btn-demo-ctrl" id="btnDemoReset">Reset Account</button>
-            </div>
-          </div>
-
-          <!-- AI BOT MODE SECTION -->
-          <div id="sectionBotMode" class="mode-section" style="display:none;">
-            <div class="calc-input-group" style="margin-bottom:12px;">
-              <label for="botStrategySelect" style="color:var(--text-3); font-size:10px; text-transform:uppercase; margin-bottom:4px; display:block;">Bot Strategy</label>
-              <select id="botStrategySelect" class="retro-select">
-                <option value="ai_consensus">🧠 AI Consensus (&gt;80% Conviction)</option>
-                <option value="ema_rsi">📈 EMA Cross + RSI Pullback</option>
-                <option value="smc_fvg">🏛 SMC Liquidity + FVG Retest</option>
-                <option value="mean_reversion">🔄 BB + Stochastic Mean Reversion</option>
-              </select>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:11px;">
-              <span style="color:var(--text-3);">Bot Engine:</span>
-              <span class="status-badge inactive" id="botStatusBadge">OFFLINE</span>
-            </div>
-            <button class="btn-demo-action buy" id="btnToggleBotState" style="background:var(--gold) !important; color:#010306 !important;">START AUTOMATED BOT</button>
-
-            <!-- Bot Decision Card -->
-            <div id="botDecisionCard" class="bot-decision-card" style="display:none;">
-              <div class="bot-decision-header">
-                <span class="bot-decision-icon">🧠</span>
-                <span class="bot-decision-title">AI Bot Decision</span>
-                <span class="bot-decision-time" id="botDecisionTime">—</span>
-              </div>
-              <div class="bot-decision-direction" id="botDecisionDirection">
-                <span class="bot-dir-label">Direction:</span>
-                <span class="bot-dir-badge" id="botDirBadge">—</span>
-              </div>
-              <div class="bot-decision-levels">
-                <div class="bot-level-item">
-                  <span class="bot-level-label">Entry</span>
-                  <span class="bot-level-value cyan" id="botDecEntry">—</span>
-                </div>
-                <div class="bot-level-item">
-                  <span class="bot-level-label">Stop Loss</span>
-                  <span class="bot-level-value red" id="botDecSL">—</span>
-                </div>
-                <div class="bot-level-item">
-                  <span class="bot-level-label">Take Profit</span>
-                  <span class="bot-level-value green" id="botDecTP">—</span>
-                </div>
-                <div class="bot-level-item">
-                  <span class="bot-level-label">Risk:Reward</span>
-                  <span class="bot-level-value gold" id="botDecRR">—</span>
-                </div>
-              </div>
-              <div class="bot-decision-reasoning">
-                <div class="bot-reason-title">💡 Reasoning</div>
-                <div class="bot-reason-text" id="botDecReason">—</div>
-              </div>
-              <div class="bot-decision-thinking">
-                <div class="bot-reason-title">🔍 Thinking</div>
-                <div class="bot-thinking-text" id="botDecThinking">—</div>
-              </div>
-            </div>
-
-            <div class="bot-log-box" id="botLogBox">
-              <div class="bot-log-entry">[System] Bot ready. Select a strategy and click Start.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Position size risk stats -->
-      <div class="glass-card demo-risk-calc-card">
-        <div class="card-header">
-          <span class="card-title-icon">🎛</span>
-          <h3>Calculator & Free Margin</h3>
-        </div>
-        <div class="demo-risk-body">
-          <div class="risk-info-item">
-            <span>Used Margin:</span>
-            <span id="demoUsedMargin">$0.00</span>
-          </div>
-          <div class="risk-info-item">
-            <span>Free Margin:</span>
-            <span id="demoFreeMargin">$10,000.00</span>
-          </div>
-          <div class="risk-info-item">
-            <span>Account Risk:</span>
-            <span id="demoOpenRisk" style="color:var(--green);">0.0%</span>
-          </div>
-          <div class="risk-info-item">
-            <span>Fees Paid:</span>
-            <span id="demoFeesPaid" style="color:var(--text-3);">$0.00</span>
-          </div>
-          <div style="margin-top:6px; font-size:10px; color:var(--gold);" id="demoRiskAdvice">
-            💡 Tip: Set SL under swing low to keep risk below 1%.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Positions Table -->
-    <div class="grid-row row-1" style="margin-top: 20px;">
-      <div class="glass-card active-positions-card">
-        <div class="card-header">
-          <span class="card-title-icon">📊</span>
-          <h3>Open Trading Positions</h3>
-        </div>
-        <div class="terminal-table-container">
-          <table class="terminal-table">
-            <thead>
-              <tr>
-                <th>Symbol</th>
-                <th>Type</th>
-                <th>Leverage</th>
-                <th>Size</th>
-                <th>Entry Price</th>
-                <th>Current Price</th>
-                <th>Unrealized P&L</th>
-                <th>ROI</th>
-                <th>SL Target</th>
-                <th>TP Target</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="demoPositionsList">
-              <tr><td colspan="11" style="text-align:center; color:var(--text-3); padding:20px;">No active simulated positions. Open a position to start tracking P&L.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI Trade coach feedback & Manual Challenge -->
-    <div class="grid-row row-two" style="margin-top: 20px;">
-      <!-- AI Coach Advice Card -->
-      <div class="glass-card coach-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧠</span>
-          <h3>AI Live Trade Coach</h3>
-        </div>
-        <div class="coach-body" id="demoCoachAdvice">
-          <div style="font-size:12px; line-height:1.6; color:var(--text-2);">
-            No running trades to evaluate. Enter a position and the AI Coach will analyze order book sweeps, liquidity blocks, and multi-timeframe stacks in real time to recommend exits or adjustments.
-          </div>
-        </div>
-      </div>
-
-      <!-- AI vs Manual Challenge scorecard -->
-      <div class="glass-card challenge-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🏆</span>
-          <h3>AI vs Manual Performance Match</h3>
-        </div>
-        <div class="challenge-body">
-          <div style="display:flex; justify-content:space-around; align-items:center; margin-bottom:12px;">
-            <div style="text-align:center;">
-              <div style="font-size:10px; color:var(--text-3);">AI ENGINE</div>
-              <div style="font-size:24px; font-weight:900; color:var(--green);" id="challengeAiPnl">+0.0%</div>
-            </div>
-            <div style="font-size:20px; font-weight:800; color:var(--text-3);">VS</div>
-            <div style="text-align:center;">
-              <div style="font-size:10px; color:var(--text-3);">YOUR SIMULATOR</div>
-              <div style="font-size:24px; font-weight:900; color:var(--gold);" id="challengeUserPnl">+0.0%</div>
-            </div>
-          </div>
-          <div class="challenge-adv-box" id="challengeAdvText">
-            AI Engine is performing well. Be sure to wait for structural confluences on lower timeframes before pushing manual execution buttons.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Calendar View & Backtester Row -->
-    <div class="grid-row row-two" style="margin-top: 20px;">
-      <!-- Calendar View -->
-      <div class="glass-card calendar-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📅</span>
-          <h3>Simulated Trading Calendar</h3>
-        </div>
-        <div class="calendar-wrapper">
-          <div class="calendar-grid-header">
-            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
-          </div>
-          <div class="calendar-grid" id="demoCalendarGrid">
-            <!-- Calendar days -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Achievement System -->
-      <div class="glass-card achievements-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🎖</span>
-          <h3>Trading Achievement Board</h3>
-        </div>
-        <div class="achievements-list">
-          <div class="achievement-item locked" id="ach-100-wins">
-            <span class="ach-badge">🏆</span>
-            <div class="ach-info">
-              <span class="ach-title">100 Winning Trades</span>
-              <span class="ach-desc">Successfully close 100 profitable paper trades.</span>
-            </div>
-          </div>
-          <div class="achievement-item locked" id="ach-5-days">
-            <span class="ach-badge">🔥</span>
-            <div class="ach-info">
-              <span class="ach-title">5 Winning Days Streak</span>
-              <span class="ach-desc">Close consecutive days in positive P&L returns.</span>
-            </div>
-          </div>
-          <div class="achievement-item locked" id="ach-10r-trade">
-            <span class="ach-badge">💎</span>
-            <div class="ach-info">
-              <span class="ach-title">10R Ratio Legend</span>
-              <span class="ach-desc">Realize a trade with a risk-to-reward ratio above 10.</span>
-            </div>
-          </div>
-          <div class="achievement-item unlocked" id="ach-no-rule-breaks">
-            <span class="ach-badge">⚖</span>
-            <div class="ach-info">
-              <span class="ach-title">Disciplined Execution</span>
-              <span class="ach-desc">No high-risk warnings triggered during position sizing.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Trade Replay, Post-Trade AI Reviews & Backtesting Row -->
-    <div class="grid-row row-two" style="margin-top: 20px;">
-      <!-- Post-Trade Review & Loss Analysis -->
-      <div class="glass-card review-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📝</span>
-          <h3>Post-Trade AI Review</h3>
-        </div>
-        <div class="review-body" id="demoTradeReviewContainer">
-          <div style="font-size:12px; color:var(--text-3); text-align:center; padding:30px;">
-            No closed trades to review. Complete a simulated paper trade to load post-trade analytical grading and loss reasoning.
-          </div>
-        </div>
-      </div>
-
-      <!-- In-Browser Simple Backtester -->
-      <div class="glass-card backtest-card" style="grid-column: span 2;">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">🧪</span>
-          <h3>Advanced Strategy Backtester & Leaderboard</h3>
-        </div>
-        <div class="backtest-body">
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; align-items: end;">
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy</label>
-                <select class="inp inp-full" id="btStrategy" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Capital ($)</label>
-                <input type="number" class="inp inp-full" id="btCapital" value="10000" style="background:#05080f; border:1px solid rgba(255,255,255,0.05); padding:6px; color:#fff; border-radius:4px; font-size:11px; width:100%;">
-              </div>
-              <div style="display:flex; align-items:center; height:32px;">
-                <label class="retro-checkbox" style="font-size:10px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; gap:6px;">
-                  <input type="checkbox" id="btCompareMode"> Compare Mode
-                </label>
-              </div>
-            </div>
-
-            <!-- Compare Selection List -->
-            <div id="btCompareListContainer" style="display:none; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.04); border-radius:6px; padding:10px; max-height:110px; overflow-y:auto;">
-              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block; margin-bottom:6px;">Select Strategies to Compare</span>
-              <div id="btCompareCheckboxes" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px; color:var(--text-2);">
-                <!-- Dynamically populated checkboxes -->
-              </div>
-            </div>
-
-            <button class="btn btn-primary" id="btnRunBt" style="width:100%; font-weight:700;">Run Strategy Backtest</button>
-
-            <!-- Results Section with Tab Layout -->
-            <div id="btResults" style="display:none; background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; border:1px solid rgba(0, 240, 255, 0.1); margin-top:8px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:6px;">
-                <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text);">Backtest Results Detail</span>
-                <div class="bot-decision-time" id="btCompletedTime" style="font-family:var(--mono); font-size:9px; color:var(--text-3);">—</div>
-              </div>
-              
-              <div style="display:flex; gap:6px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:6px;">
-                <button class="btn-demo-ctrl btn-sm active" id="btnTabBtStats" style="padding:4px 10px;">Metrics</button>
-                <button class="btn-demo-ctrl btn-sm" id="btnTabBtEquity" style="padding:4px 10px;">Equity Curves</button>
-                <button class="btn-demo-ctrl btn-sm" id="btnTabBtTrades" style="padding:4px 10px;">Trade Logs</button>
-              </div>
-
-              <!-- Tab 1: Stats Table -->
-              <div id="panelBtStats" style="display:block;">
-                <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:10px;" id="btStatsTable">
-                  <thead>
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                      <th style="text-align:left; padding:4px;">Metric</th>
-                      <th style="text-align:right; padding:4px;" id="btStatsHeaderPrimary">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody id="btStatsTableBody">
-                    <!-- Loaded dynamically -->
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Tab 2: Equity Curve Chart -->
-              <div id="panelBtEquity" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:9.5px; color:var(--text-2); text-transform:uppercase; font-weight:700;">Account Equity Over Time</span>
-                  <div id="btChartLegend" style="display:flex; gap:10px; font-size:9px;"></div>
-                </div>
-                <canvas id="btEquityChart" width="500" height="150" style="width:100%; height:140px; background:rgba(0,0,0,0.3); border-radius:4px; border:1px solid rgba(255,255,255,0.05);"></canvas>
-              </div>
-
-              <!-- Tab 3: Simulated Trade List -->
-              <div id="panelBtTrades" style="display:none;">
-                <div class="terminal-table-container" style="max-height:180px; overflow-y:auto;">
-                  <table class="terminal-table" style="width:100%; border-collapse:collapse; font-size:9.5px;">
-                    <thead>
-                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <th style="text-align:left; padding:4px;">Time</th>
-                        <th style="text-align:center; padding:4px;">Type</th>
-                        <th style="text-align:right; padding:4px;">Entry</th>
-                        <th style="text-align:right; padding:4px;">Exit</th>
-                        <th style="text-align:right; padding:4px;">P&L ($)</th>
-                        <th style="text-align:right; padding:4px;">R:R</th>
-                      </tr>
-                    </thead>
-                    <tbody id="btTradesTableBody">
-                      <!-- Filled dynamically -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Performance stats -->
-    <div class="grid-row row-1" style="margin-top: 20px;">
-      <div class="glass-card">
-        <div class="card-header">
-          <span class="card-title-icon">📊</span>
-          <h3>Performance Analytics</h3>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px;font-size:11px;font-family:var(--mono);">
-          <div><span style="color:var(--text-3);">Total Trades</span><div id="perfTotalTrades" style="font-weight:700;">0</div></div>
-          <div><span style="color:var(--text-3);">Win Rate</span><div id="perfWinRate" style="font-weight:700;color:var(--gold);">0%</div></div>
-          <div><span style="color:var(--text-3);">Avg R:R</span><div id="perfAvgRR" style="font-weight:700;">0</div></div>
-          <div><span style="color:var(--text-3);">Profit Factor</span><div id="perfProfitFactor" style="font-weight:700;color:var(--green);">0</div></div>
-          <div><span style="color:var(--text-3);">Expectancy</span><div id="perfExpectancy" style="font-weight:700;">$0</div></div>
-          <div><span style="color:var(--text-3);">Largest Win</span><div id="perfLargestWin" style="font-weight:700;color:var(--green);">$0</div></div>
-          <div><span style="color:var(--text-3);">Largest Loss</span><div id="perfLargestLoss" style="font-weight:700;color:var(--red);">$0</div></div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Custom Strategy Maker Row -->
-    <div class="grid-row row-1" style="margin-top: 20px;">
-      <div class="glass-card strategy-maker-card">
-        <div class="card-glow"></div>
-        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center;">
-            <span class="card-title-icon">🛠</span>
-            <h3>Custom Strategy Maker (Visual Builder)</h3>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary btn-sm" id="btnNewStrategy" style="padding:4px 8px;">+ Reset Builder</button>
-            <button class="btn btn-primary btn-sm" id="btnSaveStrategy" style="padding:4px 8px;">💾 Save Strategy</button>
-          </div>
-        </div>
-        <div class="maker-body" style="padding:15px; display:grid; grid-template-columns: 2fr 1fr; gap:15px;">
-          <!-- Left: Builder Canvas -->
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <!-- Meta & SL/TP -->
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px;">
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Strategy Name</label>
-                <input type="text" id="makerStrategyName" class="inp inp-full" placeholder="My Custom Strategy" style="padding:5px; font-size:11px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; width:100%;">
-              </div>
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Trade Direction</label>
-                <select id="makerDirection" class="inp inp-full" style="padding:5px; font-size:11px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; width:100%;">
-                  <option value="both">LONG & SHORT</option>
-                  <option value="long">LONG ONLY</option>
-                  <option value="short">SHORT ONLY</option>
-                </select>
-              </div>
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Stop Loss</label>
-                <div style="display:flex; gap:2px;">
-                  <select id="makerSLType" style="width:60px; font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
-                    <option value="fixed_percent">%</option>
-                    <option value="atr_multiple">ATR</option>
-                    <option value="structural">Str</option>
-                  </select>
-                  <input type="number" id="makerSLValue" value="2.0" step="0.1" style="width:40px; font-size:11px; text-align:center; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
-                </div>
-              </div>
-              <div>
-                <label style="font-size:9px; color:var(--text-3); text-transform:uppercase;">Take Profit</label>
-                <div style="display:flex; gap:2px;">
-                  <select id="makerTPType" style="width:60px; font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
-                    <option value="r_multiple">R-Mult</option>
-                    <option value="fixed_percent">%</option>
-                    <option value="structural">Str</option>
-                  </select>
-                  <input type="number" id="makerTPValue" value="2.5" step="0.1" style="width:40px; font-size:11px; text-align:center; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px;">
-                </div>
-              </div>
-            </div>
-
-            <!-- Rules Blocks Container -->
-            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.03); border-radius:8px; padding:12px; min-height:150px; display:flex; flex-direction:column; gap:10px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:10px; font-weight:800; color:var(--text-2); text-transform:uppercase;">Entry Rules Configuration</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="font-size:9px; color:var(--text-3);">Group Operator:</span>
-                  <select id="makerGroupOperator" style="font-size:10px; background:#05080f; border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:4px; padding:2px 6px;">
-                    <option value="AND">AND (All Conditions)</option>
-                    <option value="OR">OR (Any Condition)</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Live blocks list -->
-              <div id="makerRulesList" style="display:flex; flex-direction:column; gap:8px;">
-                <!-- Dynamically added blocks -->
-              </div>
-
-              <!-- Add Rule Buttons -->
-              <div style="display:flex; gap:10px; margin-top:10px; border-top:1px solid rgba(255,255,255,0.04); padding-top:10px;">
-                <button class="btn btn-secondary btn-sm" id="btnAddIndicatorRule" style="flex:1; padding:5px; font-size:10px;">+ Add Indicator Condition</button>
-                <button class="btn btn-secondary btn-sm" id="btnAddPatternRule" style="flex:1; padding:5px; font-size:10px;">+ Add Candle Pattern</button>
-                <button class="btn btn-secondary btn-sm" id="btnAddSmcRule" style="flex:1; padding:5px; font-size:10px;">+ Add SMC / Structure</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Live Win-Rate Preview & Saved Strategies -->
-          <div style="display:flex; flex-direction:column; gap:12px; border-left:1px solid rgba(255,255,255,0.05); padding-left:15px;">
-            <!-- Live Preview Indicator Card -->
-            <div style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.1); border-radius:8px; padding:12px; text-align:center;">
-              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">Real-Time Win-Rate Preview</span>
-              <div id="makerLiveWinRate" style="font-size:24px; font-weight:800; color:var(--gold); font-family:var(--mono);">— %</div>
-              <div id="makerLiveSignalsCount" style="font-size:10px; color:var(--text-2); margin-top:4px;">0 entry signals generated</div>
-            </div>
-
-            <!-- Saved Custom Strategies List -->
-            <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
-              <span style="font-size:9px; color:var(--text-3); text-transform:uppercase; display:block;">My Custom Registries</span>
-              <div id="makerSavedStrategiesList" style="flex:1; max-height:170px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
-                <!-- Saved custom strategies loaded from LocalStorage -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Trade Journal list -->
-    <div class="grid-row row-1" style="margin-top: 20px;">
-      <div class="glass-card journal-card">
-        <div class="card-glow"></div>
-        <div class="card-header">
-          <span class="card-title-icon">📓</span>
-          <h3>Virtual Trading Journal & Replay Logs</h3>
-        </div>
-        <div class="terminal-table-container">
-          <table class="terminal-table">
-            <thead>
-              <tr>
-                <th>Trade ID</th>
-                <th>Time</th>
-                <th>Symbol</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>R:R</th>
-                <th>P&L ($)</th>
-                <th>ROI (%)</th>
-                <th>Grade</th>
-                <th>Exit Reason</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="demoJournalTableList">
-              <tr><td colspan="11" style="text-align:center; color:var(--text-3); padding:20px;">No entries in trading journal.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
-<script type="module" src="analysis.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+  <script type="module" src="analysis.js?v=3"></script>
 </body>
 </html>

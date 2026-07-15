@@ -1,0 +1,194 @@
+{
+  "notes": [
+    "tier 1 = computable now from data already in the project (existing Binance feed, existing indicator engine)",
+    "tier 2 = computable via a new free/public API integration",
+    "tier 3 = requires a paid data provider, or has no reliable public data source at all",
+    "Treat tier tags as a first-pass starting point, not gospel -- verify each as you build.",
+    "Fear & Greed Index appears in both 'market_sentiment' and 'social_media' categories, referencing the same underlying index (alternative.me). Combined effective weight from this one input is 3.00% + 0.50% = 3.50%. Confirm this double-count is intentional before building."
+  ],
+  "signal_thresholds": [
+    { "min": 80, "max": 100, "label": "Strong Bullish" },
+    { "min": 65, "max": 79, "label": "Bullish" },
+    { "min": 45, "max": 64, "label": "Neutral" },
+    { "min": 30, "max": 44, "label": "Bearish" },
+    { "min": 0, "max": 29, "label": "Strong Bearish" }
+  ],
+  "categories": [
+    {
+      "id": "supply_demand",
+      "name": "Supply & Demand",
+      "overall_weight_pct": 25,
+      "sub_factors": [
+        { "name": "Order Book Imbalance", "category_weight_pct": 22, "overall_weight_pct": 5.50, "tier": 1, "source": "Binance order book depth (bids/asks) -- same exchange already used for price feed" },
+        { "name": "Market Buy vs Sell Volume", "category_weight_pct": 18, "overall_weight_pct": 4.50, "tier": 1, "source": "Binance aggTrade stream, isBuyerMaker flag" },
+        { "name": "Trade Volume", "category_weight_pct": 15, "overall_weight_pct": 3.75, "tier": 1, "source": "Binance kline/trade volume, already available" },
+        { "name": "Liquidity Walls", "category_weight_pct": 12, "overall_weight_pct": 3.00, "tier": 1, "source": "Derived from order book depth -- large resting size clusters" },
+        { "name": "Volume Delta", "category_weight_pct": 10, "overall_weight_pct": 2.50, "tier": 1, "source": "Cumulative buy volume minus sell volume from aggTrade stream" },
+        { "name": "Volume Profile", "category_weight_pct": 8, "overall_weight_pct": 2.00, "tier": 1, "source": "Derived from trade data at each price level over a lookback window" },
+        { "name": "VWAP Position", "category_weight_pct": 5, "overall_weight_pct": 1.25, "tier": 1, "source": "Already built (existing VWAP indicator) -- price relative to VWAP" },
+        { "name": "Bid-Ask Spread", "category_weight_pct": 4, "overall_weight_pct": 1.00, "tier": 1, "source": "Binance order book best bid/ask" },
+        { "name": "Market Depth / Slippage", "category_weight_pct": 3, "overall_weight_pct": 0.75, "tier": 1, "source": "Estimated slippage for a hypothetical order size from order book depth" },
+        { "name": "Hidden Liquidity (Icebergs)", "category_weight_pct": 3, "overall_weight_pct": 0.75, "tier": 3, "source": "No reliable direct detection method. Heuristic proxy only (repeated replenishment at a price level) -- not a real detector, label it as such in UI" }
+      ]
+    },
+    {
+      "id": "market_sentiment",
+      "name": "Market Sentiment",
+      "overall_weight_pct": 15,
+      "sub_factors": [
+        { "name": "Fear & Greed Index", "category_weight_pct": 20, "overall_weight_pct": 3.00, "tier": 2, "source": "alternative.me free public API, no key required" },
+        { "name": "Bullish vs Bearish Ratio", "category_weight_pct": 18, "overall_weight_pct": 2.70, "tier": 2, "source": "No canonical index exists; proxy via Binance Futures top-trader long/short account ratio, label as proxy" },
+        { "name": "Retail FOMO", "category_weight_pct": 15, "overall_weight_pct": 2.25, "tier": 3, "source": "No canonical metric; weak proxy only from volume acceleration + price rate-of-change" },
+        { "name": "Market Confidence", "category_weight_pct": 12, "overall_weight_pct": 1.80, "tier": 3, "source": "Vague construct, no direct source; weak proxy from realized volatility trend + funding rate stability" },
+        { "name": "Panic Selling", "category_weight_pct": 10, "overall_weight_pct": 1.50, "tier": 2, "source": "Reasonably well-defined heuristic: volume spike concurrent with sharp price decline, computable from existing price/volume data" },
+        { "name": "Trend Momentum", "category_weight_pct": 10, "overall_weight_pct": 1.50, "tier": 1, "source": "Standard momentum/ROC calculation from existing price data" },
+        { "name": "Volatility Sentiment", "category_weight_pct": 8, "overall_weight_pct": 1.20, "tier": 1, "source": "Derived from ATR / realized volatility, already available" },
+        { "name": "Market Recovery Confidence", "category_weight_pct": 7, "overall_weight_pct": 1.05, "tier": 3, "source": "Vague construct; weak proxy from higher-low structure after a drawdown" }
+      ]
+    },
+    {
+      "id": "derivatives",
+      "name": "Derivatives",
+      "overall_weight_pct": 15,
+      "sub_factors": [
+        { "name": "Open Interest", "category_weight_pct": 22, "overall_weight_pct": 3.30, "tier": 2, "source": "Binance Futures OI endpoint, free, new integration" },
+        { "name": "Funding Rate", "category_weight_pct": 18, "overall_weight_pct": 2.70, "tier": 2, "source": "Binance Futures funding rate endpoint, free" },
+        { "name": "Long/Short Ratio", "category_weight_pct": 15, "overall_weight_pct": 2.25, "tier": 2, "source": "Binance Futures top-trader long/short ratio endpoint, free" },
+        { "name": "Liquidation Clusters", "category_weight_pct": 15, "overall_weight_pct": 2.25, "tier": 2, "source": "Binance Futures forceOrder liquidation stream, free; needs aggregation logic to find clusters" },
+        { "name": "Leverage Ratio", "category_weight_pct": 10, "overall_weight_pct": 1.50, "tier": 3, "source": "No direct market-wide leverage metric published; weak proxy from OI change vs price change" },
+        { "name": "Options Gamma Exposure", "category_weight_pct": 8, "overall_weight_pct": 1.20, "tier": 3, "source": "Requires BTC options chain data (Deribit is the standard source) plus Greeks calculation -- substantial new integration" },
+        { "name": "Futures Basis", "category_weight_pct": 7, "overall_weight_pct": 1.05, "tier": 2, "source": "Futures price minus spot price, both already from Binance" },
+        { "name": "Options Put/Call Ratio", "category_weight_pct": 5, "overall_weight_pct": 0.75, "tier": 3, "source": "Same Deribit options integration as Gamma Exposure" }
+      ]
+    },
+    {
+      "id": "bitcoin_dominance",
+      "name": "Bitcoin Dominance",
+      "overall_weight_pct": 8,
+      "sub_factors": [
+        { "name": "BTC Dominance %", "category_weight_pct": 35, "overall_weight_pct": 2.80, "tier": 2, "source": "CoinGecko free /global endpoint" },
+        { "name": "Altcoin Rotation", "category_weight_pct": 25, "overall_weight_pct": 2.00, "tier": 2, "source": "Derivable from CoinGecko top-coin market caps vs BTC over time, needs a defined basket" },
+        { "name": "ETH Dominance", "category_weight_pct": 15, "overall_weight_pct": 1.20, "tier": 2, "source": "Same CoinGecko /global endpoint" },
+        { "name": "Stablecoin Dominance", "category_weight_pct": 10, "overall_weight_pct": 0.80, "tier": 2, "source": "Same CoinGecko /global endpoint (stablecoin market cap share)" },
+        { "name": "BTC Momentum", "category_weight_pct": 10, "overall_weight_pct": 0.80, "tier": 1, "source": "Price rate of change, already have price data" },
+        { "name": "Sector Rotation", "category_weight_pct": 5, "overall_weight_pct": 0.40, "tier": 3, "source": "Needs categorized coin sector data; low weight for the integration effort, consider deprioritizing" }
+      ]
+    },
+    {
+      "id": "macroeconomic_events",
+      "name": "Macroeconomic Events",
+      "overall_weight_pct": 8,
+      "sub_factors": [
+        { "name": "Interest Rates", "category_weight_pct": 20, "overall_weight_pct": 1.60, "tier": 3, "source": "FRED (Federal Reserve Economic Data) API, free but new integration, infrequent updates" },
+        { "name": "CPI Inflation", "category_weight_pct": 18, "overall_weight_pct": 1.44, "tier": 3, "source": "FRED API, monthly release" },
+        { "name": "FOMC Decisions", "category_weight_pct": 15, "overall_weight_pct": 1.20, "tier": 2, "source": "Check whether the existing 'FOMC Meeting' countdown already in the AI Summary card has a data source behind it -- may already be partially solved" },
+        { "name": "US Dollar Index (DXY)", "category_weight_pct": 15, "overall_weight_pct": 1.20, "tier": 2, "source": "Free financial data API (e.g. stooq, twelve data free tier) -- new integration outside crypto exchanges" },
+        { "name": "Bond Yields", "category_weight_pct": 10, "overall_weight_pct": 0.80, "tier": 3, "source": "FRED API (10Y yield), infrequent updates" },
+        { "name": "GDP Growth", "category_weight_pct": 8, "overall_weight_pct": 0.64, "tier": 3, "source": "FRED API, quarterly -- very low signal value at this update frequency" },
+        { "name": "Employment Data", "category_weight_pct": 7, "overall_weight_pct": 0.56, "tier": 3, "source": "FRED/BLS API, monthly" },
+        { "name": "Gold & Oil Trends", "category_weight_pct": 7, "overall_weight_pct": 0.56, "tier": 2, "source": "Free commodity price feed via a financial data API" }
+      ]
+    },
+    {
+      "id": "whale_activity",
+      "name": "Whale Activity",
+      "overall_weight_pct": 7,
+      "sub_factors": [
+        { "name": "Exchange Deposits", "category_weight_pct": 25, "overall_weight_pct": 1.75, "tier": 3, "source": "Needs on-chain analytics with labeled exchange wallets (CryptoQuant/Glassnode, mostly paid)" },
+        { "name": "Exchange Withdrawals", "category_weight_pct": 20, "overall_weight_pct": 1.40, "tier": 3, "source": "Same as Exchange Deposits" },
+        { "name": "Whale Wallet Transfers", "category_weight_pct": 18, "overall_weight_pct": 1.26, "tier": 3, "source": "Whale Alert API has a limited free tier, full access is paid" },
+        { "name": "Large Orders", "category_weight_pct": 15, "overall_weight_pct": 1.05, "tier": 1, "source": "Large orders on the exchange order book/tape -- different from on-chain whales, computable from existing Binance data" },
+        { "name": "OTC Transactions", "category_weight_pct": 10, "overall_weight_pct": 0.70, "tier": 3, "source": "Not observable via any public data source -- recommend excluding entirely rather than faking it" },
+        { "name": "Institutional Wallets", "category_weight_pct": 7, "overall_weight_pct": 0.49, "tier": 3, "source": "Needs labeled wallet data (Arkham/Nansen), paid" },
+        { "name": "Miner Wallet Activity", "category_weight_pct": 5, "overall_weight_pct": 0.35, "tier": 3, "source": "On-chain miner flow data, mostly paid (CryptoQuant); free approximations are low quality" }
+      ]
+    },
+    {
+      "id": "stablecoin_flows",
+      "name": "Stablecoin Flows",
+      "overall_weight_pct": 5,
+      "sub_factors": [
+        { "name": "USDT Flow", "category_weight_pct": 30, "overall_weight_pct": 1.50, "tier": 3, "source": "Needs labeled exchange wallets to measure 'flow,' not just mint/burn -- typically paid data providers" },
+        { "name": "USDC Flow", "category_weight_pct": 20, "overall_weight_pct": 1.00, "tier": 3, "source": "Same as USDT Flow" },
+        { "name": "Stablecoin Minting", "category_weight_pct": 18, "overall_weight_pct": 0.90, "tier": 2, "source": "Mint events are on-chain contract calls, trackable free via Etherscan/Tronscan APIs" },
+        { "name": "Stablecoin Burning", "category_weight_pct": 12, "overall_weight_pct": 0.60, "tier": 2, "source": "Same, burn events trackable free via Etherscan/Tronscan" },
+        { "name": "Exchange Inflows", "category_weight_pct": 10, "overall_weight_pct": 0.50, "tier": 3, "source": "Needs labeled exchange wallets" },
+        { "name": "Exchange Outflows", "category_weight_pct": 10, "overall_weight_pct": 0.50, "tier": 3, "source": "Same as Exchange Inflows" }
+      ]
+    },
+    {
+      "id": "etf_institutional_flow",
+      "name": "ETF / Institutional Flow",
+      "overall_weight_pct": 5,
+      "sub_factors": [
+        { "name": "Spot ETF Net Flow", "category_weight_pct": 35, "overall_weight_pct": 1.75, "tier": 2, "source": "Farside Investors publishes free daily BTC ETF flow data (no official API, but data is public and fetchable) -- verify it's still being published before relying on it" },
+        { "name": "Institutional Buying", "category_weight_pct": 25, "overall_weight_pct": 1.25, "tier": 3, "source": "No real-time source; mostly inferred from lagged 13F filings" },
+        { "name": "Institutional Selling", "category_weight_pct": 15, "overall_weight_pct": 0.75, "tier": 3, "source": "Same as Institutional Buying" },
+        { "name": "Corporate Treasury Purchases", "category_weight_pct": 10, "overall_weight_pct": 0.50, "tier": 3, "source": "News-driven, not a clean API -- could route through the News/Regulations AI classification pipeline instead" },
+        { "name": "Hedge Fund Positioning", "category_weight_pct": 10, "overall_weight_pct": 0.50, "tier": 2, "source": "CFTC Commitment of Traders report for CME BTC futures is a real free weekly data source" },
+        { "name": "Government Holdings", "category_weight_pct": 5, "overall_weight_pct": 0.25, "tier": 3, "source": "No real-time source; occasional news/on-chain seizure tracking only" }
+      ]
+    },
+    {
+      "id": "technical_indicators",
+      "name": "Technical Indicators",
+      "overall_weight_pct": 4,
+      "sub_factors": [
+        { "name": "Trend (EMA/SMA)", "category_weight_pct": 20, "overall_weight_pct": 0.80, "tier": 1, "source": "Already built" },
+        { "name": "RSI", "category_weight_pct": 15, "overall_weight_pct": 0.60, "tier": 1, "source": "Already built" },
+        { "name": "MACD", "category_weight_pct": 15, "overall_weight_pct": 0.60, "tier": 1, "source": "Already built" },
+        { "name": "Support & Resistance", "category_weight_pct": 15, "overall_weight_pct": 0.60, "tier": 1, "source": "Reuse existing antigravity zone engine" },
+        { "name": "Bollinger Bands", "category_weight_pct": 10, "overall_weight_pct": 0.40, "tier": 1, "source": "Already built" },
+        { "name": "ATR", "category_weight_pct": 8, "overall_weight_pct": 0.32, "tier": 1, "source": "Already built" },
+        { "name": "ADX", "category_weight_pct": 7, "overall_weight_pct": 0.28, "tier": 1, "source": "Standard calculation from existing OHLC data, add if not already present" },
+        { "name": "Fibonacci", "category_weight_pct": 5, "overall_weight_pct": 0.20, "tier": 1, "source": "Reuse existing Fibonacci drawing tool logic" },
+        { "name": "Ichimoku", "category_weight_pct": 5, "overall_weight_pct": 0.20, "tier": 1, "source": "Standard calculation from existing OHLC data, add if not already present" }
+      ]
+    },
+    {
+      "id": "on_chain_metrics",
+      "name": "On-Chain Metrics",
+      "overall_weight_pct": 3,
+      "sub_factors": [
+        { "name": "Exchange Reserves", "category_weight_pct": 25, "overall_weight_pct": 0.75, "tier": 3, "source": "Glassnode/CryptoQuant, mostly paid; no clean free API" },
+        { "name": "Active Addresses", "category_weight_pct": 20, "overall_weight_pct": 0.60, "tier": 3, "source": "Glassnode paid; free approximations are lower quality" },
+        { "name": "MVRV Ratio", "category_weight_pct": 15, "overall_weight_pct": 0.45, "tier": 3, "source": "Glassnode-style metric, mostly paid" },
+        { "name": "NVT Ratio", "category_weight_pct": 10, "overall_weight_pct": 0.30, "tier": 2, "source": "Computable yourself: market cap (CoinGecko, free) divided by on-chain transaction volume (mempool.space/blockchain.info, free)" },
+        { "name": "Hash Rate", "category_weight_pct": 10, "overall_weight_pct": 0.30, "tier": 2, "source": "mempool.space or blockchain.info free API" },
+        { "name": "Mining Difficulty", "category_weight_pct": 8, "overall_weight_pct": 0.24, "tier": 2, "source": "Same free sources as Hash Rate" },
+        { "name": "Whale Wallet Growth", "category_weight_pct": 7, "overall_weight_pct": 0.21, "tier": 3, "source": "Needs labeled whale wallet tracking, paid" },
+        { "name": "Realized Price", "category_weight_pct": 5, "overall_weight_pct": 0.15, "tier": 3, "source": "Complex on-chain calculation, typically a paid Glassnode metric" }
+      ]
+    },
+    {
+      "id": "news_regulations",
+      "name": "News & Regulations",
+      "overall_weight_pct": 3,
+      "build_note": "All sub-factors in this category are fundamentally an NLP/classification task rather than a numeric API. Recommend: pull recent headlines from a free/cheap news API (e.g. CryptoPanic free tier), feed them through the existing AI analysis engine with a classification prompt per sub-factor, and score aggregate sentiment/impact 0-100. Build this pipeline once, reuse it for all 8 rows below and for Reddit Sentiment in social_media.",
+      "sub_factors": [
+        { "name": "Government Regulations", "category_weight_pct": 25, "overall_weight_pct": 0.75, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "ETF Approval/Rejection", "category_weight_pct": 20, "overall_weight_pct": 0.60, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Exchange Hacks", "category_weight_pct": 15, "overall_weight_pct": 0.45, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Exchange Listings/Delistings", "category_weight_pct": 12, "overall_weight_pct": 0.36, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Security Vulnerabilities", "category_weight_pct": 10, "overall_weight_pct": 0.30, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Country Adoption", "category_weight_pct": 8, "overall_weight_pct": 0.24, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Tax Policies", "category_weight_pct": 5, "overall_weight_pct": 0.15, "tier": 2, "source": "News API + AI classification pipeline" },
+        { "name": "Major Partnerships", "category_weight_pct": 5, "overall_weight_pct": 0.15, "tier": 2, "source": "News API + AI classification pipeline" }
+      ]
+    },
+    {
+      "id": "social_media",
+      "name": "Social Media / Fear & Greed",
+      "overall_weight_pct": 2,
+      "sub_factors": [
+        { "name": "Fear & Greed Index", "category_weight_pct": 25, "overall_weight_pct": 0.50, "tier": 2, "source": "Same alternative.me API as market_sentiment's Fear & Greed Index -- reuse the same fetch, don't call it twice" },
+        { "name": "X (Twitter) Sentiment", "category_weight_pct": 20, "overall_weight_pct": 0.40, "tier": 3, "source": "X API v2 meaningful search access is paid/restricted -- verify current pricing/access before committing" },
+        { "name": "Reddit Sentiment", "category_weight_pct": 15, "overall_weight_pct": 0.30, "tier": 2, "source": "Reddit API is free with app registration (rate-limited); route through the AI classification pipeline built for news_regulations" },
+        { "name": "Google Trends", "category_weight_pct": 15, "overall_weight_pct": 0.30, "tier": 2, "source": "Free via unofficial pytrends library, but fragile and rate-limited -- treat as best-effort" },
+        { "name": "YouTube Influence", "category_weight_pct": 10, "overall_weight_pct": 0.20, "tier": 3, "source": "No clean metric without a curated channel-tracking system -- low value for the effort at this weight" },
+        { "name": "Telegram/Discord Activity", "category_weight_pct": 10, "overall_weight_pct": 0.20, "tier": 3, "source": "No public aggregate data source without scraping specific servers -- recommend excluding" },
+        { "name": "Influencer Impact", "category_weight_pct": 5, "overall_weight_pct": 0.10, "tier": 3, "source": "Fundamentally unmeasurable without a curated influencer list -- recommend excluding" }
+      ]
+    }
+  ]
+}

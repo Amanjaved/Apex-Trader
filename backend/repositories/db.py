@@ -96,6 +96,22 @@ def init_db():
                 created_at TEXT DEFAULT (datetime('now', 'utc'))
             )
         """)
+
+        # 5. Historical Signal Log
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS signal_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT DEFAULT (datetime('now', 'utc')),
+                symbol TEXT NOT NULL,
+                timeframe TEXT NOT NULL,
+                confidence_score REAL NOT NULL,
+                factor_breakdown TEXT DEFAULT '{}',
+                trade_recommendation TEXT DEFAULT '{}',
+                outcome_status TEXT DEFAULT 'pending',
+                outcome_recorded_at TEXT,
+                actual_rr REAL
+            )
+        """)
         
         # Pre-seed a default demo account with $10,000 if none exist
         cursor.execute("SELECT COUNT(*) FROM demo_accounts")

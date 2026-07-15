@@ -32,6 +32,10 @@
   
   --orange:       #FF5D00;
   
+  --green:        var(--emerald);
+  --blue:         var(--cyan);
+  --yellow:       var(--gold);
+  
   --text:         #F5F8FF;
   --text-2:       #9EADC8;
   --text-3:       #596B8A;

@@ -270,6 +270,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 "/api/auth/session": lambda: self._auth_session(),
                 "/api/auth/config": lambda: self._auth_config(),
                 "/api/ticks": lambda: self._update_tick(params),
+                "/api/market-score": lambda: self._market_score(params),
             }
             fn = ROUTES.get(path)
             if fn:
@@ -315,6 +316,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         path, params = parse_qs(self.path)
         if path == "/api/ai/chat":
             self._ai_chat()
+            return
+        elif path == "/api/ai/deep-analysis":
+            self._ai_deep_analysis()
+            return
+        elif path == "/api/ai/coach":
+            self._ai_coach()
             return
         elif path == "/demo/open":
             self._demo_open()
@@ -438,6 +445,99 @@ class Handler(http.server.BaseHTTPRequestHandler):
             pass
         except Exception as e:
             print(f"  [ai_chat] {e}")
+            self._error(str(e))
+
+    def _ai_deep_analysis(self) -> None:
+        body = self._read_json_body()
+        if body is None:
+            self._error("Invalid JSON body", 400)
+            return
+
+        symbol   = body.get("symbol", "BTCUSDT").upper().strip()
+        interval = body.get("interval", "1h").lower().strip()
+
+        if symbol not in SUPPORTED_SYMBOLS:
+            symbol = "BTCUSDT"
+        if interval not in ALLOWED_INTERVALS:
+            interval = "1h"
+
+        try:
+            from backend.ai.copilot import AICopilot
+            copilot = AICopilot()
+            quant = copilot.analyze_market_structure(symbol, interval, calculate_matrix=False)
+            
+            from backend.ai.llm_analyst import deep_analysis
+            import asyncio
+            try:
+                loop = asyncio.new_event_loop()
+                report = loop.run_until_complete(deep_analysis(symbol, interval, quant))
+                loop.close()
+            except Exception as e:
+                print(f"  [AI Deep Analysis Error] {e}")
+                report = "Error: senior analyst is currently unavailable."
+
+            self._send_json(json.dumps({"report": report, "bias": quant.get("bias"), "score": quant.get("score")}).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as e:
+            print(f"  [ai_deep_analysis] {e}")
+            self._error(str(e))
+
+    def _ai_coach(self) -> None:
+        body = self._read_json_body()
+        if body is None:
+            self._error("Invalid JSON body", 400)
+            return
+
+        symbol   = body.get("symbol", "BTCUSDT").upper().strip()
+        interval = body.get("interval", "1h").lower().strip()
+        positions = body.get("positions", [])
+        recent_trades = body.get("recent_trades", [])
+        mode = body.get("mode", "auto")
+        question = body.get("question", "")
+
+        if symbol not in SUPPORTED_SYMBOLS:
+            symbol = "BTCUSDT"
+        if interval not in ALLOWED_INTERVALS:
+            interval = "1h"
+
+        try:
+            from backend.ai.copilot import AICopilot
+            copilot = AICopilot()
+            coaching_data = copilot.generate_coaching(
+                symbol=symbol,
+                interval=interval,
+                positions=positions,
+                recent_trades=recent_trades,
+                mode=mode,
+                question=question
+            )
+            self._send_json(json.dumps(coaching_data).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as e:
+            print(f"  [ai_coach routes] {e}")
+            self._error(str(e))
+
+    # ── Composite Market Score Endpoint ──
+    def _market_score(self, params: Dict[str, str]) -> None:
+        symbol = params.get("symbol", "BTCUSDT").upper().strip()
+        interval = params.get("interval", "1h").lower().strip()
+
+        if symbol not in SUPPORTED_SYMBOLS:
+            symbol = "BTCUSDT"
+        if interval not in ALLOWED_INTERVALS:
+            interval = "1h"
+
+        try:
+            from backend.services.market_score import MarketScoreEngine
+            engine = MarketScoreEngine()
+            score_data = engine.compute_score(symbol, interval)
+            self._send_json(json.dumps(score_data).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as e:
+            print(f"  [market_score routes] {e}")
             self._error(str(e))
 
     # ── Authentication Endpoints ──

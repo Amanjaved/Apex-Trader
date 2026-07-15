@@ -118,6 +118,45 @@ def get_news():
 def get_health():
     return telemetry.get_health_stats()
 
+@app.get("/api/market-score")
+def get_market_score(symbol: str = "BTCUSDT", interval: str = "1h"):
+    sym = validated_symbol(symbol)
+    iv = validated_interval(interval)
+    try:
+        from backend.services.market_score import MarketScoreEngine
+        engine = MarketScoreEngine()
+        return engine.compute_score(sym, iv)
+    except Exception as e:
+        print(f"  [api market-score] {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/ticks")
+def get_ticks(symbol: str = "BTCUSDT", price: float = 0.0):
+    sym = validated_symbol(symbol)
+    if price > 0:
+        update_live_price(sym, price)
+    return {"status": "ok"}
+
+from pydantic import BaseModel
+from typing import List, Dict, Any
+
+class AICoachRequest(BaseModel):
+    symbol: str = "BTCUSDT"
+    interval: str = "1h"
+    positions: List[Dict[str, Any]] = []
+    recent_trades: List[Dict[str, Any]] = []
+    mode: str = "auto"
+    question: str = ""
+
+class AIDeepAnalysisRequest(BaseModel):
+    symbol: str = "BTCUSDT"
+    interval: str = "1h"
+
+class AIChatRequest(BaseModel):
+    symbol: str = "BTCUSDT"
+    interval: str = "1h"
+    message: str = ""
+
 @app.get("/api/ai/analysis")
 def get_ai_analysis(symbol: str = "BTCUSDT", interval: str = "1h"):
     sym = validated_symbol(symbol)
@@ -125,6 +164,53 @@ def get_ai_analysis(symbol: str = "BTCUSDT", interval: str = "1h"):
     try:
         copilot = AICopilot()
         return copilot.analyze_market_structure(sym, iv)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ai/coach")
+def post_ai_coach(req: AICoachRequest):
+    sym = validated_symbol(req.symbol)
+    iv = validated_interval(req.interval)
+    try:
+        copilot = AICopilot()
+        return copilot.generate_coaching(
+            symbol=sym,
+            interval=iv,
+            positions=req.positions,
+            recent_trades=req.recent_trades,
+            mode=req.mode,
+            question=req.question
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ai/deep-analysis")
+def post_ai_deep_analysis(req: AIDeepAnalysisRequest):
+    sym = validated_symbol(req.symbol)
+    iv = validated_interval(req.interval)
+    try:
+        copilot = AICopilot()
+        quant = copilot.analyze_market_structure(sym, iv, calculate_matrix=False)
+        
+        from backend.ai.llm_analyst import deep_analysis
+        import asyncio
+        loop = asyncio.new_event_loop()
+        try:
+            report = loop.run_until_complete(deep_analysis(sym, iv, quant))
+        finally:
+            loop.close()
+        return {"analysis": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ai/chat")
+def post_ai_chat(req: AIChatRequest):
+    sym = validated_symbol(req.symbol)
+    iv = validated_interval(req.interval)
+    try:
+        copilot = AICopilot()
+        reply = copilot.chat_query(sym, iv, req.message)
+        return {"response": reply}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -405,6 +491,13 @@ def serve_analysis():
     if os.path.isfile(analysis_path):
         return FileResponse(analysis_path)
     raise HTTPException(status_code=404, detail="analysis.html not found")
+
+@app.get("/simulator")
+def serve_simulator():
+    simulator_path = os.path.join(FRONTEND_DIR, "simulator.html")
+    if os.path.isfile(simulator_path):
+        return FileResponse(simulator_path)
+    raise HTTPException(status_code=404, detail="simulator.html not found")
 
 # Serve all CSS/JS and general assets directly from the frontend directory
 app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="static")
