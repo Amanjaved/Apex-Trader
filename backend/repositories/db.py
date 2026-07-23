@@ -113,6 +113,15 @@ def init_db():
             )
         """)
         
+        # 6. Local cache table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS local_cache (
+                key TEXT PRIMARY KEY,
+                value BLOB NOT NULL,
+                updated_at REAL NOT NULL
+            )
+        """)
+        
         # Pre-seed a default demo account with $10,000 if none exist
         cursor.execute("SELECT COUNT(*) FROM demo_accounts")
         if cursor.fetchone()[0] == 0:
@@ -170,3 +179,31 @@ def init_db():
                 cursor.execute("UPDATE trades SET ai_reasoning_snapshot = ? WHERE id = ?", (json.dumps(snapshot), trade_id))
 
 init_db()
+
+def get_cached_item(key: str, ttl_seconds: float) -> bytes | None:
+    import time
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value, updated_at FROM local_cache WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            if row:
+                value, updated_at = row["value"], row["updated_at"]
+                if time.time() - updated_at < ttl_seconds:
+                    return value
+    except Exception:
+        pass
+    return None
+
+def set_cached_item(key: str, value: bytes) -> None:
+    import time
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO local_cache (key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            """, (key, sqlite3.Binary(value), time.time()))
+    except Exception:
+        pass

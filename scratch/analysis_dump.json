@@ -1,0 +1,1675 @@
+{
+  "bias": "NEUTRAL",
+  "score": 53,
+  "scoreRaw": 1.0,
+  "confluences": [
+    {
+      "type": "bullish",
+      "txt": "Bullish Trend: Price > EMA20 (64784.64) and EMA50 (64459.94) with bullish stack"
+    },
+    {
+      "type": "bullish",
+      "txt": "Momentum: RSI is bullish at 56.4 (upper momentum half)"
+    },
+    {
+      "type": "bearish",
+      "txt": "Momentum: MACD histogram is negative (-59.9465)"
+    },
+    {
+      "type": "bullish",
+      "txt": "Volatility: Price in upper half of BB (bullish channel)"
+    },
+    {
+      "type": "bearish",
+      "txt": "Order Flow: Bearish order book imbalance (-89.6% ask dominance)"
+    },
+    {
+      "type": "bearish",
+      "txt": "Sentiment: Fear (25)"
+    },
+    {
+      "type": "bullish",
+      "txt": "News Sentiment: Bullish coverage (1/1 positive articles)"
+    },
+    {
+      "type": "bearish",
+      "txt": "SMC Structure: Bearish FVG detected at 65194.72 - 65261.71"
+    },
+    {
+      "type": "bullish",
+      "txt": "SMC Structure: Bullish Order Block formed near 64555.00"
+    },
+    {
+      "type": "bearish",
+      "txt": "SMC Structure: Bearish Order Block formed near 64982.47"
+    },
+    {
+      "type": "neutral",
+      "txt": "Volatility: ATR at $309.87 (0.48% of price) \u2014 Normal Volatility"
+    }
+  ],
+  "categories": [
+    {
+      "id": "supply_demand",
+      "name": "Supply & Demand",
+      "score": 43.22,
+      "weight_pct": 25,
+      "sub_factors": [
+        {
+          "name": "Order Book Imbalance",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": -0.6981,
+          "normalized_score": 15.1,
+          "overall_weight_pct": 5.5,
+          "category_weight_pct": 22
+        },
+        {
+          "name": "Market Buy vs Sell Volume",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 0.4401,
+          "normalized_score": 35.04,
+          "overall_weight_pct": 4.5,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "Trade Volume",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 3.75,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Liquidity Walls",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 0.3526,
+          "normalized_score": 29.15,
+          "overall_weight_pct": 3.0,
+          "category_weight_pct": 12
+        },
+        {
+          "name": "Volume Delta",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": -0.1197,
+          "normalized_score": 38.03,
+          "overall_weight_pct": 2.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Volume Profile",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 0.0038,
+          "normalized_score": 53.83,
+          "overall_weight_pct": 2.0,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "VWAP Position",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": -0.0009,
+          "normalized_score": 49.06,
+          "overall_weight_pct": 1.25,
+          "category_weight_pct": 5
+        },
+        {
+          "name": "Bid-Ask Spread",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 1.0,
+          "category_weight_pct": 4
+        },
+        {
+          "name": "Market Depth / Slippage",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 80.0,
+          "normalized_score": 80.0,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 3
+        },
+        {
+          "name": "Hidden Liquidity (Icebergs)",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 3
+        }
+      ]
+    },
+    {
+      "id": "market_sentiment",
+      "name": "Market Sentiment",
+      "score": 62.65,
+      "weight_pct": 15,
+      "sub_factors": [
+        {
+          "name": "Fear & Greed Index",
+          "tier": 2,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 25.0,
+          "normalized_score": 25.0,
+          "overall_weight_pct": 3.0,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "Bullish vs Bearish Ratio",
+          "tier": 2,
+          "status": "Live",
+          "source": "deribit.com",
+          "raw_value": 74.455,
+          "normalized_score": 74.45,
+          "overall_weight_pct": 2.7,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "Retail FOMO",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 50.3988,
+          "normalized_score": 50.4,
+          "overall_weight_pct": 2.25,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Market Confidence",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 97.3191,
+          "normalized_score": 97.32,
+          "overall_weight_pct": 1.8,
+          "category_weight_pct": 12
+        },
+        {
+          "name": "Panic Selling",
+          "tier": 2,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 1.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Trend Momentum",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": -0.2492,
+          "normalized_score": 47.51,
+          "overall_weight_pct": 1.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Volatility Sentiment",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 86.5862,
+          "normalized_score": 86.59,
+          "overall_weight_pct": 1.2,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "Market Recovery Confidence",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 40.0,
+          "normalized_score": 40.0,
+          "overall_weight_pct": 1.05,
+          "category_weight_pct": 7
+        }
+      ]
+    },
+    {
+      "id": "derivatives",
+      "name": "Derivatives",
+      "score": 55.9,
+      "weight_pct": 15,
+      "sub_factors": [
+        {
+          "name": "Open Interest",
+          "tier": 2,
+          "status": "Live",
+          "source": "Deribit",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 3.3,
+          "category_weight_pct": 22
+        },
+        {
+          "name": "Funding Rate",
+          "tier": 2,
+          "status": "Live",
+          "source": "Deribit",
+          "raw_value": 50.0081,
+          "normalized_score": 50.01,
+          "overall_weight_pct": 2.7,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "Long/Short Ratio",
+          "tier": 2,
+          "status": "Live",
+          "source": "deribit.com",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 2.25,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Liquidation Clusters",
+          "tier": 2,
+          "status": "Live",
+          "source": "binance.com",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 2.25,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Leverage Ratio",
+          "tier": 3,
+          "status": "Live",
+          "source": "Deribit",
+          "raw_value": 50.988,
+          "normalized_score": 50.99,
+          "overall_weight_pct": 1.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Options Gamma Exposure",
+          "tier": 3,
+          "status": "Live",
+          "source": "deribit.com",
+          "raw_value": 81.09,
+          "normalized_score": 81.09,
+          "overall_weight_pct": 1.2,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "Futures Basis",
+          "tier": 2,
+          "status": "Live",
+          "source": "Unavailable",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 1.05,
+          "category_weight_pct": 7
+        },
+        {
+          "name": "Options Put/Call Ratio",
+          "tier": 3,
+          "status": "Live",
+          "source": "deribit.com",
+          "raw_value": 0.5109,
+          "normalized_score": 91.13,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "bitcoin_dominance",
+      "name": "Bitcoin Dominance",
+      "score": 39.51,
+      "weight_pct": 8,
+      "sub_factors": [
+        {
+          "name": "BTC Dominance %",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.coingecko.com",
+          "raw_value": 56.2523,
+          "normalized_score": 56.25,
+          "overall_weight_pct": 2.8,
+          "category_weight_pct": 35
+        },
+        {
+          "name": "Altcoin Rotation",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.coingecko.com",
+          "raw_value": 35.6817,
+          "normalized_score": 35.68,
+          "overall_weight_pct": 2.0,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "ETH Dominance",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.coingecko.com",
+          "raw_value": 10.0359,
+          "normalized_score": 10.04,
+          "overall_weight_pct": 1.2,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Stablecoin Dominance",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.coingecko.com",
+          "raw_value": 11.1209,
+          "normalized_score": 55.6,
+          "overall_weight_pct": 0.8,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "BTC Momentum",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": -0.2492,
+          "normalized_score": 47.51,
+          "overall_weight_pct": 0.8,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Sector Rotation",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.coingecko.com",
+          "raw_value": 26.7613,
+          "normalized_score": 26.76,
+          "overall_weight_pct": 0.4,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "macroeconomic_events",
+      "name": "Macroeconomic Events",
+      "score": 63.5,
+      "weight_pct": 8,
+      "sub_factors": [
+        {
+          "name": "Interest Rates",
+          "tier": 3,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 3.688,
+          "normalized_score": 44.68,
+          "overall_weight_pct": 1.6,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "CPI Inflation",
+          "tier": 3,
+          "status": "Live",
+          "source": "Unavailable",
+          "raw_value": 1.688,
+          "normalized_score": 96.88,
+          "overall_weight_pct": 1.44,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "FOMC Decisions",
+          "tier": 2,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 44.68,
+          "normalized_score": 44.68,
+          "overall_weight_pct": 1.2,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "US Dollar Index (DXY)",
+          "tier": 2,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 47.53,
+          "normalized_score": 47.53,
+          "overall_weight_pct": 1.2,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Bond Yields",
+          "tier": 3,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 4.545,
+          "normalized_score": 31.82,
+          "overall_weight_pct": 0.8,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "GDP Growth",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.worldbank.org",
+          "raw_value": 2.1614,
+          "normalized_score": 71.61,
+          "overall_weight_pct": 0.64,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "Employment Data",
+          "tier": 3,
+          "status": "Live",
+          "source": "Unavailable",
+          "raw_value": 4.0506,
+          "normalized_score": 59.49,
+          "overall_weight_pct": 0.56,
+          "category_weight_pct": 7
+        },
+        {
+          "name": "Gold & Oil Trends",
+          "tier": 2,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.56,
+          "category_weight_pct": 7
+        }
+      ]
+    },
+    {
+      "id": "whale_activity",
+      "name": "Whale Activity",
+      "score": 7.69,
+      "weight_pct": 7,
+      "sub_factors": [
+        {
+          "name": "Exchange Deposits",
+          "tier": 3,
+          "status": "Live",
+          "source": "Cached",
+          "raw_value": 0.1573,
+          "normalized_score": 0.16,
+          "overall_weight_pct": 1.75,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "Exchange Withdrawals",
+          "tier": 3,
+          "status": "Live",
+          "source": "Cached",
+          "raw_value": 0.173,
+          "normalized_score": 0.17,
+          "overall_weight_pct": 1.4,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "Whale Wallet Transfers",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 3.0,
+          "normalized_score": 3.0,
+          "overall_weight_pct": 1.26,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "Large Orders",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 49.3677,
+          "normalized_score": 49.37,
+          "overall_weight_pct": 1.05,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "OTC Transactions",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 3.24,
+          "normalized_score": 3.24,
+          "overall_weight_pct": 0.7,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Institutional Wallets",
+          "tier": 3,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.49,
+          "category_weight_pct": 7
+        },
+        {
+          "name": "Miner Wallet Activity",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.35,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "stablecoin_flows",
+      "name": "Stablecoin Flows",
+      "score": 69.57,
+      "weight_pct": 5,
+      "sub_factors": [
+        {
+          "name": "USDT Flow",
+          "tier": 3,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": 0.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 1.5,
+          "category_weight_pct": 30
+        },
+        {
+          "name": "USDC Flow",
+          "tier": 3,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": 0.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 1.0,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "Stablecoin Minting",
+          "tier": 2,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": 265716081769.6617,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.9,
+          "category_weight_pct": 18
+        },
+        {
+          "name": "Stablecoin Burning",
+          "tier": 2,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": -0.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 12
+        },
+        {
+          "name": "Exchange Inflows",
+          "tier": 3,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": 0.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Exchange Outflows",
+          "tier": 3,
+          "status": "Live",
+          "source": "stablecoins.llama.fi",
+          "raw_value": -0.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.5,
+          "category_weight_pct": 10
+        }
+      ]
+    },
+    {
+      "id": "etf_institutional_flow",
+      "name": "ETF / Institutional Flow",
+      "score": 91.33,
+      "weight_pct": 5,
+      "sub_factors": [
+        {
+          "name": "Spot ETF Net Flow",
+          "tier": 2,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 1.75,
+          "category_weight_pct": 35
+        },
+        {
+          "name": "Institutional Buying",
+          "tier": 3,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 1.25,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "Institutional Selling",
+          "tier": 3,
+          "status": "Live",
+          "source": "query1.finance.yahoo.com",
+          "raw_value": 35.0,
+          "normalized_score": 35.0,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Corporate Treasury Purchases",
+          "tier": 3,
+          "status": "Live",
+          "source": "PublicDisclosure",
+          "raw_value": 19.1421,
+          "normalized_score": 19.14,
+          "overall_weight_pct": 0.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Hedge Fund Positioning",
+          "tier": 2,
+          "status": "Live",
+          "source": "cftc.gov",
+          "raw_value": 56.1091,
+          "normalized_score": 56.11,
+          "overall_weight_pct": 0.5,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Government Holdings",
+          "tier": 3,
+          "status": "Live",
+          "source": "PublicDisclosure",
+          "raw_value": 2.163,
+          "normalized_score": 2.16,
+          "overall_weight_pct": 0.25,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "technical_indicators",
+      "name": "Technical Indicators",
+      "score": 45.79,
+      "weight_pct": 4,
+      "sub_factors": [
+        {
+          "name": "Trend (EMA/SMA)",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.8,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "RSI",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 56.5126,
+          "normalized_score": 56.51,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "MACD",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 0.0,
+          "normalized_score": 0.0,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Support & Resistance",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 1.6513,
+          "normalized_score": 1.65,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Bollinger Bands",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 55.3559,
+          "normalized_score": 55.36,
+          "overall_weight_pct": 0.4,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "ATR",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.32,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "ADX",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 50.0,
+          "normalized_score": 50.0,
+          "overall_weight_pct": 0.28,
+          "category_weight_pct": 7
+        },
+        {
+          "name": "Fibonacci",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 79.3058,
+          "normalized_score": 79.31,
+          "overall_weight_pct": 0.2,
+          "category_weight_pct": 5
+        },
+        {
+          "name": "Ichimoku",
+          "tier": 1,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 85.0,
+          "normalized_score": 85.0,
+          "overall_weight_pct": 0.2,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "on_chain_metrics",
+      "name": "On-Chain Metrics",
+      "score": 47.5,
+      "weight_pct": 3,
+      "sub_factors": [
+        {
+          "name": "Exchange Reserves",
+          "tier": 3,
+          "status": "Live",
+          "source": "Cached",
+          "raw_value": 69.9607,
+          "normalized_score": 69.96,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "Active Addresses",
+          "tier": 3,
+          "status": "Live",
+          "source": "Cached",
+          "raw_value": 30.118,
+          "normalized_score": 30.12,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "MVRV Ratio",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 0.9818,
+          "normalized_score": 29.45,
+          "overall_weight_pct": 0.45,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "NVT Ratio",
+          "tier": 2,
+          "status": "Live",
+          "source": "Blockchair",
+          "raw_value": 0.0157,
+          "normalized_score": 0.02,
+          "overall_weight_pct": 0.3,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Hash Rate",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 100.0,
+          "normalized_score": 100.0,
+          "overall_weight_pct": 0.3,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Mining Difficulty",
+          "tier": 2,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 63.5312,
+          "normalized_score": 63.53,
+          "overall_weight_pct": 0.24,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "Whale Wallet Growth",
+          "tier": 3,
+          "status": "Live",
+          "source": "api.blockchair.com",
+          "raw_value": 46.6,
+          "normalized_score": 46.6,
+          "overall_weight_pct": 0.21,
+          "category_weight_pct": 7
+        },
+        {
+          "name": "Realized Price",
+          "tier": 3,
+          "status": "Live",
+          "source": "BinanceSpot",
+          "raw_value": 66162.9918,
+          "normalized_score": 28.18,
+          "overall_weight_pct": 0.15,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "news_regulations",
+      "name": "News & Regulations",
+      "score": 50.72,
+      "weight_pct": 3,
+      "sub_factors": [
+        {
+          "name": "Government Regulations",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 54.9,
+          "normalized_score": 54.9,
+          "overall_weight_pct": 0.75,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "ETF Approval/Rejection",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 73.3,
+          "normalized_score": 73.3,
+          "overall_weight_pct": 0.6,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "Exchange Hacks",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 29.0,
+          "normalized_score": 29.0,
+          "overall_weight_pct": 0.45,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Exchange Listings/Delistings",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 46.1,
+          "normalized_score": 46.1,
+          "overall_weight_pct": 0.36,
+          "category_weight_pct": 12
+        },
+        {
+          "name": "Security Vulnerabilities",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 15.0,
+          "normalized_score": 15.0,
+          "overall_weight_pct": 0.3,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Country Adoption",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 73.3,
+          "normalized_score": 73.3,
+          "overall_weight_pct": 0.24,
+          "category_weight_pct": 8
+        },
+        {
+          "name": "Tax Policies",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 59.3,
+          "normalized_score": 59.3,
+          "overall_weight_pct": 0.15,
+          "category_weight_pct": 5
+        },
+        {
+          "name": "Major Partnerships",
+          "tier": 2,
+          "status": "Live",
+          "source": "Live",
+          "raw_value": 52.3,
+          "normalized_score": 52.3,
+          "overall_weight_pct": 0.15,
+          "category_weight_pct": 5
+        }
+      ]
+    },
+    {
+      "id": "social_media",
+      "name": "Social Media / Fear & Greed",
+      "score": 32.58,
+      "weight_pct": 2,
+      "sub_factors": [
+        {
+          "name": "Fear & Greed Index",
+          "tier": 2,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 25.0,
+          "normalized_score": 25.0,
+          "overall_weight_pct": 0.5,
+          "category_weight_pct": 25
+        },
+        {
+          "name": "X (Twitter) Sentiment",
+          "tier": 3,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 25.0,
+          "normalized_score": 25.0,
+          "overall_weight_pct": 0.4,
+          "category_weight_pct": 20
+        },
+        {
+          "name": "Reddit Sentiment",
+          "tier": 2,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 55.9,
+          "normalized_score": 55.9,
+          "overall_weight_pct": 0.3,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "Google Trends",
+          "tier": 2,
+          "status": "Live",
+          "source": "YahooFinance",
+          "raw_value": 37.3804,
+          "normalized_score": 37.38,
+          "overall_weight_pct": 0.3,
+          "category_weight_pct": 15
+        },
+        {
+          "name": "YouTube Influence",
+          "tier": 3,
+          "status": "Live",
+          "source": "deribit.com",
+          "raw_value": 44.327,
+          "normalized_score": 44.33,
+          "overall_weight_pct": 0.2,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Telegram/Discord Activity",
+          "tier": 3,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 23.75,
+          "normalized_score": 23.75,
+          "overall_weight_pct": 0.2,
+          "category_weight_pct": 10
+        },
+        {
+          "name": "Influencer Impact",
+          "tier": 3,
+          "status": "Live",
+          "source": "AlternativeMe",
+          "raw_value": 26.25,
+          "normalized_score": 26.25,
+          "overall_weight_pct": 0.1,
+          "category_weight_pct": 5
+        }
+      ]
+    }
+  ],
+  "sources": [
+    "YahooFinance",
+    "api.worldbank.org",
+    "Deribit",
+    "binance.com",
+    "stablecoins.llama.fi",
+    "Live",
+    "api.blockchair.com",
+    "BinanceSpot",
+    "api.coingecko.com",
+    "PublicDisclosure",
+    "cftc.gov",
+    "Blockchair",
+    "Cached",
+    "deribit.com",
+    "AlternativeMe",
+    "query1.finance.yahoo.com"
+  ],
+  "longProb": 53,
+  "shortProb": 47,
+  "monteCarlo": {
+    "bull_breakout": 20,
+    "ranging": 66,
+    "bear_breakdown": 14
+  },
+  "hiddenDivergence": "None",
+  "conflictDetector": "No major conflicts detected. Technicals and order flow are aligned.",
+  "liquidityTrap": "Potential Long Liquidation Trap (Squeeze risk near key Support)",
+  "marketScore": 50.42,
+  "levels": {
+    "support": [
+      {
+        "price": 64879.11719487783,
+        "high": 64940.927996340324,
+        "low": 64817.30639341533,
+        "label": "Nearest Support (\u26a1 CONFLUENCE S)",
+        "score": 85.0
+      },
+      {
+        "price": 64470.12422440266,
+        "high": 64814.58021599999,
+        "low": 64183.292256,
+        "label": "Major Support (\u26a1 CONFLUENCE S)",
+        "score": 95.0
+      },
+      {
+        "price": 62249.37473657561,
+        "high": 62486.539271999995,
+        "low": 62150.24,
+        "label": "Major Support (\u26a1 CONFLUENCE S)",
+        "score": 90.0
+      }
+    ],
+    "resistance": [
+      {
+        "price": 65277.37,
+        "high": 65311.531279965966,
+        "low": 65243.20872003404,
+        "label": "Nearest Resistance (\u26a1 CONFLUENCE R)",
+        "score": 95.0
+      },
+      {
+        "price": 67292.15,
+        "high": 67345.98371999999,
+        "low": 67238.31628,
+        "label": "Major Resistance (WEAK R)",
+        "score": 28.0
+      },
+      {
+        "price": 72547.68331055931,
+        "high": 72640.886256,
+        "low": 72454.480008,
+        "label": "Major Resistance (WEAK R)",
+        "score": 33.0
+      }
+    ]
+  },
+  "analysis": "### **Market Thesis**\n\n* The current market structure is characterized by a neutral bias, with a 53% confidence score, driven by a mix of neutral supply and demand indicators and a slightly bullish market sentiment.\n* The EMAs (50-period EMA: 43322.73, 200-period EMA: 42415.26) are trending upwards, indicating a slight upward momentum, but the MACD is still in a neutral zone.\n* The RSI (56.51) and Bollinger Bands (55.36) are also indicating a neutral market, with no clear signs of overbought or oversold conditions.\n\n### **Institutional Positioning**\n\n* The spot ETF net flow is at 53%, indicating strong institutional buying interest, which is a bullish sign for the market.\n* The order book depth is at 53%, indicating a relatively healthy liquidity profile, which could support a potential price move.\n* The stablecoin minting is at 53%, indicating a high level of liquidity and market activity, which could also support a price move.\n\n### **Risk Factors**\n\n* The upcoming macro triggers, such as the FOMC meeting and the US employment data, could potentially impact the market, and traders should be aware of these risks.\n* The invalidation zones, such as the 200-period EMA (42415.26) and the support level (43322.73), should be closely monitored, as a break below these levels could trigger a sell-off.\n* The trap zones, such as the 50-period EMA (43322.73) and the resistance level (44690.51), should also be closely monitored, as a break above these levels could trigger a buy signal.\n\n### **Trading Plan**\n\n* The trading strategy is to go long on a break above the 50-period EMA (43322.73) and the resistance level (44690.51), with a stop-loss at the 200-period EMA (42415.26) and a take-profit target at the 50-period EMA (43322.73).\n* The entry point should be a break above the 50-period EMA (43322.73), with a confirmation of a bullish candlestick pattern.\n* The risk-reward ratio should be set at 1:2, with a stop-loss at 53% below the entry point and a take-profit target at 53% above the entry point.",
+  "headerSummary": "BTC remains neutral at 53% confidence; watch the upcoming macro triggers.",
+  "confidenceBreakdown": {
+    "trend": 16,
+    "momentum": 8,
+    "smc": 13,
+    "volume": 4,
+    "orderflow": 6,
+    "sentiment": 2,
+    "news": 4,
+    "total": 53
+  },
+  "entryChecklist": [
+    {
+      "label": "EMA20 below EMA50",
+      "checked": false
+    },
+    {
+      "label": "MACD histogram bearish",
+      "checked": true
+    },
+    {
+      "label": "RSI below 50 (Bearish)",
+      "checked": false
+    },
+    {
+      "label": "Price below VWAP midline",
+      "checked": false
+    },
+    {
+      "label": "Recent Liquidity Sweep completed",
+      "checked": true
+    },
+    {
+      "label": "Institutional Order Block active",
+      "checked": true
+    },
+    {
+      "label": "Fair Value Gap (FVG) rejection confirmed",
+      "checked": true
+    },
+    {
+      "label": "Volume support confirmation",
+      "checked": false
+    },
+    {
+      "label": "HTF higher timeframe trend aligned",
+      "checked": false
+    }
+  ],
+  "blockersList": [
+    "Price sits directly at key Weekly Support (64879.12)",
+    "Extremely low session volume (market illiquidity risk)"
+  ],
+  "blockRecommendation": "WAIT",
+  "smTimeline": [
+    {
+      "time": "09:49",
+      "event": "Liquidity Sweep Completed"
+    },
+    {
+      "time": "10:04",
+      "event": "Order Block Created"
+    },
+    {
+      "time": "10:19",
+      "event": "FVG Gap Formed"
+    },
+    {
+      "time": "10:34",
+      "event": "EMA Structural Crossover"
+    },
+    {
+      "time": "10:49",
+      "event": "Key Level Retest / Pullback"
+    },
+    {
+      "time": "11:04",
+      "event": "AI Direct Trigger Confirmed"
+    }
+  ],
+  "executionSteps": [
+    {
+      "label": "Current Market Price",
+      "val": "64954.00"
+    },
+    {
+      "label": "Wait for Trigger Target",
+      "val": "64954.00"
+    },
+    {
+      "label": "Trigger Execution SELL / SHORT",
+      "val": "CONFIRMED"
+    },
+    {
+      "label": "Set Stop Loss Protection",
+      "val": "65511.76"
+    },
+    {
+      "label": "Expected Take Profit 1",
+      "val": "62249.37"
+    },
+    {
+      "label": "Expected Take Profit 2",
+      "val": "62249.37"
+    },
+    {
+      "label": "Expected Take Profit 3",
+      "val": "63559.59"
+    },
+    {
+      "label": "Validated Risk Reward",
+      "val": "4.85R"
+    }
+  ],
+  "eli10Text": [
+    "The price climbed to a major selling zone.",
+    "A cluster of heavy institutional sellers absorbed the volume.",
+    "Price formed a bearish rejection pattern on the chart.",
+    "Market momentum has aligned bearishly on macro charts.",
+    "Shorting this asset has a statistically higher success probability."
+  ],
+  "ofHeatmap": [
+    {
+      "price": 64754.87,
+      "blocks": "\ud83d\udfe2\ud83d\udfe2"
+    },
+    {
+      "price": 64804.66,
+      "blocks": "\ud83d\udfe2\ud83d\udfe2"
+    },
+    {
+      "price": 64854.44,
+      "blocks": "\ud83d\udfe2\ud83d\udfe2"
+    },
+    {
+      "price": 64904.22,
+      "blocks": "\ud83d\udfe2\ud83d\udfe2"
+    },
+    {
+      "price": 64954.0,
+      "blocks": "\ud83d\udccc CURRENT"
+    },
+    {
+      "price": 65003.78,
+      "blocks": "\ud83d\udd34\ud83d\udd34"
+    },
+    {
+      "price": 65053.56,
+      "blocks": "\ud83d\udd34\ud83d\udd34"
+    },
+    {
+      "price": 65103.34,
+      "blocks": "\ud83d\udd34\ud83d\udd34"
+    },
+    {
+      "price": 65153.13,
+      "blocks": "\ud83d\udd34\ud83d\udd34"
+    }
+  ],
+  "instScore": {
+    "buy": 21,
+    "sell": 79
+  },
+  "smartAlerts": [
+    "BTCUSDT entered unmitigated FVG zone",
+    "BTCUSDT triggered active EMA indicator cross",
+    "BTCUSDT institutional Order Block detected",
+    "BTCUSDT retested major macro support ceiling"
+  ],
+  "riskMeter": {
+    "risk": "HIGH",
+    "drawdown": "1.65%",
+    "profit": "1.15%",
+    "reason": "HTF trend mismatch (NEUTRAL vs 4H BULLISH); high order book imbalance (89.6%); upcoming macro event (Price sits directly at key Weekly Support (64879.12))"
+  },
+  "marketRegime": {
+    "type": "RANGING",
+    "strength": "3/10",
+    "strategy": "Mean Reversion",
+    "confidence": "58%",
+    "avoid_strategy": "Trend Following"
+  },
+  "strategyWinProbs": {
+    "ema": "25.0%",
+    "ema_macd": "40.0%",
+    "ema_smc": "50.0%",
+    "ema_smc_vwap": "58.0%"
+  },
+  "newsImpact": {
+    "event": "ECB",
+    "time": "3 Hours",
+    "impact": "HIGH",
+    "recommendation": "Monitor Volatility"
+  },
+  "sessionInfo": {
+    "name": "London",
+    "bias": "Bearish",
+    "volatility": "High",
+    "winrate": "84%"
+  },
+  "confidenceHistory": [
+    53.0,
+    53.0,
+    50.0,
+    50.0,
+    58.0
+  ],
+  "classificationProbabilities": {
+    "range": 60,
+    "bull_breakout": 21,
+    "bear_breakdown": 19
+  },
+  "explanationGrouping": {
+    "primary": [
+      {
+        "name": "Smc",
+        "contribution": 65.0,
+        "points": 13,
+        "description": "Contributes 65.0% of category potential (13.0/20 pts)."
+      },
+      {
+        "name": "Trend",
+        "contribution": 64.0,
+        "points": 16,
+        "description": "Contributes 64.0% of category potential (16.0/25 pts)."
+      },
+      {
+        "name": "Orderflow",
+        "contribution": 60.0,
+        "points": 6,
+        "description": "Contributes 60.0% of category potential (6.0/10 pts)."
+      }
+    ],
+    "secondary": [
+      {
+        "name": "Momentum",
+        "contribution": 40.0,
+        "points": 8,
+        "description": "Contributes 40.0% of category potential (8.0/20 pts)."
+      },
+      {
+        "name": "Volume",
+        "contribution": 40.0,
+        "points": 4,
+        "description": "Contributes 40.0% of category potential (4.0/10 pts)."
+      }
+    ],
+    "negative": [
+      {
+        "name": "Sentiment",
+        "contribution": 40.0,
+        "points": 2,
+        "description": "Contributes 40.0% of category potential (2.0/5 pts)."
+      },
+      {
+        "name": "News",
+        "contribution": 40.0,
+        "points": 4,
+        "description": "Contributes 40.0% of category potential (4.0/10 pts)."
+      }
+    ],
+    "catalyst": [
+      {
+        "name": "Smc",
+        "contribution": 65.0,
+        "points": 13,
+        "description": "Contributes 65.0% of category potential (13.0/20 pts)."
+      }
+    ]
+  },
+  "invalidationLevels": {
+    "bull_invalidation": 64879.12,
+    "bear_invalidation": 65277.37
+  },
+  "tradeQualityScore": 67.69,
+  "tradeQualityBreakdown": {
+    "trend": 10.0,
+    "timing": 17.69,
+    "liquidity": 20.0,
+    "volume": 10.0,
+    "macro": 10.0
+  },
+  "scenarioPaths": {
+    "high_target": 65533.87,
+    "low_target": 64319.18,
+    "mid_target": 64926.53,
+    "scenarios": [
+      {
+        "name": "Scenario A: Bull Breakout",
+        "probability": "21%",
+        "target": 65533.87
+      },
+      {
+        "name": "Scenario B: Ranging",
+        "probability": "60%",
+        "target": 64926.53
+      },
+      {
+        "name": "Scenario C: Bear Breakdown",
+        "probability": "19%",
+        "target": 64319.18
+      }
+    ]
+  },
+  "macroEvents": [
+    {
+      "event": "FOMC Interest Rate Decision",
+      "date": "July 1, 2026",
+      "weight": "\u2605\u2605\u2605\u2605\u2605",
+      "volatility": "Extreme",
+      "result": "5.25% (Paused)",
+      "impact": "Good",
+      "explanation": "Hawkish pause priced in; rates stable, liquidity intact."
+    },
+    {
+      "event": "ECB Rate Decision",
+      "date": "July 2, 2026",
+      "weight": "\u2605\u2605\u2605",
+      "volatility": "Moderate",
+      "result": "4.00% (25bps Cut)",
+      "impact": "Good",
+      "explanation": "Rate cut supports global liquidity and risk assets."
+    },
+    {
+      "event": "US CPI Inflation Report",
+      "date": "July 10, 2026",
+      "weight": "\u2605\u2605\u2605\u2605\u2605",
+      "volatility": "Extreme",
+      "result": "3.0% YoY",
+      "impact": "Good",
+      "explanation": "Inflation coming down faster than forecast, bullish for risk."
+    },
+    {
+      "event": "ECB Press Conference",
+      "date": "Jul 16, 2026 (14:15 UTC)",
+      "weight": "\u2605\u2605\u2605\u2605",
+      "volatility": "High",
+      "result": "Upcoming",
+      "impact": "Pending",
+      "explanation": "Estimated volatility impact is high."
+    },
+    {
+      "event": "US Building Permits",
+      "date": "Jul 17, 2026 (12:30 UTC)",
+      "weight": "\u2605\u2605\u2605",
+      "volatility": "Moderate",
+      "result": "Upcoming",
+      "impact": "Pending",
+      "explanation": "Estimated volatility impact is moderate."
+    },
+    {
+      "event": "US Retail Sales",
+      "date": "Jul 20, 2026 (12:30 UTC)",
+      "weight": "\u2605\u2605\u2605\u2605",
+      "volatility": "US Sales",
+      "result": "Upcoming",
+      "impact": "Pending",
+      "explanation": "Estimated volatility impact is us sales."
+    },
+    {
+      "event": "Fed Chair Powell Testimony",
+      "date": "Jul 22, 2026 (14:00 UTC)",
+      "weight": "\u2605\u2605\u2605\u2605\u2605",
+      "volatility": "Extreme",
+      "result": "Upcoming",
+      "impact": "Pending",
+      "explanation": "Estimated volatility impact is extreme."
+    }
+  ],
+  "today_vs_yesterday_delta": -6,
+  "timestamp": 1784180093,
+  "liveThinking": "Current Thesis\n\u2022 Price is trapped inside support/resistance bounds.\n\u2022 Higher timeframe remains bullish.\n\u2022 Short-term momentum is contracting.\n\u2022 Waiting for breakout above resistance or sweep below support.\nRecommended Action: **WAIT**",
+  "simulatorReliability": {
+    "total_logged": 1091,
+    "win_rate": 62.48,
+    "win_rate_last_100": 71.0,
+    "reliability_class": "62.5% accuracy over 637 resolved signals",
+    "average_rr": 13.19,
+    "avg_hold_time_str": "4.8h",
+    "best_setup_wr": 70.73,
+    "worst_setup_wr": 55.82,
+    "recent_signals": [
+      {
+        "id": 1091,
+        "direction": "{\"bias\": \"BULLISH\", \"entry\": 64926.01, \"sl\": 64879.11719487783, \"tp\": 65277.37}",
+        "confidence": 66.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "1m"
+      },
+      {
+        "id": 1090,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64926.01, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 58.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "1d"
+      },
+      {
+        "id": 1089,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64954.0, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 51.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "1h"
+      },
+      {
+        "id": 1088,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64926.01, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 54.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "15m"
+      },
+      {
+        "id": 1087,
+        "direction": "{\"bias\": \"BULLISH\", \"entry\": 64926.01, \"sl\": 64879.11719487783, \"tp\": 65277.37}",
+        "confidence": 67.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "4h"
+      },
+      {
+        "id": 1086,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64926.01, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 58.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "5m"
+      },
+      {
+        "id": 1085,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64958.48, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 53.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "1h"
+      },
+      {
+        "id": 1084,
+        "direction": "{\"bias\": \"BULLISH\", \"entry\": 64954.0, \"sl\": 64879.11719487783, \"tp\": 65277.37}",
+        "confidence": 67.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "4h"
+      },
+      {
+        "id": 1083,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64954.0, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 54.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "15m"
+      },
+      {
+        "id": 1082,
+        "direction": "{\"bias\": \"NEUTRAL\", \"entry\": 64954.0, \"sl\": 65277.37, \"tp\": 64879.11719487783}",
+        "confidence": 58.0,
+        "outcome": "pending",
+        "rr": null,
+        "timeframe": "5m"
+      }
+    ]
+  },
+  "matrix": {
+    "1m": {
+      "bias": "BULLISH",
+      "score": 66,
+      "longProb": 66,
+      "shortProb": 34,
+      "trend": "bullish",
+      "rsi": "bullish",
+      "macd": "bearish",
+      "smc": "bullish",
+      "vwap": "bullish",
+      "overall": "bullish"
+    },
+    "5m": {
+      "bias": "NEUTRAL",
+      "score": 58,
+      "longProb": 58,
+      "shortProb": 42,
+      "trend": "bullish",
+      "rsi": "bearish",
+      "macd": "bullish",
+      "smc": "bullish",
+      "vwap": "bullish",
+      "overall": "neutral"
+    },
+    "15m": {
+      "bias": "NEUTRAL",
+      "score": 54,
+      "longProb": 54,
+      "shortProb": 46,
+      "trend": "neutral",
+      "rsi": "bullish",
+      "macd": "bullish",
+      "smc": "bullish",
+      "vwap": "neutral",
+      "overall": "neutral"
+    },
+    "1h": {
+      "bias": "NEUTRAL",
+      "score": 51,
+      "longProb": 51,
+      "shortProb": 49,
+      "trend": "bullish",
+      "rsi": "bullish",
+      "macd": "bearish",
+      "smc": "bullish",
+      "vwap": "bullish",
+      "overall": "neutral"
+    },
+    "4h": {
+      "bias": "BULLISH",
+      "score": 67,
+      "longProb": 67,
+      "shortProb": 33,
+      "trend": "bullish",
+      "rsi": "bullish",
+      "macd": "bullish",
+      "smc": "bullish",
+      "vwap": "bullish",
+      "overall": "bullish"
+    },
+    "1d": {
+      "bias": "NEUTRAL",
+      "score": 58,
+      "longProb": 58,
+      "shortProb": 42,
+      "trend": "neutral",
+      "rsi": "bullish",
+      "macd": "bullish",
+      "smc": "bullish",
+      "vwap": "neutral",
+      "overall": "neutral"
+    }
+  }
+}

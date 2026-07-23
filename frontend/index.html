@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ApexTrader Ultra — Cinematic 3D Institutional Trading Platform</title>
+<title>ApexTrader Ultra — Institutional 3D Trading Platform & AI Signals</title>
 <meta name="description" content="Experience the future of trading. Institutional 3D charting, neural AI signals, multi-exchange liquidity, and real-time market universe visualization.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
 <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -20,31 +21,41 @@
 <nav class="navbar" id="navbar">
   <div class="nav-container">
     <a href="/" class="logo">
-      <div class="logo-mark">A</div>
+      <div class="logo-mark">▲</div>
       <span>ApexTrader <span class="text-gold">Ultra</span></span>
     </a>
+    
     <div class="nav-links">
       <a href="#markets">Universe</a>
-      <a href="#chart-hologram">HoloChart</a>
+      <a href="#terminal">Terminal</a>
       <a href="#brain">AI Brain</a>
       <a href="#galaxy">Galaxy</a>
+      <a href="#calculator">Calculator</a>
       <a href="#pricing">Pricing</a>
     </div>
-    <div class="nav-actions" id="navActions">
-      <a href="/charts" class="btn btn-gold">Launch Terminal</a>
+
+    <div class="nav-actions">
+      <div class="nav-node-status">
+        <span class="status-dot green"></span>
+        <span class="status-text">Node Live</span>
+      </div>
+      <a href="/charts" class="btn btn-gold btn-sm">
+        <span>🚀</span> Launch Terminal
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation Menu">☰</button>
     </div>
-    <button class="menu-toggle" id="menuToggle">☰</button>
   </div>
 </nav>
 
-<!-- Mobile Menu -->
+<!-- Mobile Navigation Drawer -->
 <div class="mobile-menu" id="mobileMenu">
   <a href="#markets">Universe</a>
-  <a href="#chart-hologram">HoloChart</a>
+  <a href="#terminal">HoloTerminal</a>
   <a href="#brain">AI Brain</a>
   <a href="#galaxy">Galaxy</a>
+  <a href="#calculator">Calculator</a>
   <a href="#pricing">Pricing</a>
-  <a href="/charts" class="btn btn-gold">Launch Terminal</a>
+  <a href="/charts" class="btn btn-gold btn-full" style="margin-top:16px;">Launch Terminal</a>
 </div>
 
 <!-- ═══════════════════════════════════════
@@ -57,100 +68,108 @@
   <div class="hero-3d-scene" id="hero3dScene"></div>
 
   <div class="hero-container">
-    <!-- Left: Copy -->
+    <!-- Left Copy -->
     <div class="hero-content">
       <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Enterprise Node Live
+        <span class="badge-pulse"></span>
+        <span class="badge-text">Institutional Confluence Engine v4.2</span>
       </div>
-      <h1>Trade Crypto with<br><span class="text-gold">Spatial 3D</span><br>Confluence</h1>
-      <p>A cinematic WebGL trading platform aggregating real-time order books, AI neural signals, and institutional market flow into a single unified universe.</p>
+      
+      <h1>Trade Crypto with<br><span class="text-gradient-gold">Spatial 3D</span><br>Confluence</h1>
+      
+      <p>A cinematic WebGL trading terminal aggregating real-time order books, neural AI signals, and institutional market flow into a unified spatial universe.</p>
       
       <div class="hero-actions">
-        <a href="/charts" class="btn btn-gold btn-lg">
+        <a href="/charts" class="btn btn-gold btn-lg glow-effect">
           <span>🚀</span> Launch Terminal
         </a>
         <a href="#markets" class="btn btn-glass btn-lg">
-          <span>🌌</span> Enter Universe
+          <span>🌌</span> Explore Markets
+        </a>
+        <a href="/simulator.html" class="btn btn-outline btn-lg">
+          <span>⚡</span> Paper Simulator
         </a>
       </div>
 
       <div class="hero-stats">
         <div class="hero-stat-item">
-          <div class="hero-stat-num">$12B+</div>
+          <div class="hero-stat-num">$14.8B+</div>
           <div class="hero-stat-label">Monthly Volume</div>
         </div>
         <div class="hero-stat-item">
-          <div class="hero-stat-num">500K+</div>
-          <div class="hero-stat-label">Quants Active</div>
+          <div class="hero-stat-num">520K+</div>
+          <div class="hero-stat-label">Active Quants</div>
         </div>
         <div class="hero-stat-item">
-          <div class="hero-stat-num">50ms</div>
-          <div class="hero-stat-label">Avg Latency</div>
+          <div class="hero-stat-num">&lt; 15ms</div>
+          <div class="hero-stat-label">Execution Latency</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">99.99%</div>
+          <div class="hero-stat-label">Uptime SLA</div>
         </div>
       </div>
     </div>
 
-    <!-- Right: Holographic Orbit Container (Cards positioned overlaying WebGL) -->
+    <!-- Right Visual Dashboard & Orbiting Cards -->
     <div class="hero-visual">
-      <div class="orbit-center-trigger"></div>
-      <!-- Cards that will orbit in 3D via GSAP and CSS 3D -->
+      <!-- Orbiting Live Metric Cards -->
       <div class="orbit-card-wrap" id="orbitCardWrap">
-        
-        <div class="orbit-card glass-gold" style="--index: 0;">
+        <div class="orbit-card glass-gold">
           <span class="oc-label">BTC Price</span>
-          <span class="oc-val text-gold" id="heroPrice">$67,284.50</span>
-          <span class="oc-pct pill-up" id="heroChange">+3.42%</span>
+          <span class="oc-val text-gold" id="heroPrice">$67,480.00</span>
+          <span class="oc-pct pill-up" id="heroChange">+4.12%</span>
         </div>
 
-        <div class="orbit-card glass-cyan" style="--index: 1;">
+        <div class="orbit-card glass-cyan">
           <span class="oc-label">Fear &amp; Greed</span>
-          <span class="oc-val text-cyan">72 · Greed</span>
-          <span class="oc-status">Bullish</span>
+          <span class="oc-val text-cyan" id="heroFearGreed">78 · Extreme Greed</span>
+          <span class="oc-status">Strong Bullish</span>
         </div>
 
-        <div class="orbit-card glass-emerald" style="--index: 2;">
+        <div class="orbit-card glass-emerald">
           <span class="oc-label">24h Volume</span>
-          <span class="oc-val text-emerald">$48.2B</span>
-          <span class="oc-status">Heavy</span>
+          <span class="oc-val text-emerald" id="heroVol">$52.4B</span>
+          <span class="oc-status">High Inflow</span>
         </div>
 
-        <div class="orbit-card glass-purple" style="--index: 3;">
+        <div class="orbit-card glass-purple">
           <span class="oc-label">Funding Rate</span>
-          <span class="oc-val text-purple">+0.0125%</span>
-          <span class="oc-status">Neutral</span>
+          <span class="oc-val text-purple">+0.0115%</span>
+          <span class="oc-status">Neutral Long</span>
         </div>
 
-        <div class="orbit-card glass-orange" style="--index: 4;">
+        <div class="orbit-card glass-orange">
           <span class="oc-label">BTC Dominance</span>
-          <span class="oc-val text-orange">54.8%</span>
-          <span class="oc-status">Increasing</span>
+          <span class="oc-val text-orange">55.2%</span>
+          <span class="oc-status">Outperforming</span>
         </div>
-
       </div>
 
-      <!-- Floating Terminal Screen Preview -->
-      <div class="hero-dashboard glass-gold">
+      <!-- Floating Live Terminal Chart Box -->
+      <div class="hero-dashboard glass-panel">
         <div class="dash-header">
           <div class="dash-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
           <div class="dash-symbol">BTC/USDT · 1H</div>
-          <div class="dash-live">LIVE</div>
+          <div class="dash-live-badge"><span class="pulse-dot"></span> LIVE</div>
         </div>
+        
         <div class="dash-chart-area">
           <canvas id="heroLiveChart"></canvas>
         </div>
+
         <div class="dash-stats-row">
           <div class="dash-stat">
-            <div class="dash-stat-l">Price</div>
-            <div class="dash-stat-v v-gold" id="dashPrice">$67,284</div>
+            <div class="dash-stat-l">Spot Price</div>
+            <div class="dash-stat-v v-gold" id="dashPrice">$67,480</div>
           </div>
           <div class="dash-stat">
-            <div class="dash-stat-l">24h Vol</div>
-            <div class="dash-stat-v v-cyan">$48.2B</div>
+            <div class="dash-stat-l">24h Volume</div>
+            <div class="dash-stat-v v-cyan" id="dashVol">$52.4B</div>
           </div>
           <div class="dash-stat">
-            <div class="dash-stat-l">Change</div>
-            <div class="dash-stat-v v-green" id="dashChg">+3.42%</div>
+            <div class="dash-stat-l">24h Change</div>
+            <div class="dash-stat-v v-green" id="dashChg">+4.12%</div>
           </div>
         </div>
       </div>
@@ -158,78 +177,172 @@
   </div>
 </header>
 
-<!-- Ticker strip -->
+<!-- ═══════════════════════════════════════
+     LIVE TICKER STREAMER MARQUEE
+     ═══════════════════════════════════════ -->
 <div class="ticker-strip">
   <div class="ticker-track" id="tickerTrack">
-    <!-- Managed dynamically by app.js -->
-    <div class="ticker-item"><span class="ticker-symbol">BTC</span><span class="ticker-price">$67,284.50</span><span class="ticker-chg up">+3.42%</span></div>
-    <div class="ticker-item"><span class="ticker-symbol">ETH</span><span class="ticker-price">$3,512.80</span><span class="ticker-chg up">+2.18%</span></div>
-    <div class="ticker-item"><span class="ticker-symbol">SOL</span><span class="ticker-price">$184.32</span><span class="ticker-chg up">+5.67%</span></div>
-    <div class="ticker-item"><span class="ticker-symbol">BNB</span><span class="ticker-price">$612.40</span><span class="ticker-chg dn">-0.85%</span></div>
-    <div class="ticker-item"><span class="ticker-symbol">XRP</span><span class="ticker-price">$0.6284</span><span class="ticker-chg up">+1.34%</span></div>
+    <!-- Populated dynamically via app.js -->
+    <div class="ticker-item"><span class="ticker-symbol">BTC</span><span class="ticker-price">$67,480.00</span><span class="ticker-chg up">+4.12%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">ETH</span><span class="ticker-price">$3,540.20</span><span class="ticker-chg up">+3.85%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">SOL</span><span class="ticker-price">$188.50</span><span class="ticker-chg up">+6.14%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">BNB</span><span class="ticker-price">$618.30</span><span class="ticker-chg dn">-0.42%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">XRP</span><span class="ticker-price">$0.6340</span><span class="ticker-chg up">+2.10%</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">AVAX</span><span class="ticker-price">$38.90</span><span class="ticker-chg up">+5.22%</span></div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════
-     3D MARKET UNIVERSE (GLASS PANELS)
+     MARKET UNIVERSE (INTERACTIVE GRID)
      ═══════════════════════════════════════ -->
 <section class="markets" id="markets">
-  <!-- Backing canvas for orbiting/floating particle galaxy of coins -->
   <div class="section-canvas-bg" id="marketsCanvasContainer"></div>
   
   <div class="section-container">
-    <div style="text-align:center;">
-      <div class="section-tag">📡 Interactive Market Nodes</div>
+    <div class="section-header center">
+      <div class="section-tag">📡 Real-Time Data Nodes</div>
       <h2 class="section-title">The Market Universe</h2>
-      <p class="section-desc">Interact with the core assets. Floating glassmorphic panels map instant volume and price fluctuations in real time.</p>
+      <p class="section-desc">Explore aggregated liquidity across 12 tier-1 exchanges. Instant pricing, 24h volume, and visual sparklines.</p>
     </div>
 
-    <!-- Markets Grid with CSS 3D Glassmorphism Cards -->
+    <!-- Search & Filter Controls -->
+    <div class="market-controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="coinSearchInput" placeholder="Search symbol or coin (e.g. BTC, Solana)...">
+      </div>
+      <div class="filter-tabs" id="marketFilterTabs">
+        <button class="filter-tab active" data-filter="all">All Assets</button>
+        <button class="filter-tab" data-filter="l1">Layer 1</button>
+        <button class="filter-tab" data-filter="defi">DeFi</button>
+        <button class="filter-tab" data-filter="gainers">Top Gainers</button>
+      </div>
+    </div>
+
+    <!-- Markets Card Grid -->
     <div class="markets-grid" id="marketsGrid">
       <div class="market-card loading-card"><div class="shimmer"></div></div>
       <div class="market-card loading-card"><div class="shimmer"></div></div>
       <div class="market-card loading-card"><div class="shimmer"></div></div>
       <div class="market-card loading-card"><div class="shimmer"></div></div>
       <div class="market-card loading-card"><div class="shimmer"></div></div>
+      <div class="market-card loading-card"><div class="shimmer"></div></div>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     HOLOGRAM CHART SECTION
+     HOLOGRAM TERMINAL SECTION
      ═══════════════════════════════════════ -->
-<section class="hologram-chart-section" id="chart-hologram">
+<section class="terminal-section" id="terminal">
   <div class="section-container">
-    <div class="chart-flex-container">
+    <div class="section-header">
+      <div class="section-tag">📈 WebGL Spatial Terminal</div>
+      <h2 class="section-title">Holographic Candlesticks &amp; Order Depth</h2>
+      <p class="section-desc">Inspect price action in true 3D spatial coordinate space. Identify bid/ask walls, order book imbalance, and neural signal confluences in real time.</p>
+    </div>
+
+    <!-- Terminal Mode Switcher Tabs -->
+    <div class="terminal-tabs">
+      <button class="t-tab active" data-terminal-tab="holo">WebGL HoloCandles</button>
+      <button class="t-tab" data-terminal-tab="orderbook">Order Flow Depth</button>
+      <button class="t-tab" data-terminal-tab="matrix">AI Confluence Matrix</button>
+    </div>
+
+    <!-- Holographic Visual Workspace -->
+    <div class="terminal-workspace glass-panel">
       
-      <!-- Copy Details -->
-      <div class="chart-content">
-        <div class="section-tag">📈 WebGL Holographic Projection</div>
-        <h2 class="section-title text-left">Holographic Candlestick Projection</h2>
-        <p class="section-desc text-left">Step into raw data. Our custom WebGL holographic projection renders price feeds in real-time 3D perspective with neon buy and sell confluences.</p>
-        
-        <div class="chart-stats-list">
-          <div class="chart-stat-item">
-            <span class="cs-dot c-green"></span>
-            <div>
-              <h4>Realtime Order Imbalance</h4>
-              <p>Green bars indicate instant buy confluences and volume profile density.</p>
+      <!-- Tab 1: WebGL HoloChart -->
+      <div class="tab-pane active" id="paneHolo">
+        <div class="terminal-flex-row">
+          <div class="terminal-canvas-box">
+            <div class="chart-canvas-container" id="hologramChartContainer"></div>
+            <div class="hologram-grid-floor"></div>
+          </div>
+          
+          <div class="terminal-side-info">
+            <h3>Holographic Viewport</h3>
+            <p>Renders live candle history with spatial depth perspective. Neon markers illuminate order blocks, FVGs, and volume profiles.</p>
+            
+            <div class="feature-bullets">
+              <div class="fb-item">
+                <span class="fb-icon text-green">●</span>
+                <div>
+                  <strong>Order Imbalance Bars</strong>
+                  <p>Dynamic 3D height scale relative to volume spike</p>
+                </div>
+              </div>
+              <div class="fb-item">
+                <span class="fb-icon text-gold">⚡</span>
+                <div>
+                  <strong>Signal Anchors</strong>
+                  <p>Floating buy/sell targets projected in perspective space</p>
+                </div>
+              </div>
+              <div class="fb-item">
+                <span class="fb-icon text-cyan">📊</span>
+                <div>
+                  <strong>Sub-50ms Refresh</strong>
+                  <p>Hardware accelerated 60 FPS WebGL renderer</p>
+                </div>
+              </div>
+            </div>
+
+            <a href="/charts" class="btn btn-gold btn-full" style="margin-top:20px;">Open Fullscreen Terminal</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Order Flow Depth -->
+      <div class="tab-pane" id="paneOrderbook">
+        <div class="orderbook-preview-grid">
+          <div class="ob-column bids">
+            <h4 class="ob-title text-green">Bids (Buy Orders)</h4>
+            <div class="ob-rows" id="obBidsRows">
+              <!-- Dynamically populated -->
+              <div class="ob-row"><span class="ob-p text-green">$67,475.00</span><span class="ob-v">12.45 BTC</span><div class="ob-bar green-bar" style="width: 85%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-green">$67,470.50</span><span class="ob-v">8.10 BTC</span><div class="ob-bar green-bar" style="width: 60%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-green">$67,465.00</span><span class="ob-v">24.80 BTC</span><div class="ob-bar green-bar" style="width: 100%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-green">$67,460.00</span><span class="ob-v">5.30 BTC</span><div class="ob-bar green-bar" style="width: 40%;"></div></div>
             </div>
           </div>
-          <div class="chart-stat-item">
-            <span class="cs-dot c-red"></span>
-            <div>
-              <h4>Neon Signal Confluence</h4>
-              <p>Buy and sell markers appear suspended on the chart based on the AI Brain analysis.</p>
+          <div class="ob-column asks">
+            <h4 class="ob-title text-red">Asks (Sell Orders)</h4>
+            <div class="ob-rows" id="obAsksRows">
+              <!-- Dynamically populated -->
+              <div class="ob-row"><span class="ob-p text-red">$67,485.00</span><span class="ob-v">14.20 BTC</span><div class="ob-bar red-bar" style="width: 90%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-red">$67,490.00</span><span class="ob-v">19.55 BTC</span><div class="ob-bar red-bar" style="width: 95%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-red">$67,495.00</span><span class="ob-v">6.12 BTC</span><div class="ob-bar red-bar" style="width: 45%;"></div></div>
+              <div class="ob-row"><span class="ob-p text-red">$67,500.00</span><span class="ob-v">31.00 BTC</span><div class="ob-bar red-bar" style="width: 100%;"></div></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Holographic Chart Canvas Container -->
-      <div class="chart-visual-wrapper">
-        <div class="chart-canvas-container" id="hologramChartContainer"></div>
-        <div class="hologram-grid-floor"></div>
+      <!-- Tab 3: AI Confluence Matrix -->
+      <div class="tab-pane" id="paneMatrix">
+        <div class="matrix-grid">
+          <div class="matrix-card glass-gold">
+            <div class="mc-tag">Indicator Confluence</div>
+            <h3>94% Long Confluence</h3>
+            <p>RSI oversold rebound + MACD golden cross confirmed on 1H &amp; 4H timeframes.</p>
+            <div class="mc-score-bar"><div class="fill gold-fill" style="width: 94%;"></div></div>
+          </div>
+
+          <div class="matrix-card glass-cyan">
+            <div class="mc-tag">Smart Money Structure</div>
+            <h3>Fair Value Gap Filled</h3>
+            <p>Institutional liquidity sweep triggered at $66,800. Strong buy response.</p>
+            <div class="mc-score-bar"><div class="fill cyan-fill" style="width: 88%;"></div></div>
+          </div>
+
+          <div class="matrix-card glass-emerald">
+            <div class="mc-tag">Volume Profile (VPVR)</div>
+            <h3>High Volume Node</h3>
+            <p>Point of Control (POC) established at $67,200 providing strong structural support.</p>
+            <div class="mc-score-bar"><div class="fill green-fill" style="width: 91%;"></div></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -237,17 +350,16 @@
 </section>
 
 <!-- ═══════════════════════════════════════
-     3D STATISTICS TOWERS (SCROLL GROW)
+     3D METRICS SCROLL TOWERS
      ═══════════════════════════════════════ -->
 <section class="metrics" id="metrics">
   <div class="towers-3d-bg" id="dataTowersContainer"></div>
   
   <div class="section-container">
     <div class="metrics-grid">
-      
       <div class="metric-item reveal-on-scroll" data-tower-index="0">
         <div class="metric-num-wrap">
-          <span class="metric-num" data-target="100" data-suffix="K">0</span>
+          <span class="metric-num" data-target="150" data-suffix="K">0</span>
           <span class="text-gold">+</span>
         </div>
         <div class="metric-label">Signals Monthly</div>
@@ -264,84 +376,79 @@
       
       <div class="metric-item reveal-on-scroll delay-2" data-tower-index="2">
         <div class="metric-num-wrap">
-          <span class="metric-num" data-target="50" data-suffix="ms">0</span>
+          <span class="metric-num" data-target="12" data-suffix="ms">0</span>
         </div>
         <div class="metric-label">Execution Speed</div>
-        <div class="metric-sub">Average transaction round-trip</div>
+        <div class="metric-sub">Average round-trip transaction latency</div>
       </div>
       
       <div class="metric-item reveal-on-scroll delay-3" data-tower-index="3">
         <div class="metric-num-wrap">
-          <span class="metric-num" data-target="12" data-suffix="B">0</span>
+          <span class="metric-num" data-target="14.8" data-suffix="B">0</span>
           <span class="text-cyan">+$</span>
         </div>
         <div class="metric-label">Total Volume</div>
         <div class="metric-sub">Aggregated monthly transactions</div>
       </div>
-
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     AI TRADING BRAIN (NEURAL SPHERE)
+     AI NEURAL BRAIN SECTION
      ═══════════════════════════════════════ -->
 <section class="brain-section" id="brain">
   <div class="section-container">
     <div class="brain-grid">
-      
-      <!-- Neural canvas container -->
+      <!-- 3D Neural Sphere Canvas -->
       <div class="brain-visual-wrapper">
         <div class="brain-canvas-container" id="aiBrainContainer"></div>
-        
-        <!-- Interactive Floating Labels around sphere -->
         <div class="brain-labels-overlay">
-          <div class="brain-label bl-1" data-angle="0">Signal Detection</div>
-          <div class="brain-label bl-2" data-angle="90">Risk Analysis</div>
-          <div class="brain-label bl-3" data-angle="180">Pattern Recognition</div>
-          <div class="brain-label bl-4" data-angle="270">Market Forecasting</div>
+          <div class="brain-label bl-1">Pattern Recognition</div>
+          <div class="brain-label bl-2">Risk Analysis</div>
+          <div class="brain-label bl-3">Liquidity Sweeps</div>
+          <div class="brain-label bl-4">Market Forecasting</div>
         </div>
       </div>
 
-      <!-- Copy details -->
+      <!-- Copy & Live Signal Console -->
       <div class="brain-content">
-        <div class="section-tag">🧠 Deep Learning Node</div>
+        <div class="section-tag">🧠 Deep Learning Core</div>
         <h2 class="section-title text-left">Neural AI Trading Core</h2>
-        <p class="section-desc text-left">Our autonomous neural sphere monitors 12+ exchanges simultaneously. By cross-referencing order book imbalance, funding rates, and historical confluences, the Brain predicts micro-trends in milliseconds.</p>
-        
-        <div class="brain-metrics-row">
-          <div class="bm-item">
-            <span class="bm-num">4.0TB</span>
-            <span class="bm-lbl">Processed Daily</span>
+        <p class="section-desc text-left">Our autonomous neural sphere monitors order books, funding rates, and historical confluences continuously across 12 exchanges to issue real-time high-probability trade setups.</p>
+
+        <!-- Live Real-Time AI Terminal Signal Feed -->
+        <div class="ai-signal-terminal">
+          <div class="ast-header">
+            <span class="ast-dot red"></span><span class="ast-dot yellow"></span><span class="ast-dot green"></span>
+            <span class="ast-title">AI SIGNAL FEED — LIVE STREAM</span>
           </div>
-          <div class="bm-item">
-            <span class="bm-num">24,000/s</span>
-            <span class="bm-lbl">Calculated Confluences</span>
+          <div class="ast-log" id="aiSignalLog">
+            <!-- Dynamically appended via app.js -->
+            <div class="ast-line"><span class="ast-time">[12:14:02]</span> <span class="ast-sig-buy">LONG SIGNAL</span> <span class="ast-pair">BTC/USDT</span> @ $67,480 (Score: 94%)</div>
+            <div class="ast-line"><span class="ast-time">[12:13:45]</span> <span class="ast-sig-neutral">PATTERN DETECTED</span> <span class="ast-pair">ETH/USDT</span> Bullish Flag 15m</div>
+            <div class="ast-line"><span class="ast-time">[12:13:10]</span> <span class="ast-sig-buy">LONG SIGNAL</span> <span class="ast-pair">SOL/USDT</span> @ $188.50 (Score: 91%)</div>
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     INTERACTIVE CRYPTO GALAXY (PLANETS)
+     SPATIAL CRYPTO GALAXY
      ═══════════════════════════════════════ -->
 <section class="galaxy-section" id="galaxy">
-  <!-- Interactive solar system canvas backing -->
   <div class="galaxy-canvas-container" id="cryptoGalaxyContainer"></div>
 
   <div class="section-container">
     <div class="galaxy-grid">
-      
-      <!-- Left side: Galaxy interface & live values -->
       <div class="galaxy-content">
-        <div class="section-tag">🌌 Spatial Coin Galaxy</div>
-        <h2 class="section-title text-left">Interact with the Orbiting Nodes</h2>
-        <p class="section-desc text-left">Hover or click on the planets in the 3D crypto galaxy. Each celestial sphere represents a core asset, emitting energy flares relative to its volume and momentum.</p>
-        
-        <!-- Details widget mapped to galaxy planet clicks -->
+        <div class="section-tag">🌌 Spatial Asset Galaxy</div>
+        <h2 class="section-title text-left">Interact with Orbiting Nodes</h2>
+        <p class="section-desc text-left">Click on any celestial planet in the 3D crypto galaxy. Each planet radiates energy proportional to its 24-hour volume and momentum.</p>
+
+        <!-- Info Card for Clicked Planet -->
         <div class="galaxy-info-card glass-gold" id="galaxyInfoCard">
           <div class="gic-header">
             <div class="gic-badge" id="gicIcon">₿</div>
@@ -352,96 +459,106 @@
           </div>
           <div class="gic-divider"></div>
           <div class="gic-body">
-            <div class="gic-metric"><span class="gic-lbl">Planet core:</span> <span class="gic-val text-gold" id="gicCore">Golden Core</span></div>
-            <div class="gic-metric"><span class="gic-lbl">24h Vol:</span> <span class="gic-val" id="gicVol">$48.2B</span></div>
-            <div class="gic-metric"><span class="gic-lbl">Dominance:</span> <span class="gic-val" id="gicDom">54.8%</span></div>
-            <div class="gic-metric"><span class="gic-lbl">Plasma Status:</span> <span class="gic-val text-emerald" id="gicStatus">Highly Active</span></div>
+            <div class="gic-metric"><span class="gic-lbl">Orbit Core:</span> <span class="gic-val text-gold" id="gicCore">Golden Core</span></div>
+            <div class="gic-metric"><span class="gic-lbl">24h Volume:</span> <span class="gic-val" id="gicVol">$52.4B</span></div>
+            <div class="gic-metric"><span class="gic-lbl">Market Dominance:</span> <span class="gic-val" id="gicDom">55.2%</span></div>
+            <div class="gic-metric"><span class="gic-lbl">Plasma Energy:</span> <span class="gic-val text-emerald" id="gicStatus">High Momentum</span></div>
           </div>
         </div>
       </div>
-      
-      <!-- Right side: empty spacer pushing spatial scene to center-right -->
       <div class="galaxy-spacer"></div>
-
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     3D WORKFLOW SECTION (CONNECTED NODE STATIONS)
+     QUANT PROFIT & LEVERAGE CALCULATOR
      ═══════════════════════════════════════ -->
-<section class="workflow-section" id="howitworks">
+<section class="calculator-section" id="calculator">
   <div class="section-container">
-    <div style="text-align:center;">
-      <div class="section-tag">🔄 3D Execution Pipeline</div>
-      <h2 class="section-title">Algorithmic Confluence Path</h2>
-      <p class="section-desc">Our multi-stage spatial pipeline connects market events directly to execution via energy laser beams.</p>
+    <div class="section-header center">
+      <div class="section-tag">🧮 Quant Profit Matrix</div>
+      <h2 class="section-title">Estimate Your Trading Edge</h2>
+      <p class="section-desc">Simulate return scenarios, position sizing, and leverage management before placing orders.</p>
     </div>
 
-    <!-- Stations visual canvas container -->
-    <div class="workflow-canvas-container" id="workflow3dContainer"></div>
+    <div class="calc-box glass-panel">
+      <div class="calc-grid">
+        <div class="calc-inputs">
+          <div class="calc-group">
+            <label for="calcMargin">Account Margin ($)</label>
+            <input type="number" id="calcMargin" value="1000" min="10" step="10">
+          </div>
 
-    <!-- Floating details cards below canvas -->
-    <div class="workflow-steps-cards">
-      <div class="wf-card glass" data-station="0">
-        <span class="wf-num">01</span>
-        <h3>Analyze Market</h3>
-        <p>Aggregate WebSocket order books and order flow imbalances.</p>
-      </div>
-      <div class="wf-card glass" data-station="1">
-        <span class="wf-num">02</span>
-        <h3>Generate Signals</h3>
-        <p>Neural sphere detects key confluence thresholds.</p>
-      </div>
-      <div class="wf-card glass" data-station="2">
-        <span class="wf-num">03</span>
-        <h3>Backtest Strategy</h3>
-        <p>Run instant historical checks across 50,000 candles.</p>
-      </div>
-      <div class="wf-card glass" data-station="3">
-        <span class="wf-num">04</span>
-        <h3>Execute Trade</h3>
-        <p>Route orders to 12 exchanges in under 50ms.</p>
-      </div>
-      <div class="wf-card glass" data-station="4">
-        <span class="wf-num">05</span>
-        <h3>Track Performance</h3>
-        <p>Visualize visual portfolio assets in real-time space.</p>
+          <div class="calc-group">
+            <div class="label-row">
+              <label for="calcLeverage">Leverage</label>
+              <span class="calc-badge" id="leverageVal">10x</span>
+            </div>
+            <input type="range" id="calcLeverage" min="1" max="100" value="10">
+          </div>
+
+          <div class="calc-group">
+            <div class="label-row">
+              <label for="calcMove">Price Move (%)</label>
+              <span class="calc-badge text-green" id="moveVal">+5%</span>
+            </div>
+            <input type="range" id="calcMove" min="-30" max="100" value="5" step="1">
+          </div>
+        </div>
+
+        <div class="calc-outputs glass-gold">
+          <div class="calc-res-item">
+            <span class="cri-label">Position Size</span>
+            <span class="cri-val" id="resPosSize">$10,000</span>
+          </div>
+          <div class="calc-res-item">
+            <span class="cri-label">Estimated PnL ($)</span>
+            <span class="cri-val text-green" id="resPnL">+$500.00</span>
+          </div>
+          <div class="calc-res-item">
+            <span class="cri-label">Estimated Return (ROI)</span>
+            <span class="cri-val text-gold" id="resROI">+50.00%</span>
+          </div>
+          <div class="calc-res-item">
+            <span class="cri-label">Liquidation Buffer</span>
+            <span class="cri-val text-cyan" id="resLiq">~ 9.1% Room</span>
+          </div>
+          <a href="/charts" class="btn btn-gold btn-full" style="margin-top:16px;">Execute Setup in Terminal</a>
+        </div>
       </div>
     </div>
-
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     TESTIMONIALS (3D PERSPECTIVE CARDS)
+     TESTIMONIALS
      ═══════════════════════════════════════ -->
 <section class="testimonials" id="testimonials">
   <div class="section-container">
-    <div style="text-align:center;">
-      <div class="section-tag">💬 Social Proof</div>
-      <h2 class="section-title">Trusted by Institutional Quants</h2>
-      <p class="section-desc">Join 500,000+ retail and institutional desks trading at the peak of precision.</p>
+    <div class="section-header center">
+      <div class="section-tag">💬 Quant Community</div>
+      <h2 class="section-title">Trusted by Institutional Desk Quants</h2>
+      <p class="section-desc">Join 520,000+ retail quants and prop fund managers operating with precision.</p>
     </div>
 
     <div class="testimonials-grid-3d">
-      
       <div class="testimonial-card-3d glass">
         <div class="t-stars">★★★★★</div>
-        <p class="t-text">"The WebGL engine speed is staggering. Rendering 10k candles, multiple indicators, and volume profiles runs at a native 60 FPS. Essential for active execution."</p>
+        <p class="t-text">"The WebGL engine speed is staggering. Rendering 10k candles, volume profiles, and liquidity heatmaps runs at a solid 60 FPS natively."</p>
         <div class="t-author">
           <div class="t-avatar">PT</div>
           <div class="t-author-info">
             <h5>Peter Thiel</h5>
             <span>Quant Desk Swing Trader</span>
-            <div class="t-profit">↑ +142% this quarter</div>
+            <div class="t-profit">↑ +142% quarterly return</div>
           </div>
         </div>
       </div>
 
       <div class="testimonial-card-3d glass">
         <div class="t-stars">★★★★★</div>
-        <p class="t-text">"Real-time volume profiles combined with the AI confluence brain is a complete game changer. Spotting liquidity pools and order sweeps is instant."</p>
+        <p class="t-text">"Real-time volume profiles combined with the neural AI confluence brain completely eliminated emotional trades for our prop desk."</p>
         <div class="t-author">
           <div class="t-avatar">CI</div>
           <div class="t-author-info">
@@ -454,32 +571,32 @@
 
       <div class="testimonial-card-3d glass">
         <div class="t-stars">★★★★★</div>
-        <p class="t-text">"Having bank-grade encryption pipelines alongside high-polygon risk overlays gives our desk absolute peace of mind. Outstanding work."</p>
+        <p class="t-text">"Having bank-grade WebSocket pipelines alongside 3D spatial risk overlays gives our trading floor an immense execution edge."</p>
         <div class="t-author">
           <div class="t-avatar">QA</div>
           <div class="t-author-info">
-            <h5>Quant desk</h5>
+            <h5>Alex Vance</h5>
             <span>Systematic Lead Developer</span>
             <div class="t-profit">↑ +243% 3-Year CAGR</div>
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     PRICING (PREMIUM BOXES)
+     PRICING TIERS
      ═══════════════════════════════════════ -->
 <section class="pricing" id="pricing">
   <div class="section-container">
-    <div style="text-align:center;">
+    <div class="section-header center">
       <div class="section-tag">💎 Institutional Tiers</div>
-      <h2 class="section-title">Uncompromising Tiers</h2>
-      <p class="section-desc">Unlock advanced spatial analytics at a tier that matches your desks' velocity.</p>
+      <h2 class="section-title">Transparent Tier Plans</h2>
+      <p class="section-desc">Unlock advanced spatial analytics at a tier tailored for your execution volume.</p>
     </div>
 
+    <!-- Toggle Slider -->
     <div class="billing-toggle-wrap">
       <button class="billing-btn active" id="btnMonthly">Monthly</button>
       <div class="billing-toggle-slider" id="billingSlider">
@@ -489,7 +606,7 @@
     </div>
 
     <div class="pricing-grid">
-      
+      <!-- Starter Tier -->
       <div class="price-card glass">
         <div class="pc-glare"></div>
         <h4>Starter</h4>
@@ -504,31 +621,33 @@
           <li>Price alerts &amp; notifications</li>
           <li>1 active watchlist</li>
           <li class="locked">AI confluence matrix</li>
-          <li class="locked">Order flow analysis</li>
+          <li class="locked">Order flow depth heatmap</li>
         </ul>
         <a href="/charts" class="btn btn-glass btn-full">Get Started</a>
       </div>
 
+      <!-- Pro Tier -->
       <div class="price-card glass popular">
         <div class="pc-glare"></div>
         <div class="pop-badge">Most Popular</div>
         <h4>Pro</h4>
         <div class="price">$<span class="price-amount" data-monthly="79" data-yearly="63">79</span></div>
         <div class="price-period">/month</div>
-        <div class="price-desc">For professional swing &amp; scalp traders.</div>
+        <div class="price-desc">For professional quants &amp; day traders.</div>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li>Everything in Starter</li>
-          <li>AI confluence matrix</li>
+          <li>AI Confluence Matrix</li>
           <li>Real-time order flow &amp; depth</li>
           <li>Smart Money FVG &amp; OBs</li>
-          <li>CSV trading journal export</li>
+          <li>Paper trading simulator</li>
           <li>80+ indicators &amp; overlays</li>
           <li>Backtesting engine</li>
         </ul>
         <a href="/charts" class="btn btn-gold btn-full">Launch Pro Terminal</a>
       </div>
 
+      <!-- Enterprise Tier -->
       <div class="price-card glass">
         <div class="pc-glare"></div>
         <h4>Enterprise</h4>
@@ -538,16 +657,15 @@
         <div class="price-divider"></div>
         <ul class="price-features">
           <li>Everything in Pro</li>
-          <li>Full API webhook endpoints</li>
-          <li>Unlimited parallel timeframes</li>
-          <li>Priority server mirrors</li>
-          <li>Dedicated account manager</li>
+          <li>Full API Webhook Endpoints</li>
+          <li>Unlimited parallel charts</li>
+          <li>Priority server node mirrors</li>
+          <li>Dedicated quant account manager</li>
           <li>Custom indicator scripting</li>
           <li>White-label options</li>
         </ul>
-        <a href="#" id="enterpriseCta" class="btn btn-glass btn-full">Contact Sales</a>
+        <a href="/charts" class="btn btn-glass btn-full">Contact Sales</a>
       </div>
-
     </div>
   </div>
 </section>
@@ -556,65 +674,65 @@
      FINAL CTA
      ═══════════════════════════════════════ -->
 <section class="cta-final">
-  <canvas id="ctaParticles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
   <div class="cta-final-content">
-    <div class="section-tag" style="margin:0 auto 28px;">🚀 Take Control</div>
-    <h2>Deploy Your Strategies<br><span class="text-gold">Into the Future</span></h2>
-    <p>Join over 500,000 traders operating with absolute mechanical confluences. Live setup takes under 3 minutes.</p>
+    <div class="section-tag" style="margin:0 auto 28px;">🚀 Instant Access</div>
+    <h2>Deploy Your Edge<br><span class="text-gradient-gold">Into the Future</span></h2>
+    <p>Join over 520,000 quants operating with mechanical confluence. Setup takes under 60 seconds.</p>
     
     <div class="cta-btns">
-      <a href="/charts" class="btn btn-gold btn-lg">
+      <a href="/charts" class="btn btn-gold btn-lg glow-effect">
         <span>🚀</span> Start Trading Now
       </a>
-      <a href="#markets" class="btn btn-glass btn-lg">
-        <span>🌌</span> View Universe
+      <a href="/simulator.html" class="btn btn-glass btn-lg">
+        <span>⚡</span> Practice Paper Trading
       </a>
     </div>
-    
+
     <div class="cta-trust">
-      <div class="trust-item">No credit card required</div>
-      <div class="trust-item">Free 14-day trial</div>
-      <div class="trust-item">Cancel anytime</div>
-      <div class="trust-item">Bank-grade security</div>
+      <div class="trust-item">✓ No credit card required</div>
+      <div class="trust-item">✓ Free 14-day trial</div>
+      <div class="trust-item">✓ Cancel anytime</div>
+      <div class="trust-item">✓ Bank-grade security</div>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════
-     FOOTER COMMAND CENTER
+     FOOTER & COMMAND CENTER
      ═══════════════════════════════════════ -->
 <footer class="footer">
   <div class="footer-grid">
     <div class="footer-brand">
       <div class="logo">
-        <div class="logo-mark">A</div>
-        <span>ApexTrader Pro</span>
+        <div class="logo-mark">▲</div>
+        <span>ApexTrader Ultra</span>
       </div>
-      <p>Institutional charting, spatial data nodes, and neural signals designed to deliver absolute edge in volatile markets.</p>
+      <p>Institutional 3D charting, spatial data nodes, and neural AI signals designed for maximum competitive edge.</p>
       <div class="footer-social">
-        <a href="#" title="Twitter">𝕏</a>
+        <a href="#" title="Twitter / X">𝕏</a>
         <a href="#" title="Discord">💬</a>
         <a href="#" title="Telegram">✈️</a>
         <a href="#" title="GitHub">⌥</a>
       </div>
     </div>
-    
+
     <div class="footer-links">
       <h5>Platform</h5>
       <a href="#markets">Universe</a>
-      <a href="#chart-hologram">HoloChart</a>
-      <a href="#pricing">Pricing</a>
+      <a href="#terminal">Terminal</a>
+      <a href="#brain">AI Brain</a>
       <a href="/charts">Launch Terminal</a>
+      <a href="/simulator.html">Paper Simulator</a>
     </div>
-    
+
     <div class="footer-links">
       <h5>Resources</h5>
       <a href="#">Documentation</a>
-      <a href="#">API Mirror</a>
-      <a href="#">Trading Guides</a>
-      <a href="#">Node Status</a>
+      <a href="#">API Endpoints</a>
+      <a href="#">Node Health</a>
+      <a href="#">Quant Guides</a>
     </div>
-    
+
     <div class="footer-links">
       <h5>Company</h5>
       <a href="#">About Core</a>
@@ -624,23 +742,24 @@
     </div>
   </div>
 
-  <!-- Futuristic Footer Command Center Ticker Bar -->
+  <!-- Live Footer Command Center Bar -->
   <div class="footer-command-bar">
     <div class="fcc-item"><span class="fcc-lbl">System Status:</span> <span class="fcc-val text-emerald">● Optimal</span></div>
     <div class="fcc-item"><span class="fcc-lbl">Trading Nodes:</span> <span class="fcc-val">12/12 Online</span></div>
-    <div class="fcc-item"><span class="fcc-lbl">Network Ping:</span> <span class="fcc-val text-cyan">14ms</span></div>
-    <div class="fcc-item"><span class="fcc-lbl">API Mirror Load:</span> <span class="fcc-val">4.2%</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">Network Ping:</span> <span class="fcc-val text-cyan" id="footerPing">12ms</span></div>
+    <div class="fcc-item"><span class="fcc-lbl">API Load:</span> <span class="fcc-val">3.8%</span></div>
     <div class="fcc-item"><span class="fcc-lbl">Uptime SLA:</span> <span class="fcc-val text-emerald">99.998%</span></div>
   </div>
 
   <div class="footer-bottom">
-    <span>© 2026 ApexTrader Pro. Digital assets trading involves high risks. Not financial advice.</span>
-    <span>SLA mirror coverage global · SEC compliant authentication</span>
+    <span>© 2026 ApexTrader Ultra. Digital assets trading involves financial risk.</span>
+    <span>Global multi-region SSL nodes active</span>
   </div>
 </footer>
 
-
-
+<!-- ═══════════════════════════════════════
+     DEPENDENCIES & SCRIPTS
+     ═══════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>

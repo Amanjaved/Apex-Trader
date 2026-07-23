@@ -77,6 +77,15 @@ def fetch_binance(path: str, ttl: int) -> bytes:
         if time.time() - ts < ttl:
             return data
 
+    try:
+        from backend.repositories.db import get_cached_item
+        cached_data = get_cached_item(path, ttl)
+        if cached_data is not None:
+            cache_set(path, cached_data)
+            return cached_data
+    except Exception:
+        pass
+
     last_err: Exception | None = None
     for base in BINANCE_BASES:
         try:
@@ -85,6 +94,11 @@ def fetch_binance(path: str, ttl: int) -> bytes:
             with urllib.request.urlopen(req, timeout=6) as resp:
                 data = resp.read()
             cache_set(path, data)
+            try:
+                from backend.repositories.db import set_cached_item
+                set_cached_item(path, data)
+            except Exception:
+                pass
             return data
         except Exception as exc:
             last_err = exc
@@ -107,3 +121,61 @@ def fetch_coins() -> bytes:
     all_ = json.loads(raw)
     filtered = [t for t in all_ if t.get("symbol") in SUPPORTED_SYMBOLS]
     return json.dumps(filtered).encode()
+
+def compute_order_flow_metrics(klines: List[List[Any]]) -> Dict[str, Any]:
+    """Computes Cumulative Volume Delta (CVD) and Volume Profile (POC, VAH, VAL) from Binance klines."""
+    if not klines:
+        return {"cvd": [], "poc": 0.0, "vah": 0.0, "val": 0.0}
+
+    cvd_series: List[float] = []
+    running_cvd = 0.0
+    price_volume: Dict[float, float] = {}
+
+    for k in klines:
+        try:
+            open_p = float(k[1])
+            close_p = float(k[4])
+            vol = float(k[5])
+
+            if len(k) >= 10 and k[9] is not None:
+                buy_vol = float(k[9])
+                sell_vol = max(0.0, vol - buy_vol)
+            else:
+                pct = 0.55 if close_p >= open_p else 0.45
+                buy_vol = vol * pct
+                sell_vol = vol * (1.0 - pct)
+
+            delta = buy_vol - sell_vol
+            running_cvd += delta
+            cvd_series.append(round(running_cvd, 2))
+
+            price_bucket = round(close_p, 1)
+            price_volume[price_bucket] = price_volume.get(price_bucket, 0.0) + vol
+        except (ValueError, TypeError, IndexError):
+            continue
+
+    if not price_volume:
+        return {"cvd": cvd_series, "poc": 0.0, "vah": 0.0, "val": 0.0}
+
+    poc = max(price_volume.keys(), key=lambda p: price_volume[p])
+    sorted_prices = sorted(price_volume.keys())
+    total_vol = sum(price_volume.values())
+
+    acc_vol = 0.0
+    val_price = sorted_prices[0]
+    vah_price = sorted_prices[-1]
+
+    for p in sorted_prices:
+        acc_vol += price_volume[p]
+        if acc_vol >= (total_vol * 0.15) and val_price == sorted_prices[0]:
+            val_price = p
+        if acc_vol >= (total_vol * 0.85):
+            vah_price = p
+            break
+
+    return {
+        "cvd": cvd_series,
+        "poc": poc,
+        "vah": vah_price,
+        "val": val_price
+    }

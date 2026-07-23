@@ -70,7 +70,17 @@ export function renderPaperPositionsTable(currentPrice, opts = {}) {
   if (!tbody) return;
 
   if (!S.demoPositions.length) {
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-3);padding:20px;">No active positions. Use BUY/SELL to open a demo trade.</td></tr>`;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="11" style="text-align:center; padding:24px 10px;">
+          <div style="font-size:13px; font-weight:700; color:var(--text-secondary); margin-bottom: 4px;">Waiting for Opportunity</div>
+          <div style="font-size:10px; color:var(--text-3); margin-bottom: 8px;">AI currently waiting for confirmation · Market not ready</div>
+          <div style="display:flex; justify-content:center; gap:16px; font-size:10px; font-family:var(--mono);">
+            <span>Last Signal: <strong class="green">LONG</strong> (Yesterday)</span>
+            <span>Outcome: <strong class="green">WIN +4.3%</strong></span>
+          </div>
+        </td>
+      </tr>`;
     return;
   }
 

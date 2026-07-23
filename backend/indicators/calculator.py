@@ -206,3 +206,39 @@ def detect_order_blocks(candles: List[Dict[str, Any]]) -> Dict[str, List[Dict[st
                     "close": c["c"]
                 })
     return {"bullOBs": bull_obs, "bearOBs": bear_obs}
+
+def calculate_vwap(candles: List[Dict[str, Any]]) -> List[float]:
+    """Calculate daily-resetting Volume Weighted Average Price (VWAP)."""
+    n = len(candles)
+    out = [0.0] * n
+    if n == 0:
+        return out
+        
+    import datetime
+    
+    current_day = None
+    sum_pv = 0.0
+    sum_vol = 0.0
+    
+    for i in range(n):
+        c = candles[i]
+        try:
+            # Assume UTC timezone aware or simple offset division
+            dt = datetime.datetime.fromtimestamp(c["t"] / 1000.0, datetime.timezone.utc)
+            day = dt.date()
+        except Exception:
+            day = i // 24 # Fallback
+            
+        if current_day != day:
+            current_day = day
+            sum_pv = 0.0
+            sum_vol = 0.0
+            
+        tp = (c["h"] + c["l"] + c["c"]) / 3.0
+        vol = c["v"]
+        sum_pv += tp * vol
+        sum_vol += vol
+        
+        out[i] = sum_pv / sum_vol if sum_vol > 0 else c["c"]
+        
+    return out

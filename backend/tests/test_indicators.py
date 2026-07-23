@@ -285,5 +285,35 @@ class TestAICopilot(unittest.TestCase):
         finally:
             services.fetch_candles = orig_fetch_candles
 
+    def test_monte_carlo_normalization(self):
+        copilot = AICopilot()
+        import backend.services as services
+        import json
+        import time
+        
+        now_ms = int(time.time() * 1000)
+        # Mock candles to create standard conditions
+        closes = [60000.0] * 200
+        candles = []
+        for i, c_val in enumerate(closes):
+            candles.append([
+                now_ms - (200 - i) * 60000,
+                str(c_val - 100), str(c_val + 100), str(c_val - 100), str(c_val), "1000.0"
+            ])
+            
+        orig_fetch_candles = services.fetch_candles
+        services.fetch_candles = lambda sym, iv, lim: json.dumps(candles)
+        try:
+            res = copilot.analyze_market_structure("BTCUSDT", "1h")
+            mc = res.get("monteCarlo", {})
+            self.assertIn("bull_breakout", mc)
+            self.assertIn("ranging", mc)
+            self.assertIn("bear_breakdown", mc)
+            
+            p_sum = int(mc["bull_breakout"]) + int(mc["ranging"]) + int(mc["bear_breakdown"])
+            self.assertEqual(p_sum, 100)
+        finally:
+            services.fetch_candles = orig_fetch_candles
+
 if __name__ == "__main__":
     unittest.main()

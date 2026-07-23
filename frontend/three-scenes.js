@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderManager.register('hero', initHeroScene);
   renderManager.register('markets', initMarketsBgScene);
   renderManager.register('chart-hologram', initHologramChartScene);
+  renderManager.register('terminal', initHologramChartScene);
   renderManager.register('metrics', initDataTowersScene);
   renderManager.register('brain', initNeuralBrainScene);
   renderManager.register('galaxy', initCryptoGalaxyScene);
@@ -26,6 +27,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Card hover tilts
   initCardTiltEffect();
 });
+
+// Helper to dispose Three.js scene resources (prevents GPU memory leaks)
+function disposeScene(scene) {
+  if (!scene) return;
+  scene.traverse(obj => {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(m => m.dispose());
+      } else {
+        obj.material.dispose();
+      }
+    }
+  });
+}
 
 // ══════════════════════════════════════════════════════
 // CENTRAL VIEWPORT RENDER MANAGER (OBSERVER)
@@ -47,6 +63,13 @@ class ViewportRenderManager {
     }, { threshold: 0.05, rootMargin: '100px 0px 100px 0px' });
   }
 
+  disposeAll() {
+    this.scenes.forEach(s => {
+      if (s.context && s.context.scene) disposeScene(s.context.scene);
+    });
+    this.scenes = [];
+  }
+
   register(id, initFn) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -55,7 +78,7 @@ class ViewportRenderManager {
     let container = el;
     if (id === 'hero') container = document.getElementById('hero3dScene');
     else if (id === 'markets') container = document.getElementById('marketsCanvasContainer');
-    else if (id === 'chart-hologram') container = document.getElementById('hologramChartContainer');
+    else if (id === 'chart-hologram' || id === 'terminal') container = document.getElementById('hologramChartContainer');
     else if (id === 'metrics') container = document.getElementById('dataTowersContainer');
     else if (id === 'brain') container = document.getElementById('aiBrainContainer');
     else if (id === 'galaxy') container = document.getElementById('cryptoGalaxyContainer');
@@ -106,97 +129,86 @@ function createBaseRenderer(container) {
 
 
 // ══════════════════════════════════════════════════════
-// 1. HERO 3D SCENE (GLOWING BITCOIN + ORBITING HTML CARDS)
+// ══════════════════════════════════════════════════════
+// 1. HERO 3D SCENE (FUTURISTIC APEX 3D CRYSTAL EMBLEM)
 // ══════════════════════════════════════════════════════
 function initHeroScene(container) {
   const { scene, camera, renderer } = createBaseRenderer(container);
   camera.position.set(0, 0, 8);
 
-  // Lights
-  scene.add(new THREE.AmbientLight(0xfff3e0, 0.5));
-  const dirLight1 = new THREE.DirectionalLight(0xffd54f, 2.5);
-  dirLight1.position.set(5, 5, 4);
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xfff5e6, 0.6));
+  const dirLight1 = new THREE.DirectionalLight(0xf0b90b, 3.0);
+  dirLight1.position.set(6, 8, 5);
   scene.add(dirLight1);
 
-  const dirLight2 = new THREE.DirectionalLight(0x00e5ff, 1.5);
-  dirLight2.position.set(-5, -5, 2);
+  const dirLight2 = new THREE.DirectionalLight(0x00f2fe, 2.0);
+  dirLight2.position.set(-6, -6, 3);
   scene.add(dirLight2);
 
-  // Hologram Bitcoin construction
-  const btcGroup = new THREE.Group();
-  scene.add(btcGroup);
+  const pointLight = new THREE.PointLight(0xf0b90b, 4, 10);
+  pointLight.position.set(0, 0, 0);
+  scene.add(pointLight);
 
-  const btcMat = new THREE.MeshStandardMaterial({
-    color: 0xf7931a,
-    emissive: 0x5a2d00,
-    metalness: 0.95,
-    roughness: 0.1,
-    wireframe: false
+  // Apex 3D Emblem Group
+  const emblemGroup = new THREE.Group();
+  scene.add(emblemGroup);
+
+  // 1. Central Apex Octahedron Prism (Gold Core)
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: 0xf0b90b,
+    emissive: 0x5a3d00,
+    metalness: 0.9,
+    roughness: 0.15,
+    flatShading: true
   });
+  const coreGeom = new THREE.OctahedronGeometry(1.6, 0);
+  const coreMesh = new THREE.Mesh(coreGeom, coreMat);
+  emblemGroup.add(coreMesh);
 
-  const btcWireMat = new THREE.MeshBasicMaterial({
-    color: 0xffb74d,
+  // Wireframe shell over core
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0x00f2fe,
     wireframe: true,
     transparent: true,
-    opacity: 0.25
+    opacity: 0.35
   });
+  const wireMesh = new THREE.Mesh(coreGeom, wireMat);
+  wireMesh.scale.set(1.1, 1.1, 1.1);
+  emblemGroup.add(wireMesh);
 
-  // Base coin cylinder
-  const coinGeom = new THREE.CylinderGeometry(1.8, 1.8, 0.25, 32);
-  const coinMesh = new THREE.Mesh(coinGeom, btcMat);
-  coinMesh.rotation.x = Math.PI / 2;
-  btcGroup.add(coinMesh);
+  // 2. Gyroscope Ring 1 (Gold)
+  const ring1Geom = new THREE.TorusGeometry(2.4, 0.06, 16, 100);
+  const ring1Mat = new THREE.MeshStandardMaterial({ color: 0xf0b90b, metalness: 0.95, roughness: 0.1 });
+  const ring1 = new THREE.Mesh(ring1Geom, ring1Mat);
+  ring1.rotation.x = Math.PI / 3;
+  emblemGroup.add(ring1);
 
-  // Outer wireframe shell
-  const wireShell = new THREE.Mesh(coinGeom, btcWireMat);
-  wireShell.rotation.x = Math.PI / 2;
-  wireShell.scale.set(1.05, 1.05, 1.05);
-  btcGroup.add(wireShell);
+  // 3. Gyroscope Ring 2 (Cyan Glow)
+  const ring2Geom = new THREE.TorusGeometry(2.8, 0.04, 16, 100);
+  const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, transparent: true, opacity: 0.8 });
+  const ring2 = new THREE.Mesh(ring2Geom, ring2Mat);
+  ring2.rotation.y = Math.PI / 4;
+  emblemGroup.add(ring2);
 
-  // Bitcoin Symbol details
-  const symbolMat = new THREE.MeshStandardMaterial({ color: 0xffd54f, metalness: 0.9, roughness: 0.1 });
-  const spineGeom = new THREE.BoxGeometry(0.25, 1.6, 0.4);
-  const spine = new THREE.Mesh(spineGeom, symbolMat);
-  spine.position.set(-0.35, 0, 0);
-  btcGroup.add(spine);
+  // 4. Outer Orbital Ring 3 (Emerald)
+  const ring3Geom = new THREE.TorusGeometry(3.2, 0.03, 16, 100);
+  const ring3Mat = new THREE.MeshBasicMaterial({ color: 0x00e676, transparent: true, opacity: 0.6 });
+  const ring3 = new THREE.Mesh(ring3Geom, ring3Mat);
+  ring3.rotation.x = -Math.PI / 4;
+  emblemGroup.add(ring3);
 
-  const curvesGeom1 = new THREE.TorusGeometry(0.38, 0.12, 8, 32, Math.PI);
-  const curve1 = new THREE.Mesh(curvesGeom1, symbolMat);
-  curve1.position.set(0.05, 0.38, 0.1);
-  curve1.rotation.z = -Math.PI / 2;
-  btcGroup.add(curve1);
-
-  const curve2 = new THREE.Mesh(curvesGeom1, symbolMat);
-  curve2.position.set(0.05, -0.38, 0.1);
-  curve2.rotation.z = -Math.PI / 2;
-  btcGroup.add(curve2);
-
-  const prongGeom = new THREE.BoxGeometry(0.12, 1.9, 0.4);
-  const prong1 = new THREE.Mesh(prongGeom, symbolMat);
-  prong1.position.set(-0.1, 0, 0);
-  btcGroup.add(prong1);
-  const prong2 = new THREE.Mesh(prongGeom, symbolMat);
-  prong2.position.set(0.15, 0, 0);
-  btcGroup.add(prong2);
-
-  // Orbit Paths
-  const orbitGeom = new THREE.RingGeometry(2.8, 2.82, 64);
-  const orbitMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.15 });
-  const path = new THREE.Mesh(orbitGeom, orbitMat);
-  path.rotation.x = Math.PI / 2.2;
-  scene.add(path);
-
-  // Floating particles
-  const pCount = 80;
+  // Floating Quantum Particles
+  const pCount = 100;
   const pGeom = new THREE.BufferGeometry();
   const pPos = new Float32Array(pCount * 3);
   for (let i = 0; i < pCount; i++) {
-    pPos[i*3] = (Math.random() - 0.5) * 12;
-    pPos[i*3+1] = (Math.random() - 0.5) * 8;
-    pPos[i*3+2] = (Math.random() - 0.5) * 5;
+    pPos[i*3] = (Math.random() - 0.5) * 14;
+    pPos[i*3+1] = (Math.random() - 0.5) * 10;
+    pPos[i*3+2] = (Math.random() - 0.5) * 6;
   }
   pGeom.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  const pMat = new THREE.PointsMaterial({ color: 0xffd54f, size: 0.08, transparent: true, opacity: 0.6 });
+  const pMat = new THREE.PointsMaterial({ color: 0xf0b90b, size: 0.09, transparent: true, opacity: 0.7 });
   const pSystem = new THREE.Points(pGeom, pMat);
   scene.add(pSystem);
 
@@ -214,18 +226,23 @@ function initHeroScene(container) {
     animate: () => {
       const time = clock.getElapsedTime();
 
-      // Slow Bitcoin rotation & bobbing
-      btcGroup.rotation.y = time * 0.45;
-      btcGroup.position.y = Math.sin(time * 1.2) * 0.12;
-      wireShell.rotation.y = -time * 0.15;
+      // Gyroscopic Multi-Axis Rotations
+      coreMesh.rotation.y = time * 0.5;
+      coreMesh.rotation.x = time * 0.3;
+      wireMesh.rotation.y = -time * 0.4;
+      wireMesh.rotation.z = time * 0.2;
 
-      // Particle float
-      const positions = pGeom.attributes.position.array;
-      for (let i = 0; i < pCount; i++) {
-        positions[i*3+1] -= 0.008;
-        if (positions[i*3+1] < -4) positions[i*3+1] = 4;
-      }
-      pGeom.attributes.position.needsUpdate = true;
+      ring1.rotation.z = time * 0.6;
+      ring1.rotation.y = time * 0.4;
+
+      ring2.rotation.x = time * 0.5;
+      ring2.rotation.z = -time * 0.3;
+
+      ring3.rotation.y = -time * 0.4;
+      ring3.rotation.x = time * 0.2;
+
+      // Pulsing Emblem Light Intensity
+      pointLight.intensity = 3.5 + Math.sin(time * 3) * 1.2;
 
       // Parallax camera lerp
       camera.position.x += (mouseX * 3.5 - camera.position.x) * 0.08;
@@ -234,8 +251,8 @@ function initHeroScene(container) {
 
       // Animate HTML cards orbiting in 3D
       if (orbitCards.length > 0) {
-        const radiusX = 260; // orbit horizontal spread
-        const radiusZ = 120; // depth spread
+        const radiusX = 180; // horizontal spread contained on right visual column
+        const radiusZ = 100; // depth spread
         const speed = 0.5;
 
         orbitCards.forEach((card, index) => {
@@ -244,11 +261,11 @@ function initHeroScene(container) {
           
           const x = Math.cos(theta) * radiusX;
           const z = Math.sin(theta) * radiusZ;
-          const y = Math.sin(time * 1.5 + index) * 15;
+          const y = Math.sin(time * 1.5 + index) * 12;
 
           // Scale card dynamically based on Z depth position
-          const scale = 0.75 + ((z + radiusZ) / (2 * radiusZ)) * 0.4;
-          const opacity = 0.35 + ((z + radiusZ) / (2 * radiusZ)) * 0.65;
+          const scale = 0.75 + ((z + radiusZ) / (2 * radiusZ)) * 0.35;
+          const opacity = 0.4 + ((z + radiusZ) / (2 * radiusZ)) * 0.6;
           const zIndex = Math.round(50 + ((z + radiusZ) / (2 * radiusZ)) * 50);
 
           card.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), ${z}px) scale(${scale})`;

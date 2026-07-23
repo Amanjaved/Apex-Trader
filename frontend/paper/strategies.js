@@ -158,9 +158,13 @@ export function calculateVWAP(candles) {
     const typicalPrice = (c.h + c.l + c.c) / 3;
     const vol = c.v || 1.0;
     
-    if (i > 0 && c.t && candles[i - 1].t && c.t.slice(0, 10) !== candles[i - 1].t.slice(0, 10)) {
-      sumPv = 0;
-      sumVolume = 0;
+    if (i > 0 && c.t && candles[i - 1] && candles[i - 1].t) {
+      const day1 = typeof c.t === 'string' ? c.t.slice(0, 10) : new Date(c.t).toISOString().slice(0, 10);
+      const day2 = typeof candles[i - 1].t === 'string' ? candles[i - 1].t.slice(0, 10) : new Date(candles[i - 1].t).toISOString().slice(0, 10);
+      if (day1 !== day2) {
+        sumPv = 0;
+        sumVolume = 0;
+      }
     }
     
     sumPv += typicalPrice * vol;
