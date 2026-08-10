@@ -3,17 +3,46 @@ from __future__ import annotations
 import os
 import sqlite3
 import json
+import time
+import logging
 from contextlib import contextmanager
 
+logger = logging.getLogger(__name__)
+
 DB_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(DB_DIR, "paper_trading.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join(DB_DIR, "paper_trading.db"))
+
+
+def _ensure_valid_db_file(path: str) -> None:
+    """Detect if DB file is corrupt or a Git LFS pointer text file and reset if needed."""
+    if not os.path.exists(path):
+        return
+    try:
+        size = os.path.getsize(path)
+        # Git LFS pointer files are small text files (< 300 bytes)
+        if size < 500:
+            with open(path, "rb") as f:
+                header = f.read(30)
+                if header.startswith(b"version https://") or (len(header) > 0 and not header.startswith(b"SQLite format 3")):
+                    logger.warning("Detected non-SQLite pointer file at %s (%s). Resetting DB.", path, header)
+                    f.close()
+                    os.remove(path)
+                    for ext in ["-wal", "-shm"]:
+                        wal_file = path + ext
+                        if os.path.exists(wal_file):
+                            try:
+                                os.remove(wal_file)
+                            except Exception:
+                                pass
+    except Exception as e:
+        logger.error("Failed to check DB header for %s: %s", path, e)
+
 
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:
-        conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA busy_timeout=10000;")
         yield conn
         conn.commit()
@@ -23,13 +52,24 @@ def get_db():
     finally:
         conn.close()
 
+
 def init_db():
     # Ensure directory exists
-    os.makedirs(DB_DIR, exist_ok=True)
+    target_dir = os.path.dirname(os.path.abspath(DB_PATH))
+    os.makedirs(target_dir, exist_ok=True)
+    
+    # Check for Git LFS pointer or invalid SQLite header
+    _ensure_valid_db_file(DB_PATH)
     
     with get_db() as conn:
         cursor = conn.cursor()
         
+        # Safely enable WAL mode once during initialization
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
+
         # 1. Demo Accounts Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS demo_accounts (
@@ -124,6 +164,13 @@ def init_db():
             )
         """)
         
+        # Clean up stale cache items older than 24 hours to keep DB lightweight
+        try:
+            one_day_ago = time.time() - 86400
+            cursor.execute("DELETE FROM local_cache WHERE updated_at < ?", (one_day_ago,))
+        except Exception:
+            pass
+
         # Pre-seed a default demo account with $10,000 if none exist
         cursor.execute("SELECT COUNT(*) FROM demo_accounts")
         if cursor.fetchone()[0] == 0:
