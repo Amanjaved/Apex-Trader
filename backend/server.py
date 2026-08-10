@@ -47,6 +47,14 @@ def _banner() -> None:
     print(f"  {DIM}Press Ctrl+C to stop.{RESET}")
     print()
 
+class QuietThreadingHTTPServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        import sys
+        exctype, value, tb = sys.exc_info()
+        if exctype and issubclass(exctype, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError)):
+            return
+        super().handle_error(request, client_address)
+
 def start_server() -> None:
     # Pre-flight check
     if not os.path.isfile(HTML_FILE):
@@ -55,7 +63,7 @@ def start_server() -> None:
 
     _banner()
 
-    server = http.server.ThreadingHTTPServer(("", PORT), Handler)
+    server = QuietThreadingHTTPServer(("", PORT), Handler)
     threading.Thread(target=_open_browser, daemon=True).start()
 
     try:

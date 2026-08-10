@@ -253,24 +253,28 @@ async function init() {
   connectWebSocket();
   await refreshAnalysis();
 
-  // Background silent refresh every 15 seconds to update all data in real-time
+  // Background silent refresh every 15 seconds to update all data in real-time when active
   setInterval(() => {
-    refreshAnalysis(true);
+    if (!document.hidden) {
+      refreshAnalysis(true);
+    }
   }, 15000);
   
-  // Show/Hide Sticky Decision Bar on scroll
-  window.addEventListener('scroll', () => {
+  // Show/Hide Sticky Decision Bar on scroll (IntersectionObserver - Zero Layout Thrashing)
+  try {
     const mainHeader = document.querySelector('.terminal-header-board');
     const stickyBar = document.getElementById('stickyDecisionBar');
     if (mainHeader && stickyBar) {
-      const headerBottom = mainHeader.getBoundingClientRect().bottom;
-      if (headerBottom < 0) {
-        stickyBar.style.display = 'flex';
-      } else {
-        stickyBar.style.display = 'none';
-      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          stickyBar.style.display = entry.isIntersecting ? 'none' : 'flex';
+        });
+      }, { threshold: 0 });
+      observer.observe(mainHeader);
     }
-  });
+  } catch (e) {
+    console.warn('[Sticky Bar Observer Error]', e);
+  }
 
   // GSAP Entrance Animations
   if (window.gsap) {

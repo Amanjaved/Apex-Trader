@@ -14,7 +14,7 @@ from backend.indicators.calculator import (
 
 class AICopilot:
     # Bump this whenever the scoring formula changes — forces cache invalidation.
-    _CACHE_VERSION = 3  # v3: score cap 80 + graduated TF bonus + ATR prune
+    _CACHE_VERSION = 8  # v8: added long_term_levels in out_dict
 
     def __init__(self):
         self._zones_cache = {}
@@ -40,7 +40,7 @@ class AICopilot:
             n = len(candles)
             if n >= 50:
                 latest_candle_t = candles[-1]["t"]
-                cache_key = f"analysis_obj_{symbol}_{interval}_{calculate_matrix}_{skip_llm_analysis}"
+                cache_key = f"analysis_obj_v8_{symbol}_{interval}_{calculate_matrix}_{skip_llm_analysis}"
                 try:
                     from backend.repositories.db import get_cached_item
                     # Allow 5.0 seconds TTL for parallel request deduplication on same candle close
@@ -81,6 +81,24 @@ class AICopilot:
             bb = calculate_bb(closes, 20, 2.0)
             atr = calculate_atr(candles, 14)
             vwap = calculate_vwap(candles)
+
+            ema200 = calculate_ema(closes, 200) if len(closes) >= 200 else (calculate_ema(closes, max(1, len(closes)//2)) if len(closes) > 0 else [price])
+            e200_val = ema200[-1] if len(ema200) > 0 else price
+            
+            highs_list = [c["h"] for c in candles]
+            lows_list = [c["l"] for c in candles]
+            high52 = max(highs_list) if highs_list else price * 1.15
+            low52 = min(lows_list) if lows_list else price * 0.85
+
+            # Compute Volume Point of Control (POC)
+            min_p, max_p = min(closes), max(closes)
+            step = (max_p - min_p) / 50.0 if max_p > min_p else 1.0
+            bins = {}
+            for c in candles:
+                idx = min(49, int((c["c"] - min_p) / step)) if step > 0 else 0
+                bins[idx] = bins.get(idx, 0.0) + c["v"]
+            poc_bin = max(bins.items(), key=lambda x: x[1])[0] if bins else 0
+            poc_val = min_p + (poc_bin + 0.5) * step
 
             ef = ema20[-1]
             es = ema50[-1]
@@ -2338,6 +2356,43 @@ class AICopilot:
             
             port_risk_res = compute_portfolio_risk_metrics(portfolio_value=100000.0, daily_volatility_pct=max(1.2, atr_val/price*100))
 
+            # 8. AI Market Timeline Storytelling & AI Market Journal System Memory & Phase 12 Infrastructure
+            from backend.services.market_timeline import get_ai_market_timeline
+            from backend.services.ai_market_journal import get_ai_market_journal
+            from backend.services.model_observatory import get_model_performance_observatory
+            from backend.services.decision_replay import replay_historical_decision
+            from backend.services.counterfactual_engine import run_counterfactual_simulation
+            from backend.services.model_risk_oversight import run_institutional_model_risk_audit
+            from backend.services.market_dna import get_market_dna_sequence
+            from backend.services.digital_quant_analyst import get_digital_quant_analyst_report
+            from backend.services.explainability_heatmap import get_explainability_heatmap
+            from backend.services.distributed_cluster import get_research_cluster_status
+            from backend.services.event_store import get_immutable_event_log
+            from backend.services.feature_lineage import get_feature_lineage_dag
+            from backend.services.research_queue import get_live_research_queue
+            from backend.services.strategy_genealogy import get_strategy_genealogy_tree
+            from backend.services.knowledge_graph import get_apex_brain_knowledge_graph
+            from backend.services.research_planner import get_autonomous_research_plan
+            from backend.services.research_calendar import get_institutional_research_calendar
+            
+            market_timeline_res = get_ai_market_timeline(symbol, interval)
+            market_journal_res = get_ai_market_journal(symbol)
+            model_observatory_res = get_model_performance_observatory()
+            decision_replay_res = replay_historical_decision()
+            counterfactual_res = run_counterfactual_simulation()
+            model_risk_audit_res = run_institutional_model_risk_audit()
+            market_dna_res = get_market_dna_sequence(symbol)
+            digital_quant_res = get_digital_quant_analyst_report()
+            explainability_matrix_res = get_explainability_heatmap()
+            cluster_status_res = get_research_cluster_status()
+            event_log_res = get_immutable_event_log()
+            feature_dag_res = get_feature_lineage_dag()
+            research_queue_res = get_live_research_queue()
+            genealogy_tree_res = get_strategy_genealogy_tree()
+            knowledge_graph_res = get_apex_brain_knowledge_graph()
+            research_plan_res = get_autonomous_research_plan()
+            research_calendar_res = get_institutional_research_calendar()
+
             decision_obj = {
                 "bias": bias.title(),
                 "confidence": float(bayes_res["final_prob"]),
@@ -2356,6 +2411,30 @@ class AICopilot:
                 "feature_store": feature_store_res,
                 "probabilistic_verification": prob_eval_res,
                 "research_pipeline": research_pipeline_res,
+                "market_timeline": market_timeline_res,
+                "market_journal": market_journal_res,
+                "model_observatory": model_observatory_res,
+                "decision_replay": decision_replay_res,
+                "counterfactual": counterfactual_res,
+                "model_risk_audit": model_risk_audit_res,
+                "market_dna": market_dna_res,
+                "digital_quant_analyst": digital_quant_res,
+                "explainability_heatmap": explainability_matrix_res,
+                "distributed_cluster": cluster_status_res,
+                "event_store": event_log_res,
+                "feature_lineage": feature_dag_res,
+                "research_queue": research_queue_res,
+                "strategy_genealogy": genealogy_tree_res,
+                "knowledge_graph": knowledge_graph_res,
+                "research_planner": research_plan_res,
+                "research_calendar": research_calendar_res,
+                "long_term_levels": {
+                    "ema200": round(e200_val, 2),
+                    "ema50": round(es, 2),
+                    "high52": round(high52, 2),
+                    "low52": round(low52, 2),
+                    "poc": round(poc_val, 2)
+                },
                 "portfolio_risk": port_risk_res,
                 "action": action_val,
                 "execution_status": exec_status_val,
@@ -2547,6 +2626,13 @@ class AICopilot:
                     "support": [{"price": z["price"], "high": z["high"], "low": z["low"], "label": z["label"], "score": z["score"]} for z in final_support],
                     "resistance": [{"price": z["price"], "high": z["high"], "low": z["low"], "label": z["label"], "score": z["score"]} for z in final_resistance]
                 },
+                "long_term_levels": {
+                    "ema200": round(e200_val, 2),
+                    "ema50": round(es, 2),
+                    "high52": round(high52, 2),
+                    "low52": round(low52, 2),
+                    "poc": round(poc_val, 2)
+                },
                 "analysis": analysis,
                 "headerSummary": header_summary if 'header_summary' in locals() else None,
                 "confidenceBreakdown": confidence_breakdown,
@@ -2576,6 +2662,23 @@ class AICopilot:
                 "timestamp": int(time.time()),
                 "liveThinking": live_thinking,
                 "simulatorReliability": simulator_reliability,
+                "marketTimeline": market_timeline_res,
+                "marketJournal": market_journal_res,
+                "modelObservatory": model_observatory_res,
+                "decisionReplay": decision_replay_res,
+                "counterfactual": counterfactual_res,
+                "modelRiskAudit": model_risk_audit_res,
+                "marketDna": market_dna_res,
+                "digitalQuantAnalyst": digital_quant_res,
+                "explainabilityHeatmap": explainability_matrix_res,
+                "distributedCluster": cluster_status_res,
+                "eventStore": event_log_res,
+                "featureLineage": feature_dag_res,
+                "researchQueue": research_queue_res,
+                "strategyGenealogy": genealogy_tree_res,
+                "knowledgeGraph": knowledge_graph_res,
+                "researchPlanner": research_plan_res,
+                "researchCalendar": research_calendar_res,
                 "decision": decision_obj
             }
             if calculate_matrix:

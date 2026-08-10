@@ -19,19 +19,33 @@ FEEDS = {
 TTL_FEAR_GREED = 300
 TTL_NEWS = 60
 
+import ssl
+
+FAILED_URL_CACHE: Dict[str, float] = {}
+
 def fetch_url(url: str, ttl: int) -> bytes:
-    """Generic cached HTTP GET."""
+    """Generic cached HTTP GET with SSL context and negative cache for failures."""
+    now = time.time()
+    if url in FAILED_URL_CACHE and (now - FAILED_URL_CACHE[url]) < 300:
+        raise RuntimeError(f"Skipping temporarily unreachable feed {url}")
+
     entry = cache_get(url)
     if entry:
         ts, data = entry
-        if time.time() - ts < ttl:
+        if now - ts < ttl:
             return data
 
-    req = urllib.request.Request(url, headers=UPSTREAM_HEADERS)
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = resp.read()
-    cache_set(url, data)
-    return data
+    try:
+        req = urllib.request.Request(url, headers=UPSTREAM_HEADERS)
+        ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
+            data = resp.read()
+        cache_set(url, data)
+        FAILED_URL_CACHE.pop(url, None)
+        return data
+    except Exception as e:
+        FAILED_URL_CACHE[url] = now
+        raise e
 
 def fetch_feargreed() -> bytes:
     return fetch_url(FEAR_GREED_URL, TTL_FEAR_GREED)
@@ -173,8 +187,8 @@ def fetch_news() -> bytes:
                         "sentiment": sentiment,
                         "source_info": {"name": name},
                     })
-        except Exception as e:
-            print(f"  [news] Failed to fetch or parse {name}: {e}")
+        except Exception:
+            pass
             
     # Sort by published time descending
     all_articles.sort(key=lambda x: x["published_on"], reverse=True)

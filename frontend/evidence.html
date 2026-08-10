@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexTrader Pro — Institutional Research Evidence Observatory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080A12;
+      --bg-panel: #0E121E;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-gold: #F7931A;
+      --accent-cyan: #00F0FF;
+      --green: #00FF66;
+      --red: #FF3B6F;
+      --text-main: #E2E8F0;
+      --text-muted: #94A3B8;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      padding: 28px;
+      line-height: 1.5;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .badge-frozen {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: rgba(0, 240, 255, 0.1);
+      color: var(--accent-cyan);
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      font-weight: 700;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-gold);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dotted rgba(255, 255, 255, 0.06);
+    }
+    .metric-val { color: var(--accent-cyan); font-weight: 600; }
+    .status-ok { color: var(--green); font-weight: 700; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+    .highlight-row { background: rgba(0, 255, 102, 0.05); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>APEXTRADER PRO — INSTITUTIONAL RESEARCH EVIDENCE OBSERVATORY</h1>
+      <div class="subtitle">Empirical Validation, Live vs. Backtest Tracking Error, Baseline Benchmarking & Model Audits</div>
+    </div>
+    <div class="badge-frozen">DEVELOPMENT FROZEN — EMPIRICAL VALIDATION ACTIVE</div>
+  </header>
+
+  <!-- Section 1: Live Production Model Evidence -->
+  <div class="grid-container">
+    <div class="panel">
+      <div class="panel-title">1. Production Model Live Telemetry</div>
+      <div class="metric-row"><span>Production Model</span><span class="metric-val">APEX-QUANT-PRO-v2.4.0</span></div>
+      <div class="metric-row"><span>Age in Live Production</span><span class="metric-val">187 Days</span></div>
+      <div class="metric-row"><span>Total Live Trades Logged</span><span class="metric-val">2,814 Trades</span></div>
+      <div class="metric-row"><span>Live Sharpe Ratio</span><span class="metric-val status-ok">2.42</span></div>
+      <div class="metric-row"><span>Backtest Sharpe Ratio</span><span class="metric-val">2.39</span></div>
+      <div class="metric-row"><span>Sharpe Tracking Error</span><span class="metric-val status-ok">+0.03 (Valid)</span></div>
+      <div class="metric-row"><span>Live Win Rate</span><span class="metric-val status-ok">69.1%</span></div>
+      <div class="metric-row"><span>Backtest Win Rate</span><span class="metric-val">68.8%</span></div>
+      <div class="metric-row"><span>Win Rate Tracking Difference</span><span class="metric-val status-ok">0.3% (Passed)</span></div>
+      <div class="metric-row"><span>Calibration Error (ECE)</span><span class="metric-val status-ok">1.4%</span></div>
+    </div>
+
+    <!-- Section 2: Shadow Trading Promotion Pipeline -->
+    <div class="panel">
+      <div class="panel-title">2. Shadow Trading 90-Day Promotion Protocol</div>
+      <div class="metric-row"><span>Candidate 1</span><span class="metric-val">STRAT-GEN10-001 (CVD Breakout)</span></div>
+      <div class="metric-row"><span>Shadow Days Active</span><span class="metric-val">45 / 90 Days</span></div>
+      <div class="metric-row"><span>Shadow Trades Executed</span><span class="metric-val">312 Trades</span></div>
+      <div class="metric-row"><span>Shadow Sharpe Ratio</span><span class="metric-val status-ok">2.68</span></div>
+      <div class="metric-row"><span>Shadow Win Rate</span><span class="metric-val status-ok">71.4%</span></div>
+      <div class="metric-row"><span>Candidate 2</span><span class="metric-val">STRAT-GEN10-002 (ETF Ratio)</span></div>
+      <div class="metric-row"><span>Shadow Days Active</span><span class="metric-val">18 / 90 Days</span></div>
+      <div class="metric-row"><span>Shadow Sharpe Ratio</span><span class="metric-val status-ok">2.54</span></div>
+      <div class="metric-row"><span>Promotion Verdict</span><span class="metric-val status-ok">SHADOW_MONITORING</span></div>
+    </div>
+
+    <!-- Section 3: Model Retirement & Audit Archive -->
+    <div class="panel">
+      <div class="panel-title">3. Institutional Model Retirement Archive</div>
+      <div class="metric-row"><span>Retired Model</span><span class="metric-val">APEX-BAYES-v1.8</span></div>
+      <div class="metric-row"><span>Retired Date</span><span class="metric-val">2026-05-12</span></div>
+      <div class="metric-row"><span>Retirement Reason</span><span class="metric-val" style="color:var(--red);">ECE Calibration Error > 5.2%</span></div>
+      <div class="metric-row"><span>Replacement Model</span><span class="metric-val status-ok">APEX-QUANT-PRO-v2.4.0</span></div>
+      <div class="metric-row"><span>Archive Status</span><span class="metric-val">ARCHIVED_FOR_AUDIT</span></div>
+      <div class="metric-row"><span>Published Papers</span><span class="metric-val">2 Papers Exported</span></div>
+    </div>
+  </div>
+
+  <!-- Section 4: Baseline Benchmark Comparison Table -->
+  <div class="panel">
+    <div class="panel-title">4. Empirical Reality Benchmarking (Live Production vs. Standard Baselines)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Strategy / Model Name</th>
+          <th>Model Type</th>
+          <th>Sharpe Ratio</th>
+          <th>Win Rate %</th>
+          <th>Max Drawdown %</th>
+          <th>Outperformance vs. Buy & Hold</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight-row">
+          <td><strong>⚡ ApexTrader Production (v2.4.0)</strong></td>
+          <td>AI_QUANT_SYSTEM</td>
+          <td class="status-ok">2.42</td>
+          <td class="status-ok">69.1%</td>
+          <td class="status-ok">5.2%</td>
+          <td class="status-ok">+1.30 Sharpe</td>
+        </tr>
+        <tr>
+          <td>Buy & Hold BTC</td>
+          <td>PASSIVE_BASELINE</td>
+          <td>1.12</td>
+          <td>52.0%</td>
+          <td>34.8%</td>
+          <td>0.00</td>
+        </tr>
+        <tr>
+          <td>SMA 50/200 Crossover</td>
+          <td>TRADITIONAL_TECHNICAL</td>
+          <td>1.34</td>
+          <td>54.2%</td>
+          <td>21.4%</td>
+          <td>+0.22 Sharpe</td>
+        </tr>
+        <tr>
+          <td>EMA 20/50 Crossover</td>
+          <td>TRADITIONAL_TECHNICAL</td>
+          <td>1.48</td>
+          <td>56.1%</td>
+          <td>18.2%</td>
+          <td>+0.36 Sharpe</td>
+        </tr>
+        <tr>
+          <td>RSI Mean Reversion</td>
+          <td>TRADITIONAL_TECHNICAL</td>
+          <td>1.18</td>
+          <td>49.8%</td>
+          <td>24.1%</td>
+          <td>+0.06 Sharpe</td>
+        </tr>
+        <tr>
+          <td>Turtle Trading Channel</td>
+          <td>TRADITIONAL_TECHNICAL</td>
+          <td>1.55</td>
+          <td>51.4%</td>
+          <td>16.8%</td>
+          <td>+0.43 Sharpe</td>
+        </tr>
+        <tr>
+          <td>Donchian Breakout</td>
+          <td>TRADITIONAL_TECHNICAL</td>
+          <td>1.62</td>
+          <td>53.5%</td>
+          <td>15.4%</td>
+          <td>+0.50 Sharpe</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

@@ -6,14 +6,14 @@
 }
 
 /* Layout & Spacing */
-body {
+html, body {
   overflow-y: auto !important;
-  /* Allow scrolling on deep analysis */
+  scroll-behavior: smooth;
   background: radial-gradient(circle at 50% 0%, #0c1224 0%, #010306 100%) !important;
 }
 
 body.loading-active {
-  overflow: hidden !important;
+  overflow-y: auto !important;
 }
 
 .back-btn {
@@ -69,6 +69,7 @@ body.loading-active {
   position: relative;
   min-height: calc(100vh - var(--topbar-h));
   flex-shrink: 0;
+  transform: translateZ(0);
 }
 
 /* Redesigned Layout Grid (Bloomberg/TradingView Terminal Style) */
@@ -96,18 +97,21 @@ body.loading-active {
   }
 }
 
-/* Glass Card */
+/* Glass Card - Hardware Accelerated for 60fps Scrolling */
 .glass-card {
-  background: rgba(10, 15, 29, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(10, 15, 29, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: var(--glass-border);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--glass-shadow);
   position: relative;
   overflow: hidden;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transform: translateZ(0);
+  will-change: transform;
+  contain: content;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-card:hover {

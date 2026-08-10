@@ -10,9 +10,11 @@ DB_PATH = os.path.join(DB_DIR, "paper_trading.db")
 
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=10000;")
         yield conn
         conn.commit()
     except Exception:

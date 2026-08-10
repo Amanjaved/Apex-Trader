@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin for Beginners — Simple Next Move Prediction & Key Levels</title>
+<meta name="description" content="Simple, jargon-free Bitcoin next move prediction, target price ranges, and key support & resistance floors and ceilings for crypto beginners.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="beginner.css">
+</head>
+<body>
+
+<!-- Toast Notification Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Background Animated Glow Elements -->
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<!-- ═══════════════════════════════════════
+     TOP NAVIGATION BAR
+     ═══════════════════════════════════════ -->
+<header class="topbar">
+  <div class="brand-section">
+    <a href="/" class="logo">
+      <div class="logo-mark">⚡</div>
+      <span class="logo-text">Apex<span class="text-gold">Trader</span> <span class="badge-beginner">BEGINNER</span></span>
+    </a>
+  </div>
+
+  <!-- Symbol Selector & Live Ticker -->
+  <div class="symbol-container">
+    <div class="sym-selector" id="symSelectorBtn">
+      <span class="sym-icon" id="symIcon">₿</span>
+      <div class="sym-details">
+        <span class="sym-name" id="symName">BTC / USDT</span>
+        <span class="sym-sub">Bitcoin Daily Overview</span>
+      </div>
+      <span class="sym-chev">▼</span>
+    </div>
+    
+    <!-- Coin Dropdown -->
+    <div class="coin-dropdown" id="coinDropdown">
+      <input type="text" class="coin-search" id="coinSearch" placeholder="Search coin (BTC, ETH...)" autocomplete="off">
+      <div class="coin-list" id="coinList"></div>
+    </div>
+  </div>
+
+  <!-- Live Price Banner -->
+  <div class="live-price-pill">
+    <div class="price-label">Live Price</div>
+    <div class="price-val" id="livePriceVal">$--,--</div>
+    <div class="price-change" id="livePriceChange">--%</div>
+    <div class="ws-pulse" id="wsPulse" title="Real-time Stream Connected"></div>
+  </div>
+
+  <!-- Navigation Actions -->
+  <div class="nav-right">
+    <button class="btn btn-refresh" id="refreshBtn">
+      <span class="refresh-icon">🔄</span> Refresh Forecast
+    </button>
+    <a href="/charts" class="btn btn-pro">
+      <span>🚀</span> Switch to Pro Terminal
+    </a>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT WRAPPER
+     ═══════════════════════════════════════ -->
+<main class="main-container">
+
+  <!-- ═══════════════════════════════════════
+       PROGRESSIVE DISCLOSURE VIEW TABS
+       ═══════════════════════════════════════ -->
+  <div class="view-tabs-container">
+    <div class="view-tabs" id="mainViewTabs">
+      <button class="vtab-btn active" data-tab="tab-overview">
+        <span class="vtab-icon">⚡</span> Executive Overview <span class="vtab-badge">Level 1</span>
+      </button>
+      <button class="vtab-btn" data-tab="tab-twomode">
+        <span class="vtab-icon">🎛️</span> Dual-Mode Decision Engine
+      </button>
+      <button class="vtab-btn" data-tab="tab-technical">
+        <span class="vtab-icon">📊</span> Technical & Key Levels <span class="vtab-badge">Level 2</span>
+      </button>
+      <button class="vtab-btn" data-tab="tab-research">
+        <span class="vtab-icon">🧠</span> Apex Brain RAG Research <span class="vtab-badge">Level 3</span>
+      </button>
+      <button class="vtab-btn" data-tab="tab-education">
+        <span class="vtab-icon">📖</span> Beginner Guide
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB 1: EXECUTIVE OVERVIEW (LEVEL 1)
+       ═══════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-overview">
+    
+    <!-- 1. AI EXECUTIVE SUMMARY HERO CARD (FEATURE 1) -->
+    <div class="card exec-summary-card">
+      <div class="card-header">
+        <div class="card-title gold">
+          <span class="icon">⚡</span> AI Executive Summary
+        </div>
+        <div class="exec-header-right">
+          <span class="badge-pill green-pill" id="execStatusBadge">CONFIRMATION PENDING</span>
+          <div class="last-updated" id="lastUpdated">Updated just now</div>
+        </div>
+      </div>
+
+      <!-- Quick 10-Second Executive Summary Grid -->
+      <div class="exec-metrics-grid">
+        <div class="exec-metric-box">
+          <span class="exec-label">Current Market</span>
+          <strong class="exec-val green" id="execMarketVal">Bullish</strong>
+        </div>
+        <div class="exec-metric-box">
+          <span class="exec-label">AI Confidence</span>
+          <strong class="exec-val cyan" id="execConfVal">74%</strong>
+        </div>
+        <div class="exec-metric-box">
+          <span class="exec-label">Trend Health</span>
+          <strong class="exec-val green" id="execTrendVal">Healthy</strong>
+        </div>
+        <div class="exec-metric-box">
+          <span class="exec-label">Momentum</span>
+          <strong class="exec-val green" id="execMomVal">Increasing</strong>
+        </div>
+        <div class="exec-metric-box">
+          <span class="exec-label">Risk Level</span>
+          <strong class="exec-val yellow" id="execRiskVal">Moderate</strong>
+        </div>
+        <div class="exec-metric-box">
+          <span class="exec-label">Next Key Level</span>
+          <strong class="exec-val gold" id="execNextLevelVal">$65,800</strong>
+        </div>
+      </div>
+
+      <!-- Prediction Lifecycle Pipeline Stage Tracker (Feature 9) -->
+      <div class="lifecycle-pipeline">
+        <span class="lifecycle-title">Prediction Lifecycle Stage:</span>
+        <div class="lifecycle-steps">
+          <div class="lc-step done"><span class="lc-dot"></span> Market</div>
+          <div class="lc-step done"><span class="lc-dot"></span> Scanning</div>
+          <div class="lc-step active"><span class="lc-dot"></span> Confirmation</div>
+          <div class="lc-step"><span class="lc-dot"></span> Forecast</div>
+          <div class="lc-step"><span class="lc-dot"></span> Monitoring</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prediction-grid">
+      
+      <!-- Big Prediction Card with Scannable Bullets (Feature 2) -->
+      <div class="card prediction-card" id="predCard">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">🔮</span> Predicted Next Move
+          </div>
+          <span class="badge-pill" id="reliabilityBadge" style="margin:0; background:rgba(0,192,118,0.12); color:var(--green); border-color:rgba(0,192,118,0.3);">🛡️ STABLE CONSENSUS</span>
+        </div>
+
+        <div class="prediction-body">
+          <div class="direction-badge" id="directionBadge">
+            <div class="direction-icon" id="directionIcon">🚀</div>
+            <div class="direction-info">
+              <span class="direction-status" id="directionStatus">BULLISH MOVE EXPECTED</span>
+              <span class="direction-sub" id="directionSub">Bitcoin shows strong upward momentum</span>
+            </div>
+          </div>
+
+          <div class="gauge-container">
+            <div class="confidence-dial">
+              <svg class="dial-svg" viewBox="0 0 100 50">
+                <path class="dial-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10" stroke-linecap="round"/>
+                <path class="dial-fill" id="dialFill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="url(#dialGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="35"/>
+                <defs>
+                  <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ff3b69" />
+                    <stop offset="50%" stop-color="#f0b90b" />
+                    <stop offset="100%" stop-color="#00c076" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="dial-center">
+                <div class="confidence-val" id="confidenceVal">74%</div>
+                <div class="confidence-lbl">AI Confidence</div>
+              </div>
+            </div>
+
+            <div class="target-summary">
+              <div class="target-box highlight">
+                <span class="box-lbl">Expected Target</span>
+                <span class="box-val green" id="targetPriceVal">$--,--</span>
+                <span class="box-sub" id="targetChangePct">+0.0% expected move</span>
+              </div>
+              <div class="target-box">
+                <span class="box-lbl">Safety Floor (Stop)</span>
+                <span class="box-val red" id="stopPriceVal">$--,--</span>
+                <span class="box-sub" id="stopChangePct">-0.0% risk level</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bullet-Point Scannable Reasons (Feature 2) -->
+          <div class="scannable-bullets-container">
+            <div class="reason-title">⚡ Quick Market Breakdown:</div>
+            <ul class="bullet-list" id="bulletList">
+              <li><span class="bullet-icon green">✅</span> <strong>Trend remains bullish</strong> — Trading firmly above 50 & 200 EMAs</li>
+              <li><span class="bullet-icon green">✅</span> <strong>Buyer Volume Strong</strong> — Net +18.4% order book bid imbalance</li>
+              <li><span class="bullet-icon yellow">⚠️</span> <strong>Resistance Nearby</strong> — Approaching institutional ceiling at $65,800</li>
+              <li><span class="bullet-icon yellow">⚠️</span> <strong>Consolidation Pause</strong> — Volatility compressing before next breakout</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confidence Attribution & Timeline Side Card (Features 4 & 8) -->
+      <div class="card attribution-card">
+        <div class="card-header">
+          <div class="card-title cyan">
+            <span class="icon">📊</span> Confidence Attribution Breakdown
+          </div>
+          <span class="badge-pill">FACTOR WEIGHTS</span>
+        </div>
+
+        <div class="attribution-body">
+          <!-- Confidence Factor Math (Feature 8) -->
+          <div class="attribution-factors">
+            <div class="attr-row positive">
+              <span>Trend Structure</span>
+              <strong>+18%</strong>
+            </div>
+            <div class="attr-row positive">
+              <span>Momentum Alignment</span>
+              <strong>+12%</strong>
+            </div>
+            <div class="attr-row positive">
+              <span>Liquidity Depth</span>
+              <strong>+9%</strong>
+            </div>
+            <div class="attr-row positive">
+              <span>Order Flow Imbalance</span>
+              <strong>+7%</strong>
+            </div>
+            <div class="attr-row positive">
+              <span>Macro Inflows</span>
+              <strong>+4%</strong>
+            </div>
+            <div class="attr-row negative">
+              <span>Resistance Overhead</span>
+              <strong>-6%</strong>
+            </div>
+            <div class="attr-row negative">
+              <span>Funding Rate Premium</span>
+              <strong>-3%</strong>
+            </div>
+          </div>
+
+          <!-- AI Reasoning Timeline (Feature 4) -->
+          <div class="timeline-container">
+            <div class="timeline-title">⏱️ AI Decision Timeline:</div>
+            <div class="timeline-list">
+              <div class="tl-item"><span class="tl-time">08:10</span><span class="tl-text">Momentum expanded above daily VWAP</span></div>
+              <div class="tl-item"><span class="tl-time">08:25</span><span class="tl-text">Liquidity depth improved at $64,000 floor</span></div>
+              <div class="tl-item"><span class="tl-time">08:40</span><span class="tl-text">Minor resistance broken with volume spike</span></div>
+              <div class="tl-item"><span class="tl-time">08:52</span><span class="tl-text">AI Confidence updated to 74%</span></div>
+              <div class="tl-item active"><span class="tl-time">09:01</span><span class="tl-text">Bullish consensus confirmed</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Interactive Collapsible Scenarios (Feature 5) -->
+    <div class="card scenarios-card margin-top">
+      <div class="card-header">
+        <div class="card-title gold"><span class="icon">🔮</span> Interactive Market Scenarios</div>
+        <span class="badge-pill">PROBABILISTIC PATHS</span>
+      </div>
+      <div class="scenarios-accordion">
+        <div class="acc-item active">
+          <div class="acc-header" onclick="toggleAccordion(this)">
+            <div class="acc-title">
+              <span class="acc-badge green">68% PROBABILITY</span>
+              <strong>Bull Case: Breakout Continuation</strong>
+            </div>
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>If Bitcoin breaks and closes a 15m candle above $65,000 with volume expansion, price is projected to reach major target ($65,800 - $66,200). Institutional short liquidations will accelerate momentum.</p>
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAccordion(this)">
+            <div class="acc-title">
+              <span class="acc-badge red">24% PROBABILITY</span>
+              <strong>Bear Case: Support Re-Test</strong>
+            </div>
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>If price rejects at resistance and drops below $64,000, it will re-test the nearest support floor ($63,500). Buyers previously defended this area with $4.2M bid liquidity.</p>
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAccordion(this)">
+            <div class="acc-title">
+              <span class="acc-badge yellow">8% PROBABILITY</span>
+              <strong>Range Case: Sideways Consolidation</strong>
+            </div>
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            <p>If order volume compresses and funding remains neutral, Bitcoin will trade sideways between $63,800 and $64,800 while building liquidity for the next expansion.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB 2: DUAL-MODE DECISION ENGINE
+       ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-twomode">
+    <section class="two-mode-section">
+      <div class="mode-header-card card">
+        <div class="mode-header-top">
+          <div>
+            <div class="badge-pill" style="background:rgba(0,242,254,0.1); color:var(--cyan); border-color:rgba(0,242,254,0.3);">
+              🧠 DUAL-MODE QUANTITATIVE DECISION ENGINE
+            </div>
+            <h2 class="mode-title">Two-Mode AI Trading Analysis Engine</h2>
+            <p class="mode-desc">
+              Automatically adapts its interface depending on whether you are currently holding an active market position or waiting for a new trade setup.
+            </p>
+          </div>
+
+          <!-- Mode Selector Switcher Buttons -->
+          <div class="mode-switcher-container">
+            <div class="mode-toggle-group" id="modeToggleGroup">
+              <button class="mode-btn active" id="btnModeInfo" data-mode="info">
+                <span class="mode-icon">🛡️</span>
+                <div class="mode-btn-text">
+                  <span class="mode-btn-title">MODE 1: INFORMATION</span>
+                  <span class="mode-btn-sub">User Holding Active Position</span>
+                </div>
+              </button>
+
+              <button class="mode-btn" id="btnModeStrategy" data-mode="strategy">
+                <span class="mode-icon">🎯</span>
+                <div class="mode-btn-text">
+                  <span class="mode-btn-title">MODE 2: TRADING STRATEGY</span>
+                  <span class="mode-btn-sub">User NOT in a Position</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Position Simulator Sync Toggle -->
+            <div class="position-sync-bar">
+              <span class="sync-dot green"></span>
+              <span class="sync-label">State Sync:</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="positionSyncCheckbox">
+                <span class="slider round"></span>
+              </label>
+              <span class="sync-text" id="syncStatusText">No Active Position (Strategy Mode)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE 1 CONTAINER — INFORMATION MODE -->
+      <div class="mode-panel mode-1-panel active" id="mode1Panel">
+        <div class="mode-banner info-banner">
+          <div class="banner-icon">🛡️</div>
+          <div>
+            <h3>Mode 1: Situational Awareness & Market Interpretation</h3>
+            <p>You currently hold an active trade position. This mode monitors live market dynamics, regime changes, and risk metrics without recommending new trade entries.</p>
+          </div>
+        </div>
+
+        <div class="mode-grid">
+          <div class="card mode-card">
+            <div class="card-header">
+              <div class="card-title gold"><span class="icon">📊</span> Market Overview & Structure</div>
+              <span class="badge-pill">LIVE DATA API</span>
+            </div>
+            <div class="metrics-table">
+              <div class="metric-row"><span>Current Price</span><strong id="infoPriceVal">$64,250.00</strong></div>
+              <div class="metric-row"><span>24h Price Change</span><span class="green" id="infoPriceChg">+2.45%</span></div>
+              <div class="metric-row"><span>Market Trend</span><span class="green" id="infoTrendVal">Bullish Expansion</span></div>
+              <div class="metric-row"><span>Volatility (ATR 14)</span><strong id="infoVolVal">$1,240 (Moderate)</strong></div>
+              <div class="metric-row"><span>24h Volume</span><strong id="infoVolumeVal">$28.4B USDT</strong></div>
+              <div class="metric-row"><span>Market Structure</span><span id="infoStructVal">Higher Highs & Higher Lows</span></div>
+            </div>
+          </div>
+
+          <div class="card mode-card">
+            <div class="card-header">
+              <div class="card-title cyan"><span class="icon">📈</span> Technical Analysis Confluence</div>
+              <span class="badge-pill">INDICATOR MATRIX</span>
+            </div>
+            <div class="indicator-matrix">
+              <div class="ind-box"><span class="ind-name">Moving Averages (EMA 20/50/200)</span><span class="ind-status green">Bullish Alignment</span></div>
+              <div class="ind-box"><span class="ind-name">Relative Strength Index (RSI)</span><span class="ind-status yellow">64.5 Momentum</span></div>
+              <div class="ind-box"><span class="ind-name">MACD (12, 26, 9)</span><span class="ind-status green">Histogram Expansion</span></div>
+              <div class="ind-box"><span class="ind-name">VWAP & Volume Profile</span><span class="ind-status green">Above Daily VWAP</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE 2 CONTAINER — TRADING STRATEGY MODE -->
+      <div class="mode-panel mode-2-panel" id="mode2Panel">
+        <div class="mode-banner strategy-banner">
+          <div class="banner-icon">🎯</div>
+          <div>
+            <h3>Mode 2: Predefined Algorithmic Strategy & Setup Finder</h3>
+            <p>You are currently not in a position. The system evaluates live price action against strictly defined quantitative rules to detect high-confluence trade opportunities.</p>
+          </div>
+        </div>
+
+        <div class="mode-grid">
+          <div class="card mode-card">
+            <div class="card-header">
+              <div class="card-title gold"><span class="icon">🚦</span> Current Strategy Status</div>
+              <span class="badge-pill status-forming" id="strategyStatusBadge">SETUP FORMING</span>
+            </div>
+            <div class="status-summary">
+              <div class="big-status-box">
+                <span class="big-status-title">SETUP FORMING — CONFIRMATION PENDING</span>
+                <p class="big-status-desc">Market aligned with bullish momentum, awaiting breakout above immediate resistance.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mode-card">
+            <div class="card-header">
+              <div class="card-title cyan"><span class="icon">🤖</span> AI Strategy Decision Engine</div>
+              <span class="badge-pill">TRANSPARENT LOGIC</span>
+            </div>
+            <div class="decision-engine-body">
+              <div class="decision-row"><span>Market Assessment:</span><strong class="green">Bullish Confluence</strong></div>
+              <div class="decision-row"><span>Criteria Satisfied:</span><strong class="green">3 / 4 Criteria Met</strong></div>
+              <div class="decision-row"><span>Confidence Score:</span><strong class="cyan">78% Confidence</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB 3: TECHNICAL & KEY LEVELS (LEVEL 2)
+       ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-technical">
+    <!-- Visual Progress Bars Card (Feature 3) -->
+    <div class="card visual-meters-card margin-bottom">
+      <div class="card-header">
+        <div class="card-title gold"><span class="icon">📊</span> Quantitative Visual Meters</div>
+        <span class="badge-pill">REAL-TIME GAUGES</span>
+      </div>
+      <div class="meters-grid">
+        <div class="meter-box">
+          <div class="meter-label"><span>Trend Strength</span><strong>82%</strong></div>
+          <div class="meter-bar-bg"><div class="meter-bar-fill green" style="width: 82%;"></div></div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label"><span>Momentum Alignment</span><strong>71%</strong></div>
+          <div class="meter-bar-bg"><div class="meter-bar-fill green" style="width: 71%;"></div></div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label"><span>Liquidity Depth</span><strong>91%</strong></div>
+          <div class="meter-bar-bg"><div class="meter-bar-fill cyan" style="width: 91%;"></div></div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label"><span>Volatility Compression</span><strong>100%</strong></div>
+          <div class="meter-bar-bg"><div class="meter-bar-fill gold" style="width: 100%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support & Resistance Levels -->
+    <section class="levels-section">
+      <div class="section-header">
+        <div class="section-title"><span class="icon">🛡️</span> Key Support (Floors) & Resistance (Ceilings)</div>
+        <p class="section-desc">Support levels act like a net where price bounces up. Resistance levels act like a roof where price stops rising.</p>
+      </div>
+
+      <!-- Visual Price Ladder -->
+      <div class="card ladder-card">
+        <div class="ladder-header">
+          <span>Resistance Ceiling</span>
+          <span class="ladder-center-lbl">Current Price Visualizer</span>
+          <span>Support Floor</span>
+        </div>
+
+        <div class="price-ladder" id="priceLadder">
+          <div class="ladder-level resistance-level" id="ladderResMajor">
+            <span class="lvl-label">Major Ceiling (R2)</span>
+            <span class="lvl-price" id="ladderResMajorPrice">$--,--</span>
+          </div>
+          <div class="ladder-level resistance-level" id="ladderResNear">
+            <span class="lvl-label">Nearest Ceiling (R1)</span>
+            <span class="lvl-price" id="ladderResNearPrice">$--,--</span>
+          </div>
+
+          <div class="current-price-line" id="ladderCurrentLine">
+            <div class="price-badge">
+              <span>BITCOIN CURRENT</span>
+              <strong id="ladderCurrentPrice">$--,--</strong>
+            </div>
+          </div>
+
+          <div class="ladder-level support-level" id="ladderSupNear">
+            <span class="lvl-label">Nearest Floor (S1)</span>
+            <span class="lvl-price" id="ladderSupNearPrice">$--,--</span>
+          </div>
+          <div class="ladder-level support-level" id="ladderSupMajor">
+            <span class="lvl-label">Major Floor (S2)</span>
+            <span class="lvl-price" id="ladderSupMajorPrice">$--,--</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Psychological & Structural Anchors -->
+    <section class="psychological-section margin-top">
+      <div class="psych-grid">
+        <div class="card psych-card">
+          <div class="card-header">
+            <div class="card-title gold"><span class="icon">🎯</span> Psychological Round Barriers</div>
+          </div>
+          <div class="psych-list" id="psychList">
+            <div class="sr-box loading">Loading psychological levels...</div>
+          </div>
+        </div>
+
+        <div class="card psych-card">
+          <div class="card-header">
+            <div class="card-title cyan"><span class="icon">📊</span> Long-Term Structural Anchors</div>
+          </div>
+          <div class="psych-list" id="dataDrivenList">
+            <div class="sr-box loading">Loading structural levels...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB 4: APEX BRAIN RAG RESEARCH (LEVEL 3 - FEATURE 7)
+       ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-research">
+    <div class="card research-card">
+      <div class="card-header">
+        <div class="card-title cyan"><span class="icon">🧠</span> Apex Brain — AI RAG Research Notes</div>
+        <span class="badge-pill">VECTOR SIMILARITY MATCH</span>
+      </div>
+
+      <div class="research-body">
+        <div class="rag-analogy-box">
+          <div class="rag-header-row">
+            <span class="rag-title">Historical Market Analogy Match:</span>
+            <span class="rag-match-badge">91% Similarity Match</span>
+          </div>
+          <div class="rag-metric-grid">
+            <div class="rag-mitem"><span>Matched Historical Period:</span><strong>March 18, 2024</strong></div>
+            <div class="rag-mitem"><span>Historical Outcome:</span><strong class="green">+4.85% Bullish Continuation</strong></div>
+            <div class="rag-mitem"><span>Key Analogy Factor:</span><strong>Compressing Volatility at VWAP + Order Flow Imbalance</strong></div>
+            <div class="rag-mitem"><span>Key Structural Difference:</span><span class="yellow">Spot ETF inflows slightly weaker today</span></div>
+          </div>
+        </div>
+
+        <div class="rag-insight-box margin-top">
+          <h4>💡 Institutional Quantitative Research Context</h4>
+          <p>
+            Vector similarity retrieval across 24,000+ indexed market states indicates current price structure aligns closely with pre-breakout regimes. Historical probability favors upward continuation provided support at $63,500 holds.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB 5: BEGINNER GUIDE & GLOSSARY
+       ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-education">
+    <section class="guide-section">
+      <div class="card guide-card">
+        <div class="guide-grid">
+          <div class="guide-item">
+            <div class="guide-icon">🛡️</div>
+            <h3>What is Support?</h3>
+            <p>Think of Support as a floor. It is a price level where buyers are excited to purchase Bitcoin, preventing the price from dropping further down.</p>
+          </div>
+          <div class="guide-item">
+            <div class="guide-icon">🧱</div>
+            <h3>What is Resistance?</h3>
+            <p>Think of Resistance as a roof. It is a price level where sellers want to lock in profits, making it hard for Bitcoin to climb higher without strong volume.</p>
+          </div>
+          <div class="guide-item">
+            <div class="guide-icon">🤖</div>
+            <h3>How does AI Predict?</h3>
+            <p>Our neural engine combines moving averages, volume trends, and real-time order books to estimate which direction price is most likely to head next.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 2: SUPPORT & RESISTANCE LEVELS
+       ═══════════════════════════════════════ -->
+  <section class="levels-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="icon">🛡️</span> Key Support (Floors) & Resistance (Ceilings)
+      </div>
+      <p class="section-desc">
+        Support levels act like a net where price bounces up. Resistance levels act like a roof where price stops rising.
+      </p>
+    </div>
+
+    <!-- Visual Price Ladder / Range Map -->
+    <div class="card ladder-card">
+      <div class="ladder-header">
+        <span>Resistance Ceiling</span>
+        <span class="ladder-center-lbl">Current Price Visualizer</span>
+        <span>Support Floor</span>
+      </div>
+
+      <div class="price-ladder" id="priceLadder">
+        <!-- Visual Bar rendered dynamically by JS -->
+        <div class="ladder-level resistance-level" id="ladderResMajor">
+          <span class="lvl-label">Major Ceiling (R2)</span>
+          <span class="lvl-price" id="ladderResMajorPrice">$--,--</span>
+        </div>
+        <div class="ladder-level resistance-level" id="ladderResNear">
+          <span class="lvl-label">Nearest Ceiling (R1)</span>
+          <span class="lvl-price" id="ladderResNearPrice">$--,--</span>
+        </div>
+
+        <!-- Current Price Indicator -->
+        <div class="current-price-line" id="ladderCurrentLine">
+          <div class="price-badge">
+            <span>BITCOIN CURRENT</span>
+            <strong id="ladderCurrentPrice">$--,--</strong>
+          </div>
+        </div>
+
+        <div class="ladder-level support-level" id="ladderSupNear">
+          <span class="lvl-label">Nearest Floor (S1)</span>
+          <span class="lvl-price" id="ladderSupNearPrice">$--,--</span>
+        </div>
+        <div class="ladder-level support-level" id="ladderSupMajor">
+          <span class="lvl-label">Major Floor (S2)</span>
+          <span class="lvl-price" id="ladderSupMajorPrice">$--,--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support & Resistance Cards Grid -->
+    <div class="sr-cards-grid">
+      
+      <!-- Resistance (Ceilings) Card -->
+      <div class="card sr-card resistance-card">
+        <div class="card-header">
+          <div class="card-title red">
+            <span class="icon">🧱</span> Price Ceilings (Resistance)
+          </div>
+          <span class="tag tag-red">Hard to Break</span>
+        </div>
+        <p class="sr-intro">
+          When Bitcoin rises, it often slows down or reverses at these roof levels where sellers exit:
+        </p>
+
+        <div class="sr-list" id="resistanceList">
+          <div class="sr-item loading">Loading resistance levels...</div>
+        </div>
+      </div>
+
+      <!-- Support (Floors) Card -->
+      <div class="card sr-card support-card">
+        <div class="card-header">
+          <div class="card-title green">
+            <span class="icon">🛡️</span> Price Floors (Support)
+          </div>
+          <span class="tag tag-green">Safety Net</span>
+        </div>
+        <p class="sr-intro">
+          When Bitcoin drops, it often bounces back at these floor levels where buyers jump in:
+        </p>
+
+        <div class="sr-list" id="supportList">
+          <div class="sr-item loading">Loading support levels...</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 2.5: PSYCHOLOGICAL & DATA-DRIVEN LEVELS
+       ═══════════════════════════════════════ -->
+  <section class="psychological-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="icon">🧠</span> Strong Long-Term Psychological & Data-Driven Levels
+      </div>
+      <p class="section-desc">
+        Major round numbers ($70,000, $60,000) and historical volume anchors where institutional traders place massive long-term buy & sell orders.
+      </p>
+    </div>
+
+    <div class="psych-grid">
+      <!-- Psychological Round Number Barriers Card -->
+      <div class="card psych-card">
+        <div class="card-header">
+          <div class="card-title gold">
+            <span class="icon">🎯</span> Psychological Round Number Barriers
+          </div>
+          <span class="badge-pill" style="margin:0">HUMAN & BOT BEHAVIOR</span>
+        </div>
+        <p class="sr-intro">
+          Traders naturally set profit targets and stop-losses at clean round numbers. These create massive mental price barriers:
+        </p>
+
+        <div class="psych-list" id="psychList">
+          <div class="sr-box loading">Loading psychological levels...</div>
+        </div>
+      </div>
+
+      <!-- Data-Driven Long-Term Anchors Card -->
+      <div class="card psych-card">
+        <div class="card-header">
+          <div class="card-title cyan">
+            <span class="icon">📊</span> Data-Driven Long-Term Structural Anchors
+          </div>
+          <span class="badge-pill" style="margin:0; background:rgba(0, 242, 254, 0.1); color:var(--cyan); border-color:rgba(0, 242, 254, 0.3);">VOLUME & TREND MATH</span>
+        </div>
+        <p class="sr-intro">
+          Institutional volume indicators (200-Day Bull Market Line, High Volume Point of Control, All-Time Highs):
+        </p>
+
+        <div class="psych-list" id="dataDrivenList">
+          <div class="sr-box loading">Loading data-driven levels...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 3: BEGINNER GLOSSARY & HELP
+       ═══════════════════════════════════════ -->
+  <section class="guide-section">
+    <div class="card guide-card">
+      <div class="guide-grid">
+        
+        <div class="guide-item">
+          <div class="guide-icon">🛡️</div>
+          <h3>What is Support?</h3>
+          <p>
+            Think of Support as a floor. It is a price level where buyers are excited to purchase Bitcoin, preventing the price from dropping further down.
+          </p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-icon">🧱</div>
+          <h3>What is Resistance?</h3>
+          <p>
+            Think of Resistance as a roof. It is a price level where sellers want to lock in profits, making it hard for Bitcoin to climb higher without strong volume.
+          </p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-icon">🤖</div>
+          <h3>How does AI Predict?</h3>
+          <p>
+            Our neural engine combines moving averages, volume trends, and real-time order books to estimate which direction price is most likely to head next.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-content">
+    <span>ApexTrader © 2026 — Bitcoin Beginner Pulse Edition</span>
+    <span class="disclaimer">Not financial advice. Crypto trading involves risk.</span>
+  </div>
+</footer>
+
+<script src="beginner.js?v=6"></script>
+</body>
+</html>

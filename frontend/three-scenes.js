@@ -887,31 +887,35 @@ function initCardTiltEffect() {
     card.style.transformStyle = 'preserve-3d';
     card.style.transition = 'transform 0.15s ease, border-color 0.3s, box-shadow 0.3s';
 
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+    let cachedRect = null;
+    card.addEventListener('mouseenter', () => {
+      cachedRect = card.getBoundingClientRect();
+    }, { passive: true });
 
-      const relX = (x / rect.width) - 0.5;
-      const relY = (y / rect.height) - 0.5;
+    card.addEventListener('mousemove', (e) => {
+      if (!cachedRect) cachedRect = card.getBoundingClientRect();
+      const x = e.clientX - cachedRect.left;
+      const y = e.clientY - cachedRect.top;
+
+      const relX = (x / Math.max(1, cachedRect.width)) - 0.5;
+      const relY = (y / Math.max(1, cachedRect.height)) - 0.5;
 
       const rotX = -relY * maxTilt;
       const rotY = relX * maxTilt;
 
       card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.03, 1.03, 1.03) translateZ(10px)`;
       
-      // Calculate custom coordinates for dynamic radial gradients inside card
       card.style.setProperty('--mx', x + 'px');
       card.style.setProperty('--my', y + 'px');
 
-      // Glare overlay coordinate mapping
       glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 65%)`;
-    });
+    }, { passive: true });
 
     card.addEventListener('mouseleave', () => {
+      cachedRect = null;
       card.style.transition = 'transform 0.4s ease, border-color 0.3s, box-shadow 0.3s';
       card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1) translateZ(0px)';
       glare.style.background = 'transparent';
-    });
+    }, { passive: true });
   });
 }

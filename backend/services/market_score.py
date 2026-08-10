@@ -123,7 +123,7 @@ def fetch_external_url_with_fallback(urls: List[str], ttl: int) -> Tuple[bytes |
                     domain = m.group(1).replace("www.", "")
                 return data, domain
         except Exception as e:
-            print(f"  [MarketScoreEngine] Failed to fetch {url}: {e}")
+            # Quietly cache failure for optional fallback sources
             with _external_cache_lock:
                 _external_cache[url] = (now, None)  # Cache the failure
             continue
@@ -620,8 +620,7 @@ class MarketScoreEngine:
                                 _gas_cache["value"] = gas_val
                             gas_fetched = True
                             break
-                except Exception as e:
-                    print(f"  [MarketScoreEngine] Failed to fetch gas from {url}: {e}")
+                except Exception:
                     continue
 
             if not gas_fetched:

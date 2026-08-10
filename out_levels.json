@@ -1,0 +1,48 @@
+{
+  "support": [
+    {
+      "price": 65382.22549936819,
+      "high": 65393.0138102662,
+      "low": 65371.43718847018,
+      "label": "Nearest Support (\u26a1 CONFLUENCE S)",
+      "score": 100.0
+    },
+    {
+      "price": 64948.88471883286,
+      "high": 64988.22572656838,
+      "low": 64909.543711097336,
+      "label": "Major Support (\u26a1 CONFLUENCE S)",
+      "score": 90.0
+    },
+    {
+      "price": 64448.21865149587,
+      "high": 64581.807298465676,
+      "low": 64314.63000452606,
+      "label": "Major Support (\u26a1 CONFLUENCE S)",
+      "score": 90.0
+    }
+  ],
+  "resistance": [
+    {
+      "price": 65799.0,
+      "high": 65851.63919999999,
+      "low": 65746.3608,
+      "label": "Nearest Resistance (\u26a1 CONFLUENCE R)",
+      "score": 75.0
+    },
+    {
+      "price": 66220.94632785264,
+      "high": 66291.58424512355,
+      "low": 66150.30841058173,
+      "label": "Major Resistance (\u26a1 CONFLUENCE R)",
+      "score": 90.0
+    },
+    {
+      "price": 66956.15,
+      "high": 67009.71491999998,
+      "low": 66902.58507999999,
+      "label": "Major Resistance (\u26a1 CONFLUENCE R)",
+      "score": 38.0
+    }
+  ]
+}
