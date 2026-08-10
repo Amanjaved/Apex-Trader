@@ -24,3 +24,8 @@ env/
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+backend/repositories/*.db-shm
+backend/repositories/*.db-wal
+
+backend/market-score-history.log
